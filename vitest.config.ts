@@ -26,6 +26,10 @@ export default defineConfig({
         'packages/context-builder/src/index.ts',
       ),
       '@codex-context-bridge/memory-engine': path.join(root, 'packages/memory-engine/src/index.ts'),
+      '@codex-context-bridge/workflow-engine': path.join(
+        root,
+        'packages/workflow-engine/src/index.ts',
+      ),
       '@codex-context-bridge/secret-scanner': path.join(
         root,
         'packages/secret-scanner/src/index.ts',

@@ -537,3 +537,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Implement `P10-WF-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 17:19 +07:00 - P10-WF-001
+
+### Goal
+
+Persist workflow transitions, transfer approvals, external-send intent, acknowledgement, and restart recovery so an interrupted process cannot silently repeat a ChatGPT or Codex handoff.
+
+### Changes
+
+Added migration v4 with bounded workflow controls, structured event metadata, scoped approval bindings, and an idempotent effect journal. Added versioned workflow Zod/JSON Schema contracts and a workflow engine for transactional event/projection updates, explicit transition guards, retry/iteration limits, single-use approval capabilities, prepared/dispatching/acknowledged/failed effects, audit records, projection rebuild, and restart recovery.
+
+### Files
+
+Database migration/runtime generation and upgrade tests; workflow contracts and schema; new `packages/workflow-engine`; workspace aliases and lockfile; security, architecture, and continuity records.
+
+### Decisions
+
+Use the effect journal, never renderer or workflow projection state, as the duplicate-send authority. Persist `dispatching` before crossing the external boundary; after an interruption it requires confirmation and is never auto-resent. Store only SHA-256 approval-token hashes, cap approval lifetime at 15 minutes, bind each approval to workflow/project/operation/destination/payload, consume it in the same transaction that creates the effect, and increment Codex iterations only after acknowledgement.
+
+### Verification
+
+Targeted migration, contract, and workflow tests passed 34/34 after the final additions. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict type-check, 109 Vitest tests, one Chromium fixture E2E, and all 13 buildable workspace projects.
+
+### Failures encountered
+
+Pre-test review found inconsistent normalization that could store uppercase hashes or whitespace-padded idempotency/destination values, a raw SQLite correlation conflict, and approval creation outside an audit transaction. Fault-injection tests also exercised partial transition, approval-consumption, dispatch, and acknowledgement boundaries.
+
+### Root causes
+
+The initial draft validated some values for lookup but reused the unnormalized input for persistence. It relied on a unique constraint for correlation ownership and treated approval creation as a standalone insert rather than an audited security decision.
+
+### Fixes
+
+Normalized and runtime-validated operations, hashes, identifiers, and destinations before lookup and persistence; mapped correlation reuse to a stable domain error; made approval plus audit insertion atomic; and added regression coverage for rollback, mismatch, expiry, token secrecy, idempotency conflicts, loop limits, failed sends, projection rebuild, and SQLite reopen recovery.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(workflow): persist recoverable handoff workflows"`.
+
+### Push
+
+Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/main`; the hashes must match.
+
+### Next action
+
+Implement `P11-CHAT-001` exactly as described in `RECOVERY.md`.

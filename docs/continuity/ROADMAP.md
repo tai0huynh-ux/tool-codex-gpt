@@ -90,10 +90,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 10 - Persistent workflows
 
-- [ ] P10-WF-001 Persist recoverable idempotent workflows
+- [x] P10-WF-001 Persist recoverable idempotent workflows
   - Depends on: P8-CTX-001, P9-MEM-001
   - Done when: transactional transitions, approvals, duplicate prevention, loop limits, and crash recovery pass
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(workflow): persist recoverable handoff workflows"`
 
 ## Phase 11 - Assisted ChatGPT sending
 

@@ -32,11 +32,11 @@ Use `.agents/skills/context-bridge-checkpoint/SKILL.md` to publish checkpoints a
 
 ## Current architecture
 
-TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture extension, SQLite persistence, contracts, project identity, file safety, secret scanning, and a mock-only Codex adapter.
+TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture extension, SQLite persistence, contracts, project identity, file safety, secret scanning, a persistent workflow/effect engine, and a mock-only Codex adapter.
 
 ## Current phase
 
-Phase 10 - Persistent workflows. Phase 3 live Codex integration remains independently blocked.
+Phase 11 - Assisted ChatGPT sending. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -56,17 +56,17 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 87 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
+Expected known-good baseline: formatting, lint, strict type-check, 109 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
 
 ## Exact next task
 
-Implement `P10-WF-001`: persist transactional workflow transitions and projections, idempotent sends, handoff hashes, scoped single-use approvals, acknowledgement state, and restart recovery without duplicate transfer.
+Implement `P11-CHAT-001`: connect reviewed context packs to existing or new ChatGPT destinations through the existing no-submit composer boundary, persistent single-use approvals/effects, streaming/cancellation state, acknowledgement, and explicit clipboard fallback.
 
 ## Expected files to modify
 
-- workflow contracts and migration additions where the existing schema is insufficient
-- workflow engine package with transition, idempotency, approval, and recovery tests
-- audit integration for transfer and approval decisions
+- ChatGPT extension and local-transport contracts for reviewed send preparation and acknowledgement
+- assisted-send orchestration that consumes P10 approval/effect capabilities
+- fixture tests for existing/new destinations, streaming, cancellation, clipboard fallback, and crash recovery
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run
@@ -90,6 +90,7 @@ pnpm.cmd run build
 - Renderer code must not read repositories directly; context collection and secret decisions belong in validated main/domain boundaries.
 - Only approved memories may enter retrieval or bootstrap output; candidate content must never be auto-approved.
 - Workflow send effects must be recoverable around acknowledgement boundaries and must never be repeated from projection state alone.
+- A `dispatching` effect is ambiguous after interruption; require confirmation or downstream idempotency evidence and never auto-resend it.
 
 ## Blockers and safe alternatives
 

@@ -38,7 +38,7 @@ Electron keeps context isolation and sandboxing enabled. Preload exposes one typ
 - Symlink/path escape: mitigated by canonical containment checks.
 - Credential exfiltration: mitigated by exclusions and content scanning before copy.
 - Browser account theft: mitigated by prohibiting cookie/token/header access.
-- Infinite handoff loops: planned state-machine iteration, retry, correlation, and approval limits.
+- Infinite handoff loops: mitigated by persisted state-machine iteration, retry, correlation, idempotency, and approval limits.
 - Local peer spoofing or replay: mitigated by exact native-host origin, capability comparison, expiry, nonce/request caches, rate limits, and bounded framing.
 - Renderer compromise: constrained by context isolation, sandboxing, exact sender validation, and narrow preload methods.
-- Crash inconsistency: planned event-sourced workflow transitions in SQLite.
+- Crash inconsistency: mitigated by transactional workflow events/projections and a prepared/dispatching/acknowledged effect journal in SQLite.

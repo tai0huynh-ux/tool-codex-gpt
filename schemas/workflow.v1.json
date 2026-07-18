@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex-context-bridge.local/schemas/workflow.v1.json",
+  "title": "Codex Context Bridge Workflow Contracts",
+  "oneOf": [
+    { "$ref": "#/$defs/run" },
+    { "$ref": "#/$defs/event" },
+    { "$ref": "#/$defs/approval" },
+    { "$ref": "#/$defs/effect" },
+    { "$ref": "#/$defs/recovery" }
+  ],
+  "$defs": {
+    "state": {
+      "enum": [
+        "idle",
+        "project_resolving",
+        "project_confirmation_required",
+        "codex_running",
+        "codex_failed",
+        "codex_completed",
+        "building_context",
+        "context_review_required",
+        "context_approved",
+        "sent_to_chatgpt",
+        "waiting_chatgpt",
+        "chatgpt_response_captured",
+        "validating_chatgpt_response",
+        "chatgpt_response_invalid",
+        "codex_prompt_review_required",
+        "codex_prompt_approved",
+        "sent_to_codex",
+        "finished",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "operation": { "enum": ["send_chatgpt", "send_codex"] },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "correlationId",
+        "projectId",
+        "state",
+        "idempotencyKey",
+        "iterationCount",
+        "failureRetries",
+        "maxIterations",
+        "maxFailureRetries",
+        "recoveryStatus",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "correlationId": { "type": "string", "minLength": 1 },
+        "projectId": { "type": "string", "minLength": 1 },
+        "state": { "$ref": "#/$defs/state" },
+        "idempotencyKey": { "type": "string", "minLength": 1 },
+        "iterationCount": { "type": "integer", "minimum": 0 },
+        "failureRetries": { "type": "integer", "minimum": 0 },
+        "maxIterations": { "type": "integer", "minimum": 1 },
+        "maxFailureRetries": { "type": "integer", "minimum": 0 },
+        "recoveryStatus": { "enum": ["none", "pending", "confirmation_required"] },
+        "lastErrorCode": { "type": "string", "minLength": 1 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "workflowRunId",
+        "sequence",
+        "toState",
+        "eventType",
+        "actor",
+        "payload",
+        "occurredAt"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "workflowRunId": { "type": "string", "minLength": 1 },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "fromState": { "$ref": "#/$defs/state" },
+        "toState": { "$ref": "#/$defs/state" },
+        "eventType": { "type": "string", "minLength": 1 },
+        "actor": { "type": "string", "minLength": 1 },
+        "payload": { "type": "object" },
+        "occurredAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "workflowRunId",
+        "projectId",
+        "action",
+        "scope",
+        "destinationType",
+        "destinationId",
+        "payloadHash",
+        "approvedAt",
+        "expiresAt"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "workflowRunId": { "type": "string", "minLength": 1 },
+        "projectId": { "type": "string", "minLength": 1 },
+        "action": { "$ref": "#/$defs/operation" },
+        "scope": { "const": "single_send" },
+        "destinationType": { "type": "string", "minLength": 1 },
+        "destinationId": { "type": "string", "minLength": 1 },
+        "payloadHash": { "$ref": "#/$defs/hash" },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "consumedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "workflowRunId",
+        "operation",
+        "idempotencyKey",
+        "handoffHash",
+        "payloadHash",
+        "destinationType",
+        "destinationId",
+        "approvalId",
+        "status",
+        "preparedAt"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "workflowRunId": { "type": "string", "minLength": 1 },
+        "operation": { "$ref": "#/$defs/operation" },
+        "idempotencyKey": { "type": "string", "minLength": 1 },
+        "handoffHash": { "$ref": "#/$defs/hash" },
+        "payloadHash": { "$ref": "#/$defs/hash" },
+        "destinationType": { "type": "string", "minLength": 1 },
+        "destinationId": { "type": "string", "minLength": 1 },
+        "approvalId": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["prepared", "dispatching", "acknowledged", "failed"] },
+        "result": { "type": "object" },
+        "preparedAt": { "type": "string", "format": "date-time" },
+        "dispatchStartedAt": { "type": "string", "format": "date-time" },
+        "acknowledgedAt": { "type": "string", "format": "date-time" },
+        "failedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect", "action"],
+      "properties": {
+        "effect": { "$ref": "#/$defs/effect" },
+        "action": { "enum": ["safe_to_dispatch", "confirmation_required", "none"] }
+      }
+    }
+  }
+}

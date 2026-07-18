@@ -3,8 +3,8 @@
 ## Phase 1 boundaries
 
 Codex Context Bridge is a local-first TypeScript monorepo. The current milestone implements identity,
-validation, persistence, audit, file safety, and feasibility spikes. It does not implement the autonomous
-workflow loop, automatic sending, or a production ChatGPT/Codex adapter.
+validation, persistence, audit, file safety, approved memory, context building, and recoverable workflow
+orchestration. It does not implement automatic sending or a production ChatGPT/Codex adapter.
 
 ## Components
 
@@ -16,6 +16,7 @@ workflow loop, automatic sending, or a production ChatGPT/Codex adapter.
 - `packages/project-detector`: fingerprint creation and evidence-based confidence scoring.
 - `packages/context-builder`: deterministic, budgeted, secret-safe context pack selection and preview contracts.
 - `packages/memory-engine`: approved-only scoped memory lifecycle, deterministic retrieval, provenance, and budgeted chat bootstrap.
+- `packages/workflow-engine`: transactional workflow transitions, scoped single-use approvals, idempotent send-effect journaling, acknowledgement, limits, audit, and restart recovery.
 - `packages/file-store`: allowlisted, content-addressed file ingestion.
 - `packages/secret-scanner`: deterministic pre-ingestion secret checks.
 - `packages/codex-adapter`: typed ordered run lifecycle boundary plus an explicitly mock-only fallback for the blocked SDK spike; replay and terminal guards are contract-tested.
@@ -27,8 +28,8 @@ ADR-0001 selects Native Messaging for the production extension boundary. The bro
 
 The extension client reconnects only through a fixed native-host name and validates correlated responses. Electron preload exposes allowlisted status and operation methods; the renderer never receives raw `ipcRenderer` or a native port. Native-host registration and the `nativeMessaging` manifest permission remain intentionally inactive until the packaging/security gate.
 
-Later packages such as memory, context building, workflow orchestration, and production adapters are
-intentionally deferred. Their database boundaries exist so Phase 1 does not force unstructured query data.
+Production adapters and end-to-end assisted sending remain deferred. Their domain boundaries stay separate
+from renderer and extension trust boundaries.
 
 ## Dependency direction
 
@@ -36,6 +37,8 @@ Contracts and database are foundational. Registry depends on database. Detector 
 File store depends on secret scanning. Apps may consume packages later but no package depends on an app.
 
 Database migrations are an ordered, generated version list sourced from `packages/database/migrations/*.sql`. Each version runs in its own transaction and advances SQLite `user_version` only after success. Migration v2 adds non-destructive project/repository archive state, worktree metadata, and append-only mapping confirmation history.
+
+Migration v4 adds bounded workflow limits, recovery state, structured event metadata, scoped approval bindings, and a durable effect journal. An effect is persisted as `prepared` before dispatch, changes to `dispatching` before the external boundary, and advances the workflow only after `acknowledged`. Restart recovery may dispatch a prepared effect once, but a dispatching effect always requires confirmation and is never automatically resent.
 
 ## Project identity
 

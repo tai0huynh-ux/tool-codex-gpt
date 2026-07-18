@@ -54,7 +54,7 @@ describe('database migrations and audit log', () => {
 
     migrate(database);
 
-    expect(database.pragma('user_version', { simple: true })).toBe(3);
+    expect(database.pragma('user_version', { simple: true })).toBe(4);
     expect(database.prepare('SELECT name FROM projects WHERE id = ?').get('project-1')).toEqual({
       name: 'Bridge',
     });
@@ -111,7 +111,7 @@ describe('database migrations and audit log', () => {
 
     migrate(database);
 
-    expect(database.pragma('user_version', { simple: true })).toBe(3);
+    expect(database.pragma('user_version', { simple: true })).toBe(4);
     expect(database.prepare('SELECT id, content_hash FROM memories').get()).toEqual({
       id: 'memory-legacy',
       content_hash: null,
@@ -123,6 +123,101 @@ describe('database migrations and audit log', () => {
         )
         .all(),
     ).toEqual([{ name: 'content_hash' }, { name: 'project_id' }, { name: 'superseded_by' }]);
+    database.close();
+  });
+
+  it('upgrades v3 workflows without losing events or approvals', () => {
+    const database = new BetterSqlite3(':memory:');
+    database.pragma('foreign_keys = ON');
+    database.exec(initialMigration);
+    database.exec(
+      readFileSync(
+        path.resolve(import.meta.dirname, '../migrations/0002_project_mapping.sql'),
+        'utf8',
+      ),
+    );
+    database.exec(
+      readFileSync(
+        path.resolve(import.meta.dirname, '../migrations/0003_memory_engine.sql'),
+        'utf8',
+      ),
+    );
+    database.pragma('user_version = 3');
+    database
+      .prepare('INSERT INTO projects (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)')
+      .run('project-1', 'Bridge', '2026-07-18T00:00:00.000Z', '2026-07-18T00:00:00.000Z');
+    database
+      .prepare(
+        `INSERT INTO workflow_runs (
+          id, correlation_id, project_id, state, idempotency_key, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        'workflow-legacy',
+        'correlation-legacy',
+        'project-1',
+        'idle',
+        'workflow-key-legacy',
+        '2026-07-18T00:00:00.000Z',
+        '2026-07-18T00:00:00.000Z',
+      );
+    database
+      .prepare(
+        `INSERT INTO workflow_events (
+          id, workflow_run_id, sequence, from_state, to_state, event_type, occurred_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        'event-legacy',
+        'workflow-legacy',
+        1,
+        null,
+        'idle',
+        'workflow.created',
+        '2026-07-18T00:00:00.000Z',
+      );
+    database
+      .prepare(
+        `INSERT INTO user_approvals (
+          id, workflow_run_id, action, approval_token_hash, approved_at, expires_at
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        'approval-legacy',
+        'workflow-legacy',
+        'send_chatgpt',
+        'hash-only',
+        '2026-07-18T00:00:00.000Z',
+        '2026-07-18T00:01:00.000Z',
+      );
+
+    migrate(database);
+
+    expect(database.pragma('user_version', { simple: true })).toBe(4);
+    expect(
+      database.prepare('SELECT id, max_iterations, recovery_status FROM workflow_runs').get(),
+    ).toEqual({
+      id: 'workflow-legacy',
+      max_iterations: 5,
+      recovery_status: 'none',
+    });
+    expect(database.prepare('SELECT id, actor, payload_json FROM workflow_events').get()).toEqual({
+      id: 'event-legacy',
+      actor: 'system',
+      payload_json: '{}',
+    });
+    expect(database.prepare('SELECT id, project_id, scope FROM user_approvals').get()).toEqual({
+      id: 'approval-legacy',
+      project_id: null,
+      scope: null,
+    });
+    expect(
+      database
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'workflow_effects'",
+        )
+        .get(),
+    ).toEqual({ name: 'workflow_effects' });
     database.close();
   });
 });

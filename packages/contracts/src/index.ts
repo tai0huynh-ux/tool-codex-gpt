@@ -478,3 +478,111 @@ export type MemoryBootstrap = z.infer<typeof memoryBootstrapSchema>;
 export function validateMemoryRecord(input: unknown): MemoryRecord {
   return memoryRecordSchema.parse(input);
 }
+
+export const workflowStateSchema = z.enum([
+  'idle',
+  'project_resolving',
+  'project_confirmation_required',
+  'codex_running',
+  'codex_failed',
+  'codex_completed',
+  'building_context',
+  'context_review_required',
+  'context_approved',
+  'sent_to_chatgpt',
+  'waiting_chatgpt',
+  'chatgpt_response_captured',
+  'validating_chatgpt_response',
+  'chatgpt_response_invalid',
+  'codex_prompt_review_required',
+  'codex_prompt_approved',
+  'sent_to_codex',
+  'finished',
+  'failed',
+  'cancelled',
+]);
+
+export const workflowOperationSchema = z.enum(['send_chatgpt', 'send_codex']);
+
+export const workflowRunSchema = z
+  .object({
+    id: z.string().min(1),
+    correlationId: z.string().min(1),
+    projectId: z.string().min(1),
+    state: workflowStateSchema,
+    idempotencyKey: z.string().min(1),
+    iterationCount: z.number().int().nonnegative(),
+    failureRetries: z.number().int().nonnegative(),
+    maxIterations: z.number().int().positive(),
+    maxFailureRetries: z.number().int().nonnegative(),
+    recoveryStatus: z.enum(['none', 'pending', 'confirmation_required']),
+    lastErrorCode: z.string().min(1).optional(),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+  })
+  .strict();
+
+export const workflowEventSchema = z
+  .object({
+    id: z.string().min(1),
+    workflowRunId: z.string().min(1),
+    sequence: z.number().int().positive(),
+    fromState: workflowStateSchema.optional(),
+    toState: workflowStateSchema,
+    eventType: z.string().min(1),
+    actor: z.string().min(1),
+    payload: z.record(z.string(), z.unknown()),
+    occurredAt: z.iso.datetime(),
+  })
+  .strict();
+
+export const workflowApprovalSchema = z
+  .object({
+    id: z.string().min(1),
+    workflowRunId: z.string().min(1),
+    projectId: z.string().min(1),
+    action: workflowOperationSchema,
+    scope: z.literal('single_send'),
+    destinationType: z.string().min(1),
+    destinationId: z.string().min(1),
+    payloadHash: z.string().regex(/^[a-f0-9]{64}$/),
+    approvedAt: z.iso.datetime(),
+    expiresAt: z.iso.datetime(),
+    consumedAt: z.iso.datetime().optional(),
+  })
+  .strict();
+
+export const workflowEffectSchema = z
+  .object({
+    id: z.string().min(1),
+    workflowRunId: z.string().min(1),
+    operation: workflowOperationSchema,
+    idempotencyKey: z.string().min(1),
+    handoffHash: z.string().regex(/^[a-f0-9]{64}$/),
+    payloadHash: z.string().regex(/^[a-f0-9]{64}$/),
+    destinationType: z.string().min(1),
+    destinationId: z.string().min(1),
+    approvalId: z.string().min(1),
+    status: z.enum(['prepared', 'dispatching', 'acknowledged', 'failed']),
+    result: z.record(z.string(), z.unknown()).optional(),
+    preparedAt: z.iso.datetime(),
+    dispatchStartedAt: z.iso.datetime().optional(),
+    acknowledgedAt: z.iso.datetime().optional(),
+    failedAt: z.iso.datetime().optional(),
+  })
+  .strict();
+
+export const workflowRecoveryItemSchema = z
+  .object({
+    effect: workflowEffectSchema,
+    action: z.enum(['safe_to_dispatch', 'confirmation_required', 'none']),
+  })
+  .strict();
+
+export type WorkflowState = z.infer<typeof workflowStateSchema>;
+export type WorkflowOperation = z.infer<typeof workflowOperationSchema>;
+export type WorkflowRun = z.infer<typeof workflowRunSchema>;
+export type WorkflowEvent = z.infer<typeof workflowEventSchema>;
+export type WorkflowApproval = z.infer<typeof workflowApprovalSchema>;
+export type WorkflowEffect = z.infer<typeof workflowEffectSchema>;
+export type WorkflowRecoveryItem = z.infer<typeof workflowRecoveryItemSchema>;

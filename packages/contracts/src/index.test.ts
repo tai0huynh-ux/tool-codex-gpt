@@ -8,6 +8,7 @@ import {
   validateContextPack,
   validateHandoff,
   validateMemoryRecord,
+  workflowRunSchema,
 } from './index';
 
 const validEnvelope = {
@@ -177,6 +178,50 @@ describe('memory record', () => {
         confidence: 0.5,
         status: 'candidate',
         sources: [{ type: 'user', id: 'user-1' }],
+        createdAt: '2026-07-18T10:00:00.000Z',
+        updatedAt: '2026-07-18T10:00:00.000Z',
+      }),
+    ).toThrow();
+  });
+});
+
+describe('workflow contracts', () => {
+  it('validates a persisted run through Zod and the published JSON Schema', () => {
+    const run = {
+      id: 'workflow-1',
+      correlationId: 'correlation-1',
+      projectId: 'project-1',
+      state: 'idle',
+      idempotencyKey: 'workflow-key-1',
+      iterationCount: 0,
+      failureRetries: 0,
+      maxIterations: 5,
+      maxFailureRetries: 2,
+      recoveryStatus: 'none',
+      createdAt: '2026-07-18T10:00:00.000Z',
+      updatedAt: '2026-07-18T10:00:00.000Z',
+    };
+    expect(workflowRunSchema.parse(run).id).toBe('workflow-1');
+    const schemaPath = path.resolve(import.meta.dirname, '../../../schemas/workflow.v1.json');
+    const schema = JSON.parse(readFileSync(schemaPath, 'utf8')) as object;
+    const ajv = new Ajv2020({ strict: true });
+    addFormats(ajv);
+    expect(ajv.compile(schema)(run)).toBe(true);
+  });
+
+  it('rejects unknown states and unbounded workflow limits', () => {
+    expect(() =>
+      workflowRunSchema.parse({
+        id: 'workflow-1',
+        correlationId: 'correlation-1',
+        projectId: 'project-1',
+        state: 'unknown',
+        idempotencyKey: 'workflow-key-1',
+        iterationCount: 0,
+        failureRetries: 0,
+        maxIterations: 0,
+        maxFailureRetries: 2,
+        recoveryStatus: 'none',
         createdAt: '2026-07-18T10:00:00.000Z',
         updatedAt: '2026-07-18T10:00:00.000Z',
       }),

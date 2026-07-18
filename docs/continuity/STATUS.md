@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 10 - Persistent workflows.
+Phase 11 - Assisted ChatGPT sending.
 
 ## Current objective
 
-Persist recoverable, idempotent ChatGPT-Codex workflow transitions and single-use approvals.
+Connect reviewed context-pack previews to the existing ChatGPT composer boundary through the persistent workflow engine.
 
 ## Last completed checkpoint
 
-P9-MEM-001 - Versioned memory contract, migration v3, explicit candidate/approve/reject/delete/supersede lifecycle, approved-only deterministic retrieval, provenance, isolation, duplicate detection, persistence, and budgeted bootstrap. Resolve with `git log -1 --grep "feat(memory): add approved scoped long-term memory"`.
+P10-WF-001 - Migration v4, versioned workflow contracts, transactional event/projection transitions, bounded retries and iterations, scoped single-use approval capabilities, idempotent effect journaling, acknowledgement state, and restart recovery without duplicate transfer. Resolve with `git log -1 --grep "feat(workflow): persist recoverable handoff workflows"`.
 
 ## Current verified capabilities
 
@@ -49,6 +49,12 @@ P9-MEM-001 - Versioned memory contract, migration v3, explicit candidate/approve
 - Memory sources remain attached to every returned record; legacy rows receive deterministic migration provenance.
 - Duplicate content is detected per scope/project across history, while supersession preserves the old record and points to the approved replacement.
 - New-chat bootstrap includes project identity, goal, architecture, status, blockers, objective, handoff protocol, and approved memories within an exact character budget.
+- SQLite migration v4 preserves existing workflow rows while adding limits, recovery state, event actors/payloads, scoped approval fields, and an idempotent effect journal.
+- Workflow transitions persist monotonic events, projection updates, and audit records atomically; injected faults prove rollback before projection completion.
+- Approval capabilities expire within 15 minutes, are stored only as SHA-256 token hashes, bind workflow/project/operation/destination/payload, and are consumed once in the effect transaction.
+- Prepared effects are safe to dispatch once; dispatching effects require confirmation after restart and are never automatically resent; acknowledged and failed effects cannot dispatch again.
+- ChatGPT and Codex sends advance workflow state only after acknowledgement, with bounded retry and acknowledged-Codex iteration counters.
+- Workflow recovery, approval consumption, effect state, and duplicate prevention persist after reopening SQLite.
 
 ## Current known failures
 
@@ -61,13 +67,13 @@ P9-MEM-001 - Versioned memory contract, migration v3, explicit candidate/approve
 
 ## Next three actions
 
-1. Implement transactional `P10-WF-001` workflow transition and event projection persistence.
-2. Add scoped, expiring, single-use approval capabilities bound to project, destination, and payload hash.
-3. Prove crash recovery and duplicate-send prevention across pre/post acknowledgement boundaries.
+1. Implement `P11-CHAT-001` reviewed existing/new ChatGPT conversation handoff through the composer boundary.
+2. Add streaming/cancellation state and explicit clipboard fallback without automatic submit.
+3. Bind every attempted send to the P10 approval/effect journal and fixture-test acknowledgement recovery.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 87 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all 12 buildable workspace projects. GitHub Actions run `29639720015` passed for checkpoint `ee64102`.
+`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 109 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all 13 buildable workspace projects. GitHub Actions run `29640228145` passed for the preceding published checkpoint `0b5d8b0`; P10 CI is pending publication.
 
 ## Latest commit
 
@@ -79,4 +85,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 16:59 +07:00.
+2026-07-18 17:19 +07:00.
