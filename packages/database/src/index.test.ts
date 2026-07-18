@@ -54,7 +54,7 @@ describe('database migrations and audit log', () => {
 
     migrate(database);
 
-    expect(database.pragma('user_version', { simple: true })).toBe(2);
+    expect(database.pragma('user_version', { simple: true })).toBe(3);
     expect(database.prepare('SELECT name FROM projects WHERE id = ?').get('project-1')).toEqual({
       name: 'Bridge',
     });
@@ -77,6 +77,52 @@ describe('database migrations and audit log', () => {
     const database = new BetterSqlite3(':memory:');
     database.pragma('user_version = 999');
     expect(() => migrate(database)).toThrow('DATABASE_SCHEMA_NEWER_THAN_RUNTIME');
+    database.close();
+  });
+
+  it('upgrades v2 memory rows with isolation, hash, and supersession columns', () => {
+    const database = new BetterSqlite3(':memory:');
+    database.pragma('foreign_keys = ON');
+    database.exec(initialMigration);
+    database.exec(
+      readFileSync(
+        path.resolve(import.meta.dirname, '../migrations/0002_project_mapping.sql'),
+        'utf8',
+      ),
+    );
+    database.pragma('user_version = 2');
+    database
+      .prepare(
+        `INSERT INTO memories (
+          id, scope, scope_id, category, content, confidence, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        'memory-legacy',
+        'global',
+        null,
+        'rule',
+        'Preserve history.',
+        0.8,
+        'approved',
+        '2026-07-18T00:00:00.000Z',
+        '2026-07-18T00:00:00.000Z',
+      );
+
+    migrate(database);
+
+    expect(database.pragma('user_version', { simple: true })).toBe(3);
+    expect(database.prepare('SELECT id, content_hash FROM memories').get()).toEqual({
+      id: 'memory-legacy',
+      content_hash: null,
+    });
+    expect(
+      database
+        .prepare(
+          "SELECT name FROM pragma_table_info('memories') WHERE name IN ('project_id', 'content_hash', 'superseded_by') ORDER BY name",
+        )
+        .all(),
+    ).toEqual([{ name: 'content_hash' }, { name: 'project_id' }, { name: 'superseded_by' }]);
     database.close();
   });
 });

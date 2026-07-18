@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex-context-bridge.local/schemas/memory-record.v1.json",
+  "title": "MemoryRecord v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "scope",
+    "category",
+    "content",
+    "contentHash",
+    "confidence",
+    "status",
+    "sources",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "scope": { "enum": ["global", "team", "project", "conversation", "workflow"] },
+    "scopeId": { "type": "string", "minLength": 1 },
+    "projectId": { "type": "string", "minLength": 1 },
+    "category": {
+      "enum": ["preference", "rule", "architecture", "decision", "known_issue", "workflow", "fact"]
+    },
+    "content": { "type": "string", "minLength": 1 },
+    "contentHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "status": { "enum": ["candidate", "approved", "superseded", "deleted"] },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "id"],
+        "properties": {
+          "type": { "enum": ["user", "conversation", "codex", "file", "workflow", "system"] },
+          "id": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "supersededBy": { "type": "string", "minLength": 1 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "scope": { "const": "global" } }, "required": ["scope"] },
+      "then": {
+        "not": {
+          "anyOf": [
+            { "properties": { "scopeId": {} }, "required": ["scopeId"] },
+            { "properties": { "projectId": {} }, "required": ["projectId"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "scope": { "enum": ["team", "project", "conversation", "workflow"] } },
+        "required": ["scope"]
+      },
+      "then": {
+        "properties": { "scopeId": { "type": "string", "minLength": 1 } },
+        "required": ["scopeId"]
+      }
+    },
+    {
+      "if": { "properties": { "scope": { "const": "team" } }, "required": ["scope"] },
+      "then": {
+        "not": {
+          "properties": { "projectId": {} },
+          "required": ["projectId"]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "scope": { "enum": ["project", "conversation", "workflow"] } },
+        "required": ["scope"]
+      },
+      "then": {
+        "properties": { "projectId": { "type": "string", "minLength": 1 } },
+        "required": ["projectId"]
+      }
+    },
+    {
+      "if": { "properties": { "scope": { "const": "project" } }, "required": ["scope"] },
+      "then": {
+        "properties": {
+          "scopeId": { "type": "string", "minLength": 1 },
+          "projectId": { "type": "string", "minLength": 1 }
+        },
+        "required": ["scopeId", "projectId"]
+      }
+    }
+  ]
+}

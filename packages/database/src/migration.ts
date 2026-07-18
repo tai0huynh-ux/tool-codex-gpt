@@ -11,6 +11,11 @@ export const migrations = [
     name: 'project_mapping',
     sql: "ALTER TABLE projects ADD COLUMN archived_at TEXT;\n\nALTER TABLE repositories ADD COLUMN branch TEXT;\nALTER TABLE repositories ADD COLUMN worktree_root TEXT;\nALTER TABLE repositories ADD COLUMN updated_at TEXT;\nALTER TABLE repositories ADD COLUMN archived_at TEXT;\n\nCREATE TABLE mapping_confirmations (\n  id TEXT PRIMARY KEY,\n  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,\n  repository_id TEXT REFERENCES repositories(id) ON DELETE CASCADE,\n  subject_type TEXT NOT NULL CHECK(subject_type IN (\n    'repository',\n    'chat_project',\n    'chat_conversation',\n    'codex_thread'\n  )),\n  subject_id TEXT NOT NULL,\n  confidence REAL NOT NULL CHECK(confidence >= 0 AND confidence <= 1),\n  evidence_json TEXT NOT NULL,\n  status TEXT NOT NULL CHECK(status IN ('confirmed', 'rejected', 'superseded')),\n  created_at TEXT NOT NULL,\n  superseded_at TEXT\n);\n\nCREATE INDEX mapping_confirmations_subject_idx\n  ON mapping_confirmations(subject_type, subject_id, created_at);\nCREATE INDEX mapping_confirmations_project_idx\n  ON mapping_confirmations(project_id, created_at);\n",
   },
+  {
+    version: 3,
+    name: 'memory_engine',
+    sql: "ALTER TABLE memories ADD COLUMN project_id TEXT REFERENCES projects(id) ON DELETE CASCADE;\nALTER TABLE memories ADD COLUMN content_hash TEXT;\nALTER TABLE memories ADD COLUMN superseded_by TEXT REFERENCES memories(id) ON DELETE SET NULL;\n\nCREATE INDEX memories_retrieval_idx\n  ON memories(status, scope, project_id, scope_id, updated_at);\nCREATE UNIQUE INDEX memories_active_content_idx\n  ON memories(scope, COALESCE(scope_id, ''), COALESCE(project_id, ''), content_hash)\n  WHERE content_hash IS NOT NULL AND status IN ('candidate', 'approved');\nCREATE INDEX memory_sources_memory_idx ON memory_sources(memory_id, source_type, source_id);\n",
+  },
 ] as const;
 
 export const initialMigration = migrations[0].sql;

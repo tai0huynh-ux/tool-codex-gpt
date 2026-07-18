@@ -3,7 +3,12 @@ import addFormats from 'ajv-formats';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { validateContextBridgeResponse, validateContextPack, validateHandoff } from './index';
+import {
+  validateContextBridgeResponse,
+  validateContextPack,
+  validateHandoff,
+  validateMemoryRecord,
+} from './index';
 
 const validEnvelope = {
   protocolVersion: '1.0',
@@ -132,5 +137,49 @@ describe('context pack', () => {
     const ajv = new Ajv2020({ strict: true });
     addFormats(ajv);
     expect(ajv.compile(schema)(pack)).toBe(true);
+  });
+});
+
+describe('memory record', () => {
+  it('validates approved provenance through Zod and the published JSON Schema', () => {
+    const memory = {
+      id: 'memory-1',
+      scope: 'project',
+      scopeId: 'project-1',
+      projectId: 'project-1',
+      category: 'architecture',
+      content: 'Use SQLite for local persistence.',
+      contentHash: 'a'.repeat(64),
+      confidence: 0.95,
+      status: 'approved',
+      sources: [{ type: 'file', id: 'docs/ARCHITECTURE.md' }],
+      createdAt: '2026-07-18T10:00:00.000Z',
+      updatedAt: '2026-07-18T10:00:00.000Z',
+    };
+    expect(validateMemoryRecord(memory).id).toBe('memory-1');
+    const schemaPath = path.resolve(import.meta.dirname, '../../../schemas/memory-record.v1.json');
+    const schema = JSON.parse(readFileSync(schemaPath, 'utf8')) as object;
+    const ajv = new Ajv2020({ strict: true });
+    addFormats(ajv);
+    expect(ajv.compile(schema)(memory)).toBe(true);
+  });
+
+  it('rejects project-bound memory without matching project identity', () => {
+    expect(() =>
+      validateMemoryRecord({
+        id: 'memory-1',
+        scope: 'project',
+        scopeId: 'project-1',
+        projectId: 'project-2',
+        category: 'rule',
+        content: 'Wrong project.',
+        contentHash: 'a'.repeat(64),
+        confidence: 0.5,
+        status: 'candidate',
+        sources: [{ type: 'user', id: 'user-1' }],
+        createdAt: '2026-07-18T10:00:00.000Z',
+        updatedAt: '2026-07-18T10:00:00.000Z',
+      }),
+    ).toThrow();
   });
 });

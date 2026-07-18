@@ -388,3 +388,93 @@ export type ContextPack = z.infer<typeof contextPackSchema>;
 export function validateContextPack(input: unknown): ContextPack {
   return contextPackSchema.parse(input);
 }
+
+export const memoryScopeSchema = z.enum(['global', 'team', 'project', 'conversation', 'workflow']);
+export const memoryStatusSchema = z.enum(['candidate', 'approved', 'superseded', 'deleted']);
+export const memoryCategorySchema = z.enum([
+  'preference',
+  'rule',
+  'architecture',
+  'decision',
+  'known_issue',
+  'workflow',
+  'fact',
+]);
+export const memorySourceSchema = z
+  .object({
+    type: z.enum(['user', 'conversation', 'codex', 'file', 'workflow', 'system']),
+    id: z.string().min(1),
+  })
+  .strict();
+
+export const memoryRecordSchema = z
+  .object({
+    id: z.string().min(1),
+    scope: memoryScopeSchema,
+    scopeId: z.string().min(1).optional(),
+    projectId: z.string().min(1).optional(),
+    category: memoryCategorySchema,
+    content: z.string().min(1),
+    contentHash: z.string().regex(/^[a-f0-9]{64}$/),
+    confidence: z.number().min(0).max(1),
+    status: memoryStatusSchema,
+    sources: z.array(memorySourceSchema).min(1),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+    supersededBy: z.string().min(1).optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.scope === 'global' && value.scopeId !== undefined) {
+      context.addIssue({ code: 'custom', message: 'Global memory cannot have scopeId.' });
+    }
+    if (value.scope !== 'global' && value.scopeId === undefined) {
+      context.addIssue({ code: 'custom', message: 'Scoped memory requires scopeId.' });
+    }
+    if (['global', 'team'].includes(value.scope) && value.projectId !== undefined) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Global and team memory cannot have projectId.',
+      });
+    }
+    if (
+      ['project', 'conversation', 'workflow'].includes(value.scope) &&
+      value.projectId === undefined
+    ) {
+      context.addIssue({ code: 'custom', message: 'Project-bound memory requires projectId.' });
+    }
+    if (value.scope === 'project' && value.scopeId !== value.projectId) {
+      context.addIssue({ code: 'custom', message: 'Project memory scopeId must match projectId.' });
+    }
+  });
+
+export const memoryRetrievalResultSchema = z
+  .object({
+    items: z.array(memoryRecordSchema),
+    omittedCount: z.number().int().nonnegative(),
+    totalCharacters: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const memoryBootstrapSchema = z
+  .object({
+    projectId: z.string().min(1),
+    rendered: z.string().min(1),
+    memories: z.array(memoryRecordSchema),
+    omittedMemoryCount: z.number().int().nonnegative(),
+    totalCharacters: z.number().int().positive(),
+    maxCharacters: z.number().int().positive(),
+  })
+  .strict();
+
+export type MemoryScope = z.infer<typeof memoryScopeSchema>;
+export type MemoryStatus = z.infer<typeof memoryStatusSchema>;
+export type MemoryCategory = z.infer<typeof memoryCategorySchema>;
+export type MemorySource = z.infer<typeof memorySourceSchema>;
+export type MemoryRecord = z.infer<typeof memoryRecordSchema>;
+export type MemoryRetrievalResult = z.infer<typeof memoryRetrievalResultSchema>;
+export type MemoryBootstrap = z.infer<typeof memoryBootstrapSchema>;
+
+export function validateMemoryRecord(input: unknown): MemoryRecord {
+  return memoryRecordSchema.parse(input);
+}

@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture ext
 
 ## Current phase
 
-Phase 9 - Long-term memory. Phase 3 live Codex integration remains independently blocked.
+Phase 10 - Persistent workflows. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -56,18 +56,17 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 76 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
+Expected known-good baseline: formatting, lint, strict type-check, 87 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
 
 ## Exact next task
 
-Implement `P9-MEM-001`: add candidate/approved/rejected/superseded memory persistence, approved-only deterministic retrieval, source provenance, cross-project isolation, duplicate handling, and a budgeted new-chat bootstrap.
+Implement `P10-WF-001`: persist transactional workflow transitions and projections, idempotent sends, handoff hashes, scoped single-use approvals, acknowledgement state, and restart recovery without duplicate transfer.
 
 ## Expected files to modify
 
-- database migration and memory repository
-- memory engine package and deterministic retrieval tests
-- memory contracts and bootstrap budget model
-- continuity status, roadmap, matrix, worklog, recovery, and state
+- workflow contracts and migration additions where the existing schema is insufficient
+- workflow engine package with transition, idempotency, approval, and recovery tests
+- audit integration for transfer and approval decisions
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run
@@ -90,6 +89,7 @@ pnpm.cmd run build
 - Add database changes as ordered `NNNN_name.sql` files, then run `pnpm.cmd migrations:generate`; never rewrite an accepted migration to simulate an upgrade.
 - Renderer code must not read repositories directly; context collection and secret decisions belong in validated main/domain boundaries.
 - Only approved memories may enter retrieval or bootstrap output; candidate content must never be auto-approved.
+- Workflow send effects must be recoverable around acknowledgement boundaries and must never be repeated from projection state alone.
 
 ## Blockers and safe alternatives
 

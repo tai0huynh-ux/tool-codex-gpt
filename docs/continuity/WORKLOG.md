@@ -491,3 +491,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Implement `P9-MEM-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 16:59 +07:00 - P9-MEM-001
+
+### Goal
+
+Persist useful long-term memory with explicit approval, strict scope isolation, source provenance, deterministic retrieval, and a bounded new-chat bootstrap.
+
+### Changes
+
+Added migration v3 with memory project identity, SHA-256 content hashes, supersession links, active duplicate protection, and retrieval/source indexes. Added versioned memory contracts and JSON Schema. Implemented a memory engine supporting candidate creation, edited approval, rejection, deletion, supersession, legacy backfill, duplicate detection, persistent sources, deterministic approved-only retrieval, and budgeted bootstrap rendering.
+
+### Files
+
+Database migration/runtime generation and tests; memory contracts/schema; new `packages/memory-engine`; workspace aliases and lockfile; architecture and continuity records.
+
+### Decisions
+
+Keep the official four-state model: an explicit reject action transitions a candidate to non-active `deleted` rather than introducing an incompatible fifth status. Never auto-approve candidates. Bind project, conversation, and workflow memories to a project; keep global/team memories project-neutral. Rank after scope filtering by query overlap, category, confidence, recency, then stable ID. Preserve rejected, deleted, and superseded history for duplicate detection and provenance.
+
+### Verification
+
+Targeted migration, contract, and memory tests pass 20/20. Coverage includes candidate exclusion, edited approval, rejection persistence, deletion, supersession history, global/team/project/conversation merging, cross-project isolation, duplicate detection, stable ranking, recency tie-breaking, provenance, exact bootstrap budget, legacy backfill, and SQLite reopen recovery. Full repository verification is recorded before publication.
+
+### Failures encountered
+
+The first migration run exposed a stale v1-upgrade assertion that hardcoded schema version 2. Strict lint rejected ambiguous empty-string normalization, and strict AJV rejected conditional `required` fields not declared locally in their schema branches.
+
+### Root causes
+
+The earlier migration test asserted a historical latest version rather than the current generated migration list. Initial scope normalization used truthiness instead of explicit empty handling. The first JSON Schema expressed valid conditions but did not satisfy AJV strict conditional-property analysis.
+
+### Fixes
+
+Advanced the migration expectation to v3, used explicit undefined/empty normalization, declared conditional properties inside each JSON Schema branch, backfilled legacy hashes/project identity/source provenance, and added regression tests for every failure.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(memory): add approved scoped long-term memory"`.
+
+### Push
+
+Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/main`; the hashes must match.
+
+### Next action
+
+Implement `P10-WF-001` exactly as described in `RECOVERY.md`.

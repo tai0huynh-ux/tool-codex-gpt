@@ -25,6 +25,7 @@ export default defineConfig({
         root,
         'packages/context-builder/src/index.ts',
       ),
+      '@codex-context-bridge/memory-engine': path.join(root, 'packages/memory-engine/src/index.ts'),
       '@codex-context-bridge/secret-scanner': path.join(
         root,
         'packages/secret-scanner/src/index.ts',

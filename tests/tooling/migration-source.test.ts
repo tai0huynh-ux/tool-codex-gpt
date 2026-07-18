@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -7,8 +7,22 @@ import { initialMigration, migrations } from '../../packages/database/src/migrat
 
 const root = path.resolve(import.meta.dirname, '../..');
 const script = path.join(root, 'scripts/sync-initial-migration.mjs');
-const canonicalSql = path.join(root, 'packages/database/migrations/0001_initial.sql');
-const projectMappingSql = path.join(root, 'packages/database/migrations/0002_project_mapping.sql');
+const migrationsDirectory = path.join(root, 'packages/database/migrations');
+const canonicalSql = path.join(migrationsDirectory, '0001_initial.sql');
+
+function expectedMigrations() {
+  return readdirSync(migrationsDirectory)
+    .filter((name) => /^\d{4}_[a-z0-9_]+\.sql$/i.test(name))
+    .sort()
+    .map((name) => ({
+      version: Number(name.slice(0, 4)),
+      name: name.replace(/^\d{4}_/, '').replace(/\.sql$/i, ''),
+      sql: `${readFileSync(path.join(migrationsDirectory, name), 'utf8')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/\n*$/, '')}\n`,
+    }));
+}
 
 function runSync(...argumentsList: string[]) {
   return spawnSync(process.execPath, [script, ...argumentsList], {
@@ -20,18 +34,7 @@ function runSync(...argumentsList: string[]) {
 describe('canonical database migration source', () => {
   it('keeps runtime SQL identical to the distributable SQL source', () => {
     expect(initialMigration).toBe(readFileSync(canonicalSql, 'utf8').replace(/\r\n/g, '\n'));
-    expect(migrations).toEqual([
-      {
-        version: 1,
-        name: 'initial',
-        sql: readFileSync(canonicalSql, 'utf8').replace(/\r\n/g, '\n'),
-      },
-      {
-        version: 2,
-        name: 'project_mapping',
-        sql: readFileSync(projectMappingSql, 'utf8').replace(/\r\n/g, '\n'),
-      },
-    ]);
+    expect(migrations).toEqual(expectedMigrations());
     expect(runSync('--check').status).toBe(0);
   });
 

@@ -83,10 +83,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 9 - Long-term memory
 
-- [ ] P9-MEM-001 Add approved scoped memories and chat bootstrap
+- [x] P9-MEM-001 Add approved scoped memories and chat bootstrap
   - Depends on: P8-CTX-001
   - Done when: candidate, approval, rejection, supersession, retrieval, budgets, provenance, and bootstrap tests pass
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(memory): add approved scoped long-term memory"`
 
 ## Phase 10 - Persistent workflows
 

@@ -154,6 +154,15 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  packages/memory-engine:
+    dependencies:
+      '@codex-context-bridge/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@codex-context-bridge/database':
+        specifier: workspace:*
+        version: link:../database
+
   packages/project-detector:
     dependencies:
       '@codex-context-bridge/contracts':

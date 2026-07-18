@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 9 - Long-term memory.
+Phase 10 - Persistent workflows.
 
 ## Current objective
 
-Add approved-only, scoped long-term memory with deterministic retrieval and bootstrap budgets.
+Persist recoverable, idempotent ChatGPT-Codex workflow transitions and single-use approvals.
 
 ## Last completed checkpoint
 
-P8-CTX-001 - Versioned context-pack contract and safe deterministic builder with ranking, path containment, secret/binary blocking, hashes, deduplication, excerpts/diffs, budgets, and complete manifest. Resolve with `git log -1 --grep "feat(context-builder): build safe deterministic context packs"`.
+P9-MEM-001 - Versioned memory contract, migration v3, explicit candidate/approve/reject/delete/supersede lifecycle, approved-only deterministic retrieval, provenance, isolation, duplicate detection, persistence, and budgeted bootstrap. Resolve with `git log -1 --grep "feat(memory): add approved scoped long-term memory"`.
 
 ## Current verified capabilities
 
@@ -43,6 +43,12 @@ P8-CTX-001 - Versioned context-pack contract and safe deterministic builder with
 - Context file inspection reuses canonical allowlist, symlink, exclusion, size, and secret safety before hashing content.
 - Binary, secret, traversal, escaping-symlink, oversized, duplicate, deleted, and budget-omitted files receive explicit manifest status without unsafe attachment.
 - Large text files use line-safe excerpts or supplied diffs; full, excerpt, and token budgets are reported in the pack preview.
+- SQLite migration v3 adds memory project isolation, content hashes, supersession links, active duplicate protection, and retrieval indexes without rewriting prior migrations.
+- Memory candidates require explicit approval; candidate, rejected/deleted, and superseded records never enter retrieval or bootstrap output.
+- Retrieval isolates project/conversation/workflow scopes, merges only requested team and global records, and ranks deterministically by relevance, category, confidence, recency, and ID.
+- Memory sources remain attached to every returned record; legacy rows receive deterministic migration provenance.
+- Duplicate content is detected per scope/project across history, while supersession preserves the old record and points to the approved replacement.
+- New-chat bootstrap includes project identity, goal, architecture, status, blockers, objective, handoff protocol, and approved memories within an exact character budget.
 
 ## Current known failures
 
@@ -55,13 +61,13 @@ P8-CTX-001 - Versioned context-pack contract and safe deterministic builder with
 
 ## Next three actions
 
-1. Implement `P9-MEM-001` memory candidate, approval, rejection, and supersession persistence.
-2. Add approved-only deterministic retrieval with scope/project isolation and provenance.
-3. Build a budgeted new-chat bootstrap from approved memory and current project state.
+1. Implement transactional `P10-WF-001` workflow transition and event projection persistence.
+2. Add scoped, expiring, single-use approval capabilities bound to project, destination, and payload hash.
+3. Prove crash recovery and duplicate-send prevention across pre/post acknowledgement boundaries.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 76 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all 11 buildable workspace projects. GitHub Actions run `29639367655` passed for checkpoint `cd45345` with no failure artifact.
+`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 87 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all 12 buildable workspace projects. GitHub Actions run `29639720015` passed for checkpoint `ee64102`.
 
 ## Latest commit
 
@@ -73,4 +79,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 16:44 +07:00.
+2026-07-18 16:59 +07:00.
