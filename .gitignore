@@ -9,3 +9,4 @@ coverage/
 *.db-wal
 playwright-report/
 test-results/
+artifacts/

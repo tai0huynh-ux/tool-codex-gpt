@@ -10,6 +10,7 @@ import { ProjectRegistry } from '@codex-context-bridge/project-registry';
 import { WorkflowEngine } from '@codex-context-bridge/workflow-engine';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { registerDesktopIpc, type DesktopBridgeService } from './ipc';
+import { backupDatabaseBeforeUpgrade } from './database-backup';
 import { createProjectDesktopService, registerProjectIpc } from './project-ipc';
 import { createWorkflowDesktopService, registerWorkflowIpc } from './workflow-ipc';
 
@@ -49,7 +50,9 @@ void app.whenReady().then(() => {
   registerDesktopIpc(ipcMain, disconnectedService, {
     validateSender: (event) => trustedRendererIds.has(event.sender.id),
   });
-  projectDatabase = openDatabase(path.join(app.getPath('userData'), 'context-bridge.sqlite'));
+  const databasePath = path.join(app.getPath('userData'), 'context-bridge.sqlite');
+  backupDatabaseBeforeUpgrade(databasePath, app.getVersion());
+  projectDatabase = openDatabase(databasePath);
   const registry = new ProjectRegistry(projectDatabase);
   const workflows = new WorkflowEngine(projectDatabase);
   registerProjectIpc(

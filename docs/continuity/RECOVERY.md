@@ -60,13 +60,13 @@ Expected known-good baseline: formatting, lint, strict type-check, 130 or more V
 
 ## Exact next task
 
-Implement `P16-REL-001`: create reproducible Windows desktop packaging and extension artifacts, backup the SQLite database before upgrade, generate checksums and a redacted diagnostic export, and run a clean-profile install/launch/recovery smoke. Do not publish a GitHub Release or claim signing without explicit authorization and a real certificate.
+Publish the implemented `P16-REL-001` checkpoint, watch GitHub Actions to completion, then mark the roadmap/release checklist complete if CI remains green. Do not publish a GitHub Release or claim signing; the local manifest correctly reports `NotSigned`.
 
 ## Expected files to modify
 
-- desktop packaging configuration and scripts
-- extension artifact and checksum manifest
-- migration backup, diagnostic export, and clean-profile smoke tests
+- continuity finalization after P16 CI
+- release checklist and machine-readable state
+- no production code unless CI reveals a reproducible defect
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run

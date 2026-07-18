@@ -6,7 +6,7 @@ Phase 16 - Packaging and release readiness.
 
 ## Current objective
 
-Produce reproducible Windows desktop and extension artifacts with migration backup, checksums, redacted diagnostics, and clean-profile smoke evidence.
+Publish the verified Windows packaging checkpoint, wait for clean-checkout CI, then finalize the release-readiness record without creating a public release.
 
 ## Last completed checkpoint
 
@@ -74,6 +74,10 @@ P15-SEC-001 - Bounded strict workflow IPC identifiers, unknown-property rejectio
 - The recovery fixture proves a transport-loss effect remains `dispatching` after restart, is surfaced as `confirmation_required`, and is not inserted again.
 - Workflow IPC rejects oversized identifiers and unknown fields before service execution.
 - Renderer workflow responses expose approval scope and audit outcome only; approval token hashes and audit detail payloads are excluded and regression-tested.
+- Windows packaging produces an unsigned NSIS x64 installer, blockmap, extension ZIP, and SHA-256 release manifest under ignored `artifacts/`.
+- A versioned SQLite copy is created before an existing desktop database is opened for migration; the first recovery point is not overwritten.
+- Packaged smoke passed for unpacked launch and silent install/clean-profile launch/silent uninstall; the manifest explicitly reports `NotSigned`.
+- Diagnostic export contains platform, Git, phase, blocker, and verification identity only; it does not read environment variables or database/chat/file content.
 
 ## Current known failures
 
@@ -86,13 +90,13 @@ P15-SEC-001 - Bounded strict workflow IPC identifiers, unknown-property rejectio
 
 ## Next three actions
 
-1. Implement `P16-REL-001` reproducible Windows packaging and extension artifacts.
-2. Add migration backup, checksums, redacted diagnostic export, and clean-profile smoke.
-3. Keep public release and signing disabled unless explicitly authorized and credentials are available.
+1. Commit and push `P16-REL-001` packaging and release scripts.
+2. Watch the clean-checkout GitHub Actions release gate to completion.
+3. Finalize release readiness while keeping public release/signing disabled and `CODEX-SDK-001` explicit.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18 for P15: migration parity, 136 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. P14 GitHub Actions run `29642485845` passed in 1m47s.
+`pnpm.cmd run verify` passed on 2026-07-18 for P16 locally: migration parity, 138 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. `package:win`, unpacked smoke, silent install/clean-profile launch, and silent uninstall passed; P16 CI is pending publication.
 
 ## Latest commit
 
@@ -104,4 +108,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 18:30 +07:00.
+2026-07-18 18:45 +07:00.

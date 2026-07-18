@@ -6,6 +6,7 @@
   "main": "dist/main/main.js",
   "scripts": {
     "build": "tsup src/main.ts src/preload.ts --format esm --out-dir dist/main --clean && vite build",
+    "dist:win": "pnpm run build && electron-builder --win nsis --x64 --publish never",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "typecheck": "tsc --noEmit"
   },
@@ -16,7 +17,6 @@
     "@codex-context-bridge/project-registry": "workspace:*",
     "@codex-context-bridge/workflow-engine": "workspace:*",
     "@vitejs/plugin-react": "^5.0.0",
-    "electron": "^43.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "vite": "^8.0.0",
@@ -24,6 +24,40 @@
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
+    "@types/react-dom": "^19.0.0",
+    "electron": "^43.0.0",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.codexcontextbridge.desktop",
+    "productName": "Codex Context Bridge",
+    "executableName": "CodexContextBridge",
+    "artifactName": "Codex-Context-Bridge-${version}-${arch}-setup.${ext}",
+    "asar": true,
+    "npmRebuild": false,
+    "directories": {
+      "output": "../../artifacts/desktop"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

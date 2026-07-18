@@ -859,3 +859,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Implement `P16-REL-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 18:45 +07:00 - P16-REL-001 (publication pending)
+
+### Goal
+
+Create reproducible Windows desktop and extension artifacts with database recovery, redacted diagnostics, checksums, and clean-profile installation evidence.
+
+### Changes
+
+Added electron-builder NSIS x64 configuration, Windows packaging and packaged-smoke scripts, ignored artifact output, extension ZIP creation, SHA-256/signature manifest generation, redacted diagnostics export, and a versioned pre-open SQLite backup. Added backup tests and root release commands.
+
+### Files
+
+Desktop packaging configuration/dependency/lockfile; database backup module/tests and main-process integration; Windows package/smoke scripts; diagnostics exporter; Git ignore; release checklist and continuity records.
+
+### Decisions
+
+Use electron-builder 24.13.3 because version 26 violates the repository supply-chain policy through an exotic Git subdependency. Keep `npmRebuild` disabled because the older builder cannot execute pnpm 11's JavaScript entrypoint as a Windows executable; require packaged smoke as the acceptance check for the shipped native binary. Report signing honestly as `NotSigned` and do not publish a GitHub Release.
+
+### Verification
+
+Full `pnpm.cmd run verify` passed with 138 Vitest tests, two recoverable fixture E2E tests, two Chromium fixture E2E tests, and all builds. `pnpm.cmd run package:win` produced the NSIS installer, blockmap, extension ZIP, and SHA-256 manifest. Unpacked smoke passed. Silent installer exit was 0, clean-profile installed app remained running, and silent uninstall exit was 0.
+
+### Failures encountered
+
+electron-builder 26 was blocked by `blockExoticSubdeps`. electron-builder 24 initially attempted to execute pnpm's `.mjs` entrypoint as a Win32 binary during native rebuild. The first manifest script used a newer .NET `Path.GetRelativePath` API unavailable in Windows PowerShell. Full verify then caught a diagnostic script using the disallowed global `console`.
+
+### Root causes
+
+The current pnpm supply-chain policy intentionally rejects Git subdependencies; builder 24 predates pnpm 11's Windows launcher layout; Windows PowerShell runs an older .NET surface; and project ESLint does not expose browser/Node console globals by default.
+
+### Fixes
+
+Selected the policy-compatible builder, disabled its broken rebuild path while retaining real packaged smoke, computed relative paths by validated prefix removal, and wrote diagnostics output through `process.stdout`.
+
+### Commit
+
+Resolve with `git log -1 --grep "build(release): add reproducible Windows packaging"`.
+
+### Push
+
+Pending commit, push, remote hash verification, and clean-checkout GitHub Actions.
+
+### Next action
+
+Publish this checkpoint and finalize the release checklist after CI passes.
