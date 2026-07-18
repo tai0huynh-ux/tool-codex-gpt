@@ -16,7 +16,9 @@
     "lint": "eslint . --max-warnings=0",
     "migrations:check": "node scripts/sync-initial-migration.mjs --check",
     "migrations:generate": "node scripts/sync-initial-migration.mjs",
+    "native:restore-node": "node scripts/restore-node-native.mjs",
     "package:win": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-windows.ps1",
+    "prepare:internal-beta": "node scripts/prepare-internal-beta.mjs",
     "smoke:packaged:win": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-packaged-windows.ps1",
     "smoke:native-host:win": "node scripts/smoke-native-host.mjs artifacts/desktop/win-unpacked/resources/CodexContextBridgeNativeHost.exe",
     "smoke:installed-native-host:win": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-installed-native-host.ps1",
@@ -26,6 +28,7 @@
     "test": "vitest run",
     "test:workflow-e2e": "vitest run tests/integration/recoverable-workflow.test.ts",
     "test:e2e": "pnpm run test:workflow-e2e && playwright test",
+    "test:internal-beta-uat": "vitest run tests/integration/recoverable-workflow.test.ts packages/context-builder/src/index.test.ts packages/assisted-chatgpt/src/index.test.ts packages/response-router/src/index.test.ts packages/workflow-engine/src/index.test.ts && playwright test",
     "test:watch": "vitest",
     "test:codex-spike": "tsx tests/spikes/codex-sdk-spike.ts",
     "verify": "pnpm run migrations:check && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run test:e2e && pnpm run build"
