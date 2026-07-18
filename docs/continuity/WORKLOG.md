@@ -980,7 +980,7 @@ Extension strict type-check passed, both recoverable workflow E2E tests passed, 
 
 Publish the CI fix, wait for clean-checkout verification, then continue P6-IPC-003.
 
-## 2026-07-18 19:59 +07:00 - P6-IPC-003 (publication pending)
+## 2026-07-18 19:59 +07:00 - P6-IPC-003
 
 ### Goal
 
@@ -1020,11 +1020,11 @@ The host rejects missing/incorrect/expired capabilities, malformed frames, disco
 
 ### Commit
 
-Resolve with `git log -1 --grep "feat(transport): install authenticated native host relay"`.
+`19ccc32dc4fc2d7da8ab183dc7a963654bf97f96` - `feat(transport): install authenticated native host relay`.
 
 ### Push
 
-Pending commit, remote hash verification, and clean-checkout GitHub Actions.
+Pushed `main` to `origin`; `HEAD` and `origin/main` matched `19ccc32dc4fc2d7da8ab183dc7a963654bf97f96`. GitHub Actions Verify run `29645472474` passed clean-checkout Linux verification in 1m47s.
 
 ### Next action
 

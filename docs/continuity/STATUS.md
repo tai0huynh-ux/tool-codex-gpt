@@ -102,7 +102,7 @@ P6-IPC-003 - Package an authenticated desktop-to-native-host relay with exact-or
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed locally on 2026-07-18 for P6-IPC-003: migration parity, formatting, lint, strict type-check, 153 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. `package:win`, unpacked/package native smoke, and installed native-host smoke passed; the installed host relayed twice, all six per-user registry registrations matched, and uninstall removed registrations and payload.
+`pnpm.cmd run verify` passed locally on 2026-07-18 for P6-IPC-003: migration parity, formatting, lint, strict type-check, 153 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. `package:win`, unpacked/package native smoke, and installed native-host smoke passed; the installed host relayed twice, all six per-user registry registrations matched, and uninstall removed registrations and payload. GitHub Actions Verify run `29645472474` passed in 1m47s for commit `19ccc32`.
 
 ## Latest commit
 
