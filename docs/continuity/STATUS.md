@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 1 - CI and foundation stabilization.
+Phase 2 - Codex adapter lifecycle.
 
 ## Current objective
 
-Remove duplicated migration sources by making one SQL file canonical and enforcing generated runtime parity.
+Add a lossless typed Codex run lifecycle with ordered events and guarded terminal states.
 
 ## Last completed checkpoint
 
-P1-CI-001 - Credential-free cross-platform repository verification. Implementation commits: `3787b41` and `b091234`.
+P1-DATA-001 - Canonical SQL migration source with deterministic runtime generation and drift enforcement. Resolve the checkpoint commit with `git log -1 --grep "fix(database): prevent migration source drift"`.
 
 ## Current verified capabilities
 
@@ -22,6 +22,7 @@ P1-CI-001 - Credential-free cross-platform repository verification. Implementati
 - ChatGPT capture fixture passes in jsdom and Chromium.
 - Electron uses context isolation, sandboxing, and no renderer Node integration.
 - GitHub Actions runs frozen installation, Chromium fixture E2E, and the full verification gate on Linux with Node.js 24.
+- Database runtime SQL is generated from the distributable migration and direct package type-check/build commands reject stale output.
 
 ## Current known failures
 
@@ -34,13 +35,13 @@ P1-CI-001 - Credential-free cross-platform repository verification. Implementati
 
 ## Next three actions
 
-1. Make `packages/database/migrations/0001_initial.sql` the canonical initial migration source.
-2. Generate and verify the runtime TypeScript migration without silent drift.
-3. Add a lossless typed Codex run lifecycle contract.
+1. Reproduce lifecycle event loss and terminal-state races in the mock Codex adapter.
+2. Add a typed, ordered run lifecycle contract with regression coverage.
+3. Preserve cancellation, failure, replay, and terminal guards without claiming live SDK acceptance.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: 24 Vitest tests, 1 Chromium Playwright test, formatting, lint, strict type-check, and all builds. GitHub Actions run `29636579711` passed in 1m18s with no annotations.
+`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 26 Vitest tests, 1 Chromium Playwright test, formatting, lint, strict type-check, and all builds. GitHub Actions run `29636673930` also passed for the preceding continuity checkpoint.
 
 ## Latest commit
 
@@ -52,4 +53,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 14:57 +07:00.
+2026-07-18 15:02 +07:00.

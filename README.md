@@ -48,10 +48,14 @@ pnpm run typecheck
 pnpm run test
 pnpm run test:e2e
 pnpm run build
+pnpm migrations:check
+pnpm migrations:generate
 pnpm status -- --json
 ```
 
 On Windows PowerShell, invoke the same commands with `pnpm.cmd`.
+
+The initial SQLite migration in `packages/database/migrations/0001_initial.sql` is canonical. After editing it, regenerate the bundled runtime module before verification.
 
 ## Live integration
 

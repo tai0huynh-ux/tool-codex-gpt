@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture ext
 
 ## Current phase
 
-Phase 1 - CI and foundation stabilization.
+Phase 2 - Codex adapter lifecycle.
 
 ## Last known-good commit
 
@@ -60,14 +60,13 @@ Expected known-good baseline: formatting, lint, strict type-check, 16 or more Vi
 
 ## Exact next task
 
-Implement `P1-DATA-001`: make `packages/database/migrations/0001_initial.sql` the canonical initial migration source, generate the runtime TypeScript representation deterministically, and add a check that fails when generated runtime SQL drifts from the distributable SQL. Preserve the existing schema and migration version.
+Implement `P2-CODEX-001`: reproduce lifecycle event loss and invalid terminal transitions in the mock adapter, then define a typed ordered event contract covering start, progress, completion, failure, cancellation, replay, sequencing, and terminal guards. Keep the adapter explicitly mock-only and do not treat fixture results as live Codex evidence.
 
 ## Expected files to modify
 
-- `packages/database/migrations/0001_initial.sql`
-- `packages/database/src/migration.ts`
-- migration generation/check tooling and tests
-- root/package scripts if needed
+- `packages/codex-adapter/src/index.ts`
+- `packages/codex-adapter/src/index.test.ts`
+- shared contracts only if the lifecycle boundary requires them
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run
@@ -86,7 +85,7 @@ pnpm.cmd run build
 - PowerShell blocks `pnpm.ps1`; use `pnpm.cmd` at the interactive Windows shell only.
 - Electron and Playwright downloads need explicit pnpm build-script permission.
 - Live Codex tests are separate from CI and must never be represented by mock or fixture results.
-- SQLite migration SQL currently exists in both a `.sql` file and a TypeScript string.
+- Edit `packages/database/migrations/0001_initial.sql`, then run `pnpm.cmd migrations:generate`; generated migration drift fails verify, database type-check, and database build.
 
 ## Blockers and safe alternatives
 

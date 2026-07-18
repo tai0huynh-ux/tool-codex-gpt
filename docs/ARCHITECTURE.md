@@ -11,7 +11,7 @@ workflow loop, automatic sending, or a production ChatGPT/Codex adapter.
 - `apps/desktop`: minimal Electron + React + Vite shell with context isolation and sandboxing.
 - `apps/chatgpt-extension`: Manifest V3 capture spike restricted to user-opened `chatgpt.com` tabs.
 - `packages/contracts`: versioned handoff and project identity contracts.
-- `packages/database`: SQLite migration runner and append-only audit primitive.
+- `packages/database`: SQLite migration runner and append-only audit primitive; distributable SQL is the canonical migration source and the bundled TypeScript module is generated and parity-checked.
 - `packages/project-registry`: project CRUD over normalized relational tables.
 - `packages/project-detector`: fingerprint creation and evidence-based confidence scoring.
 - `packages/file-store`: allowlisted, content-addressed file ingestion.

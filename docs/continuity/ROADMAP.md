@@ -19,10 +19,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
   - Depends on: P1-TOOL-001
   - Done when: frozen install, format, lint, type-check, unit, Chromium fixture E2E, and build run with timeout and failure artifacts
   - Commits: `3787b41` workflow and `b091234` Node.js 24 action runtimes
-- [ ] P1-DATA-001 Establish a canonical migration source
+- [x] P1-DATA-001 Establish a canonical migration source
   - Depends on: P0-CONT-001
   - Done when: runtime migrations and distributable SQL cannot drift silently
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "fix(database): prevent migration source drift"`
 
 ## Phase 2 - Codex adapter lifecycle
 

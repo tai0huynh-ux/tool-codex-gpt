@@ -4,16 +4,17 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "Phase 1 - CI and foundation stabilization",
-  "currentTaskId": "P1-DATA-001",
+  "currentPhase": "Phase 2 - Codex adapter lifecycle",
+  "currentTaskId": "P2-CODEX-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P1-CI-001",
+    "id": "P1-DATA-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T07:57:24.473Z"
+    "completedAt": "2026-07-18T08:02:40.753Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
+    "pnpm.cmd migrations:check",
     "pnpm.cmd exec vitest run tests/continuity/state-schema.test.ts",
     "pnpm.cmd status -- --json",
     "skill-creator quick_validate.py for both project skills",
@@ -25,10 +26,10 @@
   ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P1-DATA-001 canonical migration source.",
     "Implement P2-CODEX-001 lossless typed run lifecycle.",
-    "Implement P4-EXT-001 virtualized conversation capture."
+    "Implement P4-EXT-001 virtualized conversation capture.",
+    "Prove P3-CODEX-001 live integration when CODEX-SDK-001 is safely resolved."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T07:57:24.473Z"
+  "updatedAt": "2026-07-18T08:02:40.753Z"
 }
