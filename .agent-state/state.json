@@ -8,9 +8,9 @@
   "currentTaskId": "P13-UI-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P12-HANDOFF-001",
+    "id": "P12-CI-002",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T10:52:16.000Z"
+    "completedAt": "2026-07-18T11:02:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -18,7 +18,8 @@
     "pnpm.cmd exec vitest run tests/continuity/state-schema.test.ts",
     "pnpm.cmd status -- --json",
     "skill-creator quick_validate.py for both project skills",
-    "GitHub Actions Verify run 29641246549 for preceding checkpoint 737ac81",
+    "GitHub Actions Verify run 29641649890 reproduced the clean-checkout source-resolution failure",
+    "Targeted response-router lint, type-check, and 6 tests after the source-alias fix",
     "Project renderer visual smoke at 1440x1000 and 390x844"
   ],
   "knownFailures": [
@@ -31,5 +32,5 @@
     "Prove P3-CODEX-001 live integration when CODEX-SDK-001 is safely resolved."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T10:52:16.000Z"
+  "updatedAt": "2026-07-18T11:02:00.000Z"
 }

@@ -17,6 +17,7 @@
     "baseUrl": ".",
     "paths": {
       "@codex-context-bridge/contracts": ["packages/contracts/src/index.ts"],
+      "@codex-context-bridge/codex-adapter": ["packages/codex-adapter/src/index.ts"],
       "@codex-context-bridge/database": ["packages/database/src/index.ts"],
       "@codex-context-bridge/project-registry": ["packages/project-registry/src/index.ts"],
       "@codex-context-bridge/project-detector": ["packages/project-detector/src/index.ts"],

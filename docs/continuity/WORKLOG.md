@@ -675,3 +675,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Implement `P13-UI-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 18:02 +07:00 - P12-CI-002
+
+### Goal
+
+Restore reproducible clean-checkout lint and test resolution for the published P12 response router before starting Phase 13.
+
+### Changes
+
+Added matching TypeScript and Vitest source aliases for `@codex-context-bridge/codex-adapter`, keeping source-level verification independent of locally generated package `dist` artifacts.
+
+### Files
+
+Root TypeScript and Vitest resolution configuration plus continuity status, matrix, worklog, and machine-readable state.
+
+### Decisions
+
+Fix package resolution at the workspace tooling boundary instead of weakening response-router lint/types or adding generated artifacts to CI. No production behavior, extension permission, or live-integration claim changes.
+
+### Verification
+
+Targeted response-router ESLint, package type-check, and six router tests passed. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict type-check, 130 Vitest tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects.
+
+### Failures encountered
+
+GitHub Actions run `29641649890` failed during lint on a clean Ubuntu checkout with unresolved/error-typed `MockCodexAdapter` and `CodexRun` usage in response-router tests.
+
+### Root causes
+
+The response router imported the workspace Codex adapter without matching aliases in `tsconfig.base.json` and `vitest.config.ts`. Local generated `dist` output masked the missing source resolution before publication.
+
+### Fixes
+
+Mapped the Codex adapter package directly to its source entry in both TypeScript and Vitest, then reproduced the failing package boundary and reran the full gate.
+
+### Commit
+
+Resolve with `git log -1 --grep "fix(ci): resolve codex adapter from source"`.
+
+### Push
+
+Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/main`; the hashes must match. Replacement GitHub Actions must pass before Phase 13 implementation starts.
+
+### Next action
+
+Publish this CI fix, watch its GitHub Actions run to completion, then implement `P13-UI-001` exactly as described in `RECOVERY.md`.

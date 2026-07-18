@@ -84,7 +84,7 @@ P12-HANDOFF-001 - Migration v5 response receipts, strict structured-response ide
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 130 Vitest tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. GitHub Actions run `29641246549` passed for published checkpoint `737ac81`; P12 CI is pending publication.
+`pnpm.cmd run verify` passed on 2026-07-18 after adding source aliases for `@codex-context-bridge/codex-adapter`: migration parity, 130 Vitest tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. P12 GitHub Actions run `29641649890` exposed the missing clean-checkout alias; replacement CI is pending publication of the fix.
 
 ## Latest commit
 
@@ -96,4 +96,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 17:52 +07:00.
+2026-07-18 18:02 +07:00.

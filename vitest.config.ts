@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@codex-context-bridge/contracts': path.join(root, 'packages/contracts/src/index.ts'),
+      '@codex-context-bridge/codex-adapter': path.join(root, 'packages/codex-adapter/src/index.ts'),
       '@codex-context-bridge/database': path.join(root, 'packages/database/src/index.ts'),
       '@codex-context-bridge/project-registry': path.join(
         root,
