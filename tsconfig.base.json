@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "useUnknownInCatchVariables": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@codex-context-bridge/contracts": ["packages/contracts/src/index.ts"],
+      "@codex-context-bridge/database": ["packages/database/src/index.ts"],
+      "@codex-context-bridge/project-registry": ["packages/project-registry/src/index.ts"],
+      "@codex-context-bridge/project-detector": ["packages/project-detector/src/index.ts"],
+      "@codex-context-bridge/file-store": ["packages/file-store/src/index.ts"],
+      "@codex-context-bridge/secret-scanner": ["packages/secret-scanner/src/index.ts"]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+# Architecture
+
+## Phase 1 boundaries
+
+Codex Context Bridge is a local-first TypeScript monorepo. The current milestone implements identity,
+validation, persistence, audit, file safety, and feasibility spikes. It does not implement the autonomous
+workflow loop, automatic sending, or a production ChatGPT/Codex adapter.
+
+## Components
+
+- `apps/desktop`: minimal Electron + React + Vite shell with context isolation and sandboxing.
+- `apps/chatgpt-extension`: Manifest V3 capture spike restricted to user-opened `chatgpt.com` tabs.
+- `packages/contracts`: versioned handoff and project identity contracts.
+- `packages/database`: SQLite migration runner and append-only audit primitive.
+- `packages/project-registry`: project CRUD over normalized relational tables.
+- `packages/project-detector`: fingerprint creation and evidence-based confidence scoring.
+- `packages/file-store`: allowlisted, content-addressed file ingestion.
+- `packages/secret-scanner`: deterministic pre-ingestion secret checks.
+- `packages/codex-adapter`: interface boundary plus an explicitly mock-only fallback for the blocked SDK spike.
+
+Later packages such as memory, context building, workflow orchestration, and production adapters are
+intentionally deferred. Their database boundaries exist so Phase 1 does not force unstructured query data.
+
+## Dependency direction
+
+Contracts and database are foundational. Registry depends on database. Detector depends on contracts.
+File store depends on secret scanning. Apps may consume packages later but no package depends on an app.
+
+## Project identity
+
+A fingerprint hashes normalized Git remote, canonical root, project name, repository marker, and optional
+`AGENTS.md` hash. Detection scores matching evidence. A score of at least `0.85` can auto-select, `0.60` to
+`0.84` requires confirmation, and lower scores are blocked from sending.

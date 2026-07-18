@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["chrome"]
+  },
+  "include": ["src", "fixture", "vite.config.ts"]
+}

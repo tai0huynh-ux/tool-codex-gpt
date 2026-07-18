@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Codex Context Bridge Capture Spike",
+  "version": "0.1.0",
+  "description": "User-initiated capture spike for rendered ChatGPT conversations.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["https://chatgpt.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

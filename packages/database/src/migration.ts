@@ -1,0 +1,22 @@
+export const initialMigration = `
+CREATE TABLE projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE project_aliases (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE, alias TEXT NOT NULL, UNIQUE(project_id, alias));
+CREATE TABLE repositories (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE, canonical_root TEXT NOT NULL UNIQUE, normalized_remote TEXT, project_name TEXT, repository_marker TEXT, agents_hash TEXT, fingerprint TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL);
+CREATE TABLE chat_sources (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE, provider TEXT NOT NULL, external_project_name TEXT, conversation_id TEXT, title TEXT, created_at TEXT NOT NULL);
+CREATE TABLE chat_snapshots (id TEXT PRIMARY KEY, chat_source_id TEXT NOT NULL REFERENCES chat_sources(id) ON DELETE CASCADE, content_hash TEXT NOT NULL, captured_at TEXT NOT NULL, UNIQUE(chat_source_id, content_hash));
+CREATE TABLE chat_messages (id TEXT PRIMARY KEY, snapshot_id TEXT NOT NULL REFERENCES chat_snapshots(id) ON DELETE CASCADE, ordinal INTEGER NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL, UNIQUE(snapshot_id, ordinal));
+CREATE TABLE attachment_records (id TEXT PRIMARY KEY, sha256 TEXT NOT NULL UNIQUE, size INTEGER NOT NULL, media_type TEXT, storage_path TEXT NOT NULL, original_name TEXT NOT NULL, inclusion_reason TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE memories (id TEXT PRIMARY KEY, scope TEXT NOT NULL, scope_id TEXT, category TEXT NOT NULL, content TEXT NOT NULL, confidence REAL NOT NULL CHECK(confidence >= 0 AND confidence <= 1), status TEXT NOT NULL CHECK(status IN ('candidate', 'approved', 'superseded', 'deleted')), created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE memory_sources (id TEXT PRIMARY KEY, memory_id TEXT NOT NULL REFERENCES memories(id) ON DELETE CASCADE, source_type TEXT NOT NULL, source_id TEXT NOT NULL);
+CREATE TABLE codex_threads (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE RESTRICT, repository_fingerprint TEXT NOT NULL, external_thread_id TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE handoffs (id TEXT PRIMARY KEY, parent_handoff_id TEXT REFERENCES handoffs(id), correlation_id TEXT NOT NULL, protocol_version TEXT NOT NULL, source TEXT NOT NULL, target TEXT NOT NULL, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE RESTRICT, destination_mode TEXT NOT NULL, objective TEXT NOT NULL, envelope_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX handoffs_correlation_idx ON handoffs(correlation_id);
+CREATE TABLE handoff_attachments (handoff_id TEXT NOT NULL REFERENCES handoffs(id) ON DELETE CASCADE, attachment_id TEXT NOT NULL REFERENCES attachment_records(id) ON DELETE RESTRICT, PRIMARY KEY(handoff_id, attachment_id));
+CREATE TABLE workflow_runs (id TEXT PRIMARY KEY, correlation_id TEXT NOT NULL UNIQUE, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE RESTRICT, state TEXT NOT NULL, idempotency_key TEXT NOT NULL UNIQUE, iteration_count INTEGER NOT NULL DEFAULT 0, failure_retries INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE workflow_events (id TEXT PRIMARY KEY, workflow_run_id TEXT NOT NULL REFERENCES workflow_runs(id) ON DELETE CASCADE, sequence INTEGER NOT NULL, from_state TEXT, to_state TEXT NOT NULL, event_type TEXT NOT NULL, occurred_at TEXT NOT NULL, UNIQUE(workflow_run_id, sequence));
+CREATE TABLE user_approvals (id TEXT PRIMARY KEY, workflow_run_id TEXT REFERENCES workflow_runs(id) ON DELETE CASCADE, action TEXT NOT NULL, approval_token_hash TEXT NOT NULL, approved_at TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT);
+CREATE TABLE audit_events (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, actor TEXT NOT NULL, project_id TEXT, correlation_id TEXT, resource_type TEXT, resource_id TEXT, outcome TEXT NOT NULL, details_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX audit_events_created_idx ON audit_events(created_at);
+CREATE INDEX audit_events_correlation_idx ON audit_events(correlation_id);
+CREATE TABLE settings (key TEXT PRIMARY KEY, value_json TEXT NOT NULL, updated_at TEXT NOT NULL);
+`;
