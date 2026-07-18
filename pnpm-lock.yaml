@@ -84,6 +84,15 @@ importers:
       '@codex-context-bridge/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@codex-context-bridge/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@codex-context-bridge/project-detector':
+        specifier: workspace:*
+        version: link:../../packages/project-detector
+      '@codex-context-bridge/project-registry':
+        specifier: workspace:*
+        version: link:../../packages/project-registry
       '@vitejs/plugin-react':
         specifier: ^5.0.0
         version: 5.2.0(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(tsx@4.23.1))

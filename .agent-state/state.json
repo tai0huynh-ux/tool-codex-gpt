@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "Phase 7 - Project mapping",
-  "currentTaskId": "P7-UI-001",
+  "currentPhase": "Phase 8 - Context packs",
+  "currentTaskId": "P8-CTX-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P7-DATA-001",
+    "id": "P7-UI-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T09:07:06.017Z"
+    "completedAt": "2026-07-18T09:31:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -18,16 +18,16 @@
     "pnpm.cmd exec vitest run tests/continuity/state-schema.test.ts",
     "pnpm.cmd status -- --json",
     "skill-creator quick_validate.py for both project skills",
-    "GitHub Actions Verify run 29638214032"
+    "GitHub Actions Verify run 29638734198",
+    "Project renderer visual smoke at 1440x1000 and 390x844"
   ],
   "knownFailures": [
-    "Native Messaging host registration and manifest permission activation are deferred; no live transport is claimed.",
-    "Project registration and ambiguity confirmation are not yet exposed through the desktop UI."
+    "Native Messaging host registration and manifest permission activation are deferred; no live transport is claimed."
   ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P7-UI-001 project registration and ambiguity confirmation UI.",
     "Implement P8-CTX-001 deterministic reviewed context packs.",
+    "Implement P9-MEM-001 approved scoped memories after context packs.",
     "Prove P3-CODEX-001 live integration when CODEX-SDK-001 is safely resolved."
   ],
   "workingTreeExpectedClean": true,

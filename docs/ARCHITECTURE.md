@@ -8,7 +8,7 @@ workflow loop, automatic sending, or a production ChatGPT/Codex adapter.
 
 ## Components
 
-- `apps/desktop`: minimal Electron + React + Vite shell with context isolation and sandboxing.
+- `apps/desktop`: Electron + React + Vite project workspace with context isolation, sandboxing, and typed preload boundaries.
 - `apps/chatgpt-extension`: Manifest V3 capture spike restricted to user-opened `chatgpt.com` tabs.
 - `packages/contracts`: versioned handoff and project identity contracts.
 - `packages/database`: SQLite migration runner and append-only audit primitive; distributable SQL is the canonical migration source and the bundled TypeScript module is generated and parity-checked.
@@ -42,3 +42,5 @@ A fingerprint hashes normalized Git remote, canonical root, project name, reposi
 `0.84` requires confirmation, and lower scores are blocked from sending.
 
 Branch is operational metadata, not repository identity. Distinct worktree roots remain distinct repository registrations while normalized remote and other evidence can associate them with the same project. Equal-confidence candidates return an explicit ambiguity and never select the first database row implicitly. Confirmations retain evidence and supersede older active mappings without deleting history.
+
+The desktop main process owns the persistent SQLite connection and recomputes repository detection evidence. The renderer can list, create, alias, archive, preview, and explicitly confirm mappings only through validated IPC; it cannot supply trusted confidence or evidence and never receives database or filesystem access.

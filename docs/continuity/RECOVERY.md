@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture ext
 
 ## Current phase
 
-Phase 7 - Project mapping. Phase 3 live Codex integration remains independently blocked.
+Phase 8 - Context packs. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -56,18 +56,18 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 63 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
+Expected known-good baseline: formatting, lint, strict type-check, 69 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
 
 ## Exact next task
 
-Implement `P7-UI-001`: add typed project-registry IPC and a desktop project UI for multiple repositories, aliases, ambiguity evidence/confirmation, archive state, and persisted reload.
+Implement `P8-CTX-001`: define deterministic context-pack contracts and build secret-safe file selection, hashes, diff/test summaries, budgets, and a reviewed preview without sending data.
 
 ## Expected files to modify
 
-- desktop main/preload project IPC and tests
-- desktop database lifecycle/configuration
-- desktop renderer project list, detail, registration, evidence, and confirmation UI
-- renderer/component and Electron smoke fixtures
+- context-pack contracts and JSON Schema
+- context builder package and deterministic tests
+- file-store and secret-scanner integration where needed
+- reviewed desktop preview boundary after the domain builder is verified
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run
@@ -88,6 +88,7 @@ pnpm.cmd run build
 - Live Codex tests are separate from CI and must never be represented by mock or fixture results.
 - Native Messaging protocol fixtures are not live registration evidence; the manifest permission and host installer remain deferred to the packaging/security gate.
 - Add database changes as ordered `NNNN_name.sql` files, then run `pnpm.cmd migrations:generate`; never rewrite an accepted migration to simulate an upgrade.
+- Renderer code must not read repositories directly; context collection and secret decisions belong in validated main/domain boundaries.
 
 ## Blockers and safe alternatives
 

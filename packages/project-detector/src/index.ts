@@ -56,31 +56,40 @@ const weights: Record<ProjectEvidence['type'], number> = {
   'agents-hash': 0.05,
 };
 
+export function scoreProjectCandidate(
+  observed: RepositoryFingerprintInput,
+  candidate: RepositoryFingerprintInput,
+): { confidence: number; evidence: ProjectEvidence[] } {
+  const normalizedObserved = createRepositoryFingerprint(observed);
+  const normalizedCandidate = createRepositoryFingerprint(candidate);
+  const evidence: ProjectEvidence[] = [];
+  const compare = (type: ProjectEvidence['type'], left?: string, right?: string): void => {
+    if (left && right && left === right) evidence.push({ type, value: left, score: weights[type] });
+  };
+  compare('git-remote', normalizedObserved.gitRemote, normalizedCandidate.gitRemote);
+  compare('repo-root', normalizedObserved.repoRoot, normalizedCandidate.repoRoot);
+  compare('project-name', normalizedObserved.projectName, normalizedCandidate.projectName);
+  compare(
+    'repository-marker',
+    normalizedObserved.repositoryMarker,
+    normalizedCandidate.repositoryMarker,
+  );
+  compare('agents-hash', normalizedObserved.agentsHash, normalizedCandidate.agentsHash);
+  return {
+    confidence: Number(evidence.reduce((total, item) => total + item.score, 0).toFixed(2)),
+    evidence,
+  };
+}
+
 export function detectProject(
   observed: RepositoryFingerprintInput,
   candidates: { projectId: string; fingerprint: RepositoryFingerprintInput }[],
 ): ProjectDetectionResult {
-  const normalizedObserved = createRepositoryFingerprint(observed);
   let best: { projectId: string; confidence: number; evidence: ProjectEvidence[] } | undefined;
   let ambiguousProjectIds: string[] = [];
 
   for (const candidate of candidates) {
-    const normalizedCandidate = createRepositoryFingerprint(candidate.fingerprint);
-    const evidence: ProjectEvidence[] = [];
-    const compare = (type: ProjectEvidence['type'], left?: string, right?: string): void => {
-      if (left && right && left === right)
-        evidence.push({ type, value: left, score: weights[type] });
-    };
-    compare('git-remote', normalizedObserved.gitRemote, normalizedCandidate.gitRemote);
-    compare('repo-root', normalizedObserved.repoRoot, normalizedCandidate.repoRoot);
-    compare('project-name', normalizedObserved.projectName, normalizedCandidate.projectName);
-    compare(
-      'repository-marker',
-      normalizedObserved.repositoryMarker,
-      normalizedCandidate.repositoryMarker,
-    );
-    compare('agents-hash', normalizedObserved.agentsHash, normalizedCandidate.agentsHash);
-    const confidence = Number(evidence.reduce((total, item) => total + item.score, 0).toFixed(2));
+    const { confidence, evidence } = scoreProjectCandidate(observed, candidate.fingerprint);
     if (!best || confidence > best.confidence) {
       best = { projectId: candidate.projectId, confidence, evidence };
       ambiguousProjectIds = [candidate.projectId];

@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 7 - Project mapping.
+Phase 8 - Context packs.
 
 ## Current objective
 
-Build the project registration and ambiguity-confirmation UI on the verified mapping persistence layer.
+Build deterministic, reviewed context packs with secret-safe file selection, evidence, hashes, and budgets.
 
 ## Last completed checkpoint
 
-P7-DATA-001 - Versioned mapping migration, non-destructive project/repository registry, worktree metadata, aliases, and confirmation history. Resolve with `git log -1 --grep "feat(projects): add mapping persistence"`.
+P7-UI-001 / P7-PROJ-001 - Persistent typed project IPC and Vietnamese-first desktop registration, evidence, ambiguity confirmation, alias, archive, and reload workflow. Resolve with `git log -1 --grep "feat(projects): add registration and mapping UI"`.
 
 ## Current verified capabilities
 
@@ -34,12 +34,15 @@ P7-DATA-001 - Versioned mapping migration, non-destructive project/repository re
 - Projects and repositories support archive/restore or archive-only lifecycle, aliases, worktree/branch metadata, fingerprint refresh, ChatGPT sources, and Codex thread registration.
 - Mapping confirmations preserve scored evidence, supersede prior active mappings atomically, and retain history.
 - Equal-confidence project candidates return explicit ambiguity instead of silently selecting the first match.
+- Desktop project data persists in the Electron user-data SQLite database and remains main-process-only.
+- The typed preload exposes project list/create/archive/alias/root-picker/preview/confirm operations without raw IPC.
+- Repository confidence and evidence are recomputed in the main process; renderer payloads cannot assert trusted evidence.
+- The responsive project workspace supports registration, evidence preview, explicit ambiguous-project selection, confirmation, aliases, archive, and persisted reload.
 
 ## Current known failures
 
 - Live Codex SDK spike exits before `thread.started` because the configured external model catalog is incompatible with SDK `0.144.5`.
 - Native Messaging host registration and manifest permission activation are intentionally deferred to the packaging/security gate; no live transport is claimed yet.
-- Project registration and ambiguity confirmation are not yet exposed through the desktop UI.
 
 ## Active blockers
 
@@ -47,13 +50,13 @@ P7-DATA-001 - Versioned mapping migration, non-destructive project/repository re
 
 ## Next three actions
 
-1. Add typed project-registry IPC backed by the local SQLite database.
-2. Build project list/detail and repository registration forms with clear ambiguity evidence.
-3. Add renderer tests and an Electron project-flow smoke fixture.
+1. Implement `P8-CTX-001` deterministic context selection and pack contracts.
+2. Add secret-safe file collection, hashing, budgets, and diff/test result summaries.
+3. Expose a reviewed context-pack preview through a narrow desktop boundary.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 63 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all builds. GitHub Actions run `29638214032` passed for checkpoint `fa5d4e9` with no annotations.
+`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 69 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all builds. Desktop and mobile renderer screenshots were also inspected locally with a mocked preload boundary.
 
 ## Latest commit
 
@@ -65,4 +68,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 16:07 +07:00.
+2026-07-18 16:31 +07:00.

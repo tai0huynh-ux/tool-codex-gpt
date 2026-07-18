@@ -399,3 +399,49 @@ Verify HEAD and `origin/main` equality after publication.
 ### Next action
 
 Implement `P7-UI-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 16:31 +07:00 - P7-UI-001 / P7-PROJ-001
+
+### Goal
+
+Expose the verified project-mapping persistence through a safe, usable desktop workflow without moving trust or database access into the renderer.
+
+### Changes
+
+Added validated project IPC for list, create, archive, aliases, directory selection, repository preview, and explicit confirmation. Opened the persistent SQLite database in Electron main, recomputed evidence in the main process, recorded payload-free audit outcomes, and exposed narrow preload methods. Replaced the foundation renderer with a responsive Vietnamese-first project workspace covering project detail, repository metadata, confidence evidence, ambiguous destination selection, confirmation, aliases, and non-destructive archive.
+
+### Files
+
+Desktop main/preload/project IPC and tests; renderer component, typing, tests, styling, and HTML; project detector scoring export; desktop package metadata and lockfile; architecture and continuity records.
+
+### Decisions
+
+Never accept renderer-supplied confidence or evidence. Require literal confirmation at the validated IPC boundary, keep SQLite and directory dialogs in Electron main, omit undefined optional properties under strict TypeScript, and preserve the existing cream/forest/rust visual language with one dominant repository-analysis action.
+
+### Verification
+
+Targeted IPC, renderer, and detector tests passed 11/11, including file-backed SQLite reopen. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict type-check, 69 Vitest tests, one Chromium fixture E2E, and all builds. Chromium screenshots at 1440x1000 and 390x844 were inspected for desktop/mobile layout.
+
+### Failures encountered
+
+Initial IPC objects explicitly carried optional `undefined` values under `exactOptionalPropertyTypes`; strict lint also rejected unsafe test matchers, redundant conditions, deprecated form event types, and numeric template interpolation.
+
+### Root causes
+
+Zod inference permits optional fields to be present with `undefined`, while the project fingerprint contract requires exact omission. Early tests used broad asymmetric matchers that weakened static analysis, and renderer event/types had not yet been aligned with the repository's strict ESLint profile.
+
+### Fixes
+
+Added exact optional normalization helpers, kept runtime schemas authoritative, replaced unsafe matchers with typed assertions, used current React event types, and added focused regression coverage for ambiguity confirmation and persistent reload.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(projects): add registration and mapping UI"`.
+
+### Push
+
+Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/main`; the hashes must match.
+
+### Next action
+
+Implement `P8-CTX-001` exactly as described in `RECOVERY.md`.

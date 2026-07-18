@@ -65,14 +65,14 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
   - Depends on: P6-IPC-001
   - Done when: v1 upgrade, archive, worktrees, aliases, evidence history, ambiguity, ChatGPT source, and Codex thread tests pass
   - Commit: resolve with `git log -1 --grep "feat(projects): add mapping persistence"`
-- [ ] P7-UI-001 Add project registration and ambiguity confirmation UI
+- [x] P7-UI-001 Add project registration and ambiguity confirmation UI
   - Depends on: P7-DATA-001
   - Done when: typed IPC and renderer flows cover project/repository registration, evidence, confirmation, archive, and persisted reload
-  - Commit: pending
-- [ ] P7-PROJ-001 Add repository registration and mapping UI
+  - Commit: resolve with `git log -1 --grep "feat(projects): add registration and mapping UI"`
+- [x] P7-PROJ-001 Add repository registration and mapping UI
   - Depends on: P7-DATA-001, P7-UI-001
   - Done when: multiple repositories, ambiguity confirmation, worktrees, aliases, and persisted mappings work end to end
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(projects): add registration and mapping UI"`
 
 ## Phase 8 - Context packs
 
