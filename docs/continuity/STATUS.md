@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 2 - Codex adapter lifecycle.
+Phase 4 - Conversation capture.
 
 ## Current objective
 
-Add a lossless typed Codex run lifecycle with ordered events and guarded terminal states.
+Preserve complete rendered conversations across virtualized scrolling, streaming updates, deduplication, and cancellation.
 
 ## Last completed checkpoint
 
-P1-DATA-001 - Canonical SQL migration source with deterministic runtime generation and drift enforcement. Resolve the checkpoint commit with `git log -1 --grep "fix(database): prevent migration source drift"`.
+P2-CODEX-001 - Lossless typed mock run lifecycle with replay, sequencing, failure/cancellation coverage, and terminal guards. Resolve the checkpoint commit with `git log -1 --grep "fix(codex): preserve ordered run lifecycle"`.
 
 ## Current verified capabilities
 
@@ -23,11 +23,12 @@ P1-DATA-001 - Canonical SQL migration source with deterministic runtime generati
 - Electron uses context isolation, sandboxing, and no renderer Node integration.
 - GitHub Actions runs frozen installation, Chromium fixture E2E, and the full verification gate on Linux with Node.js 24.
 - Database runtime SQL is generated from the distributable migration and direct package type-check/build commands reject stale output.
+- Mock Codex runs expose replayable ordered start, progress, completion, failure, and cancellation events without allowing terminal-state overwrite.
 
 ## Current known failures
 
 - Live Codex SDK spike exits before `thread.started` because the configured external model catalog is incompatible with SDK `0.144.5`.
-- Mock Codex adapter lifecycle reliability and virtualized chat capture are not yet proven.
+- Virtualized chat capture is not yet proven.
 
 ## Active blockers
 
@@ -35,13 +36,13 @@ P1-DATA-001 - Canonical SQL migration source with deterministic runtime generati
 
 ## Next three actions
 
-1. Reproduce lifecycle event loss and terminal-state races in the mock Codex adapter.
-2. Add a typed, ordered run lifecycle contract with regression coverage.
-3. Preserve cancellation, failure, replay, and terminal guards without claiming live SDK acceptance.
+1. Reproduce message loss in a virtualized conversation fixture.
+2. Accumulate, deduplicate, and order messages across scroll passes and streaming updates.
+3. Cover abort behavior and selector-health failures without broadening extension permissions.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 26 Vitest tests, 1 Chromium Playwright test, formatting, lint, strict type-check, and all builds. GitHub Actions run `29636673930` also passed for the preceding continuity checkpoint.
+`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 31 Vitest tests, 1 Chromium Playwright test, formatting, lint, strict type-check, and all builds. GitHub Actions run `29636851097` passed for database checkpoint `0c9776e`.
 
 ## Latest commit
 
@@ -53,4 +54,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 15:02 +07:00.
+2026-07-18 15:08 +07:00.

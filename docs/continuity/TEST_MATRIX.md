@@ -5,7 +5,7 @@
 | Formatting        | automated                    | `pnpm.cmd run format:check`     | local Windows                 | pass                    | `87bd00f` baseline |
 | Lint              | automated                    | `pnpm.cmd run lint`             | local Windows                 | pass                    | `87bd00f` baseline |
 | TypeScript        | automated                    | `pnpm.cmd run typecheck`        | local Windows                 | pass                    | `87bd00f` baseline |
-| Domain packages   | unit                         | `pnpm.cmd run test`             | local Windows                 | 26 pass                 | checkpoint         |
+| Domain packages   | unit                         | `pnpm.cmd run test`             | local Windows                 | 31 pass                 | checkpoint         |
 | Extension capture | fixture E2E                  | `pnpm.cmd run test:e2e`         | Chromium                      | 1 pass                  | `87bd00f` baseline |
 | Workspace build   | automated                    | `pnpm.cmd run build`            | local Windows                 | pass                    | `87bd00f` baseline |
 | State recovery    | unit                         | `pnpm.cmd run test`             | local/CI                      | 3 continuity tests pass | checkpoint         |
@@ -13,6 +13,7 @@
 | Portable scripts  | unit                         | `pnpm.cmd run test`             | local/CI                      | 2 pass                  | checkpoint         |
 | GitHub Actions    | full verification            | workflow `Verify`               | Ubuntu, Node.js 24            | pass, no annotations    | `b091234`          |
 | Migration parity  | generation and runtime       | `pnpm.cmd migrations:check`     | local/CI/package entry points | 2 regression tests pass | checkpoint         |
+| Codex lifecycle   | mock contract                | `pnpm.cmd run test`             | local/CI                      | 6 lifecycle tests pass  | checkpoint         |
 | Codex SDK         | live authenticated read-only | `pnpm.cmd run test:codex-spike` | local Codex config            | blocked                 | `CODEX-SDK-001`    |
 | ChatGPT selectors | live manual                  | documented manual smoke         | user-opened authenticated tab | not run                 | not implemented    |
 

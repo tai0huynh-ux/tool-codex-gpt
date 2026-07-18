@@ -16,7 +16,7 @@ workflow loop, automatic sending, or a production ChatGPT/Codex adapter.
 - `packages/project-detector`: fingerprint creation and evidence-based confidence scoring.
 - `packages/file-store`: allowlisted, content-addressed file ingestion.
 - `packages/secret-scanner`: deterministic pre-ingestion secret checks.
-- `packages/codex-adapter`: interface boundary plus an explicitly mock-only fallback for the blocked SDK spike.
+- `packages/codex-adapter`: typed ordered run lifecycle boundary plus an explicitly mock-only fallback for the blocked SDK spike; replay and terminal guards are contract-tested.
 
 Later packages such as memory, context building, workflow orchestration, and production adapters are
 intentionally deferred. Their database boundaries exist so Phase 1 does not force unstructured query data.

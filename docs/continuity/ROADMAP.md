@@ -26,10 +26,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 2 - Codex adapter lifecycle
 
-- [ ] P2-CODEX-001 Add a lossless typed run lifecycle
+- [x] P2-CODEX-001 Add a lossless typed run lifecycle
   - Depends on: P1-CI-001
   - Done when: start, progress, completion, failure, cancellation, replay, sequencing, and terminal guards pass contract tests
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "fix(codex): preserve ordered run lifecycle"`
 
 ## Phase 3 - Production Codex integration
 

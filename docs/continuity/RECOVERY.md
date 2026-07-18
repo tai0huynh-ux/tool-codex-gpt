@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture ext
 
 ## Current phase
 
-Phase 2 - Codex adapter lifecycle.
+Phase 4 - Conversation capture. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -60,13 +60,14 @@ Expected known-good baseline: formatting, lint, strict type-check, 16 or more Vi
 
 ## Exact next task
 
-Implement `P2-CODEX-001`: reproduce lifecycle event loss and invalid terminal transitions in the mock adapter, then define a typed ordered event contract covering start, progress, completion, failure, cancellation, replay, sequencing, and terminal guards. Keep the adapter explicitly mock-only and do not treat fixture results as live Codex evidence.
+Implement `P4-EXT-001`: reproduce virtualized conversation loss with a fixture that removes off-screen messages, then accumulate rendered messages across scroll passes with stable identity, deduplication, ordering, streaming updates, abort handling, and selector-health evidence. Do not read cookies, tokens, history, private APIs, or broaden extension permissions.
 
 ## Expected files to modify
 
-- `packages/codex-adapter/src/index.ts`
-- `packages/codex-adapter/src/index.test.ts`
-- shared contracts only if the lifecycle boundary requires them
+- `apps/chatgpt-extension/src/capture.ts`
+- `apps/chatgpt-extension/src/capture.test.ts`
+- `apps/chatgpt-extension/fixture/*`
+- `tests/e2e/extension-fixture.spec.ts`
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run

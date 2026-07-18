@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "Phase 2 - Codex adapter lifecycle",
-  "currentTaskId": "P2-CODEX-001",
+  "currentPhase": "Phase 4 - Conversation capture",
+  "currentTaskId": "P4-EXT-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P1-DATA-001",
+    "id": "P2-CODEX-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T08:02:40.753Z"
+    "completedAt": "2026-07-18T08:08:56.463Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -20,16 +20,13 @@
     "skill-creator quick_validate.py for both project skills",
     "GitHub Actions Verify run 29636579711"
   ],
-  "knownFailures": [
-    "Mock Codex adapter lifecycle reliability is not yet proven.",
-    "Virtualized conversation capture is not yet proven."
-  ],
+  "knownFailures": ["Virtualized conversation capture is not yet proven."],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P2-CODEX-001 lossless typed run lifecycle.",
     "Implement P4-EXT-001 virtualized conversation capture.",
+    "Implement P5-EXT-001 controlled composer insertion and bounded response parsing.",
     "Prove P3-CODEX-001 live integration when CODEX-SDK-001 is safely resolved."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T08:02:40.753Z"
+  "updatedAt": "2026-07-18T08:08:56.463Z"
 }

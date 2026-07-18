@@ -185,3 +185,49 @@ Verify HEAD and `origin/main` equality after publication.
 ### Next action
 
 Implement `P2-CODEX-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 15:08 +07:00 - P2-CODEX-001
+
+### Goal
+
+Make the mock Codex lifecycle lossless and explicit before any production adapter depends on it.
+
+### Changes
+
+Added typed start, progress, completion, failure, and cancellation events with monotonic sequence numbers and timestamps; added event journaling and replay for late subscribers; returned running runs before background completion; added structured run lookup, cancellation idempotency, terminal guards, immutable recorded events, and subscriber failure isolation.
+
+### Files
+
+`packages/codex-adapter/src/index.ts`, `packages/codex-adapter/src/index.test.ts`, architecture, and continuity records.
+
+### Decisions
+
+Keep this adapter explicitly mock-only. Use structured lifecycle state rather than final-response text, preserve late-subscriber evidence through replay, and reject cancellation after completion or failure.
+
+### Verification
+
+Six targeted lifecycle tests cover identity, ordered replay, cancellation races, structured failure, completed-run terminal guards, and broken subscriber isolation. Full `pnpm.cmd run verify` passed with 31 Vitest tests, one Chromium Playwright test, migration parity, formatting, lint, strict type-check, and all builds.
+
+### Failures encountered
+
+Strict type-check rejected an explicit `error: undefined` copy, and full lint rejected two verbose null/status guards.
+
+### Root causes
+
+The repository enables `exactOptionalPropertyTypes` and the optional-chain preference rule; the initial compatible implementation did not yet follow those stricter local contracts.
+
+### Fixes
+
+Only copy the optional error field when present and express missing-or-not-running guards with optional chaining.
+
+### Commit
+
+Resolve with `git log -1 --grep "fix(codex): preserve ordered run lifecycle"`.
+
+### Push
+
+Verify HEAD and `origin/main` equality after publication.
+
+### Next action
+
+Implement `P4-EXT-001` exactly as described in `RECOVERY.md` while `CODEX-SDK-001` keeps Phase 3 live acceptance blocked.
