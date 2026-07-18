@@ -28,13 +28,18 @@ metadata, and dependencies are excluded by default.
 
 Every handoff uses protocol `1.0` and is validated at input and output. Routing must bind project ID,
 repository fingerprint, destination ID, correlation ID, and idempotency key. Confidence below `0.60` blocks
-sending. Duplicate/iteration controls belong to the deferred persistent workflow engine.
+sending. The persistent workflow engine enforces bounded iterations/retries, single-use hashed approvals,
+durable response receipts, and idempotent effect keys before either destination can be dispatched.
 
 ## Local transport and Electron IPC
 
 ADR-0001 selects Native Messaging without activating new extension permissions in the current manifest. The native boundary uses an exact extension origin plus an ephemeral capability, versioned operation schemas, request IDs, nonces, short expiry, replay protection, a 256 KiB application limit, rate limiting, timeout, reconnect, and redacted audit events. Capabilities and payload content must never be logged.
 
 Electron keeps context isolation and sandboxing enabled. Preload exposes one typed method per allowlisted IPC channel and validates responses before returning them. The renderer never receives raw `ipcRenderer`, filesystem, shell, child-process, database, or native-port access. Main-process handlers validate the exact renderer identity, request schema, timeout, and transport failure code.
+
+Workflow IPC additionally caps identifiers and diagnostic fields, rejects unknown properties, returns only
+approval scope/expiry metadata, and projects audit type/outcome/time without `details_json`. Approval token
+hashes, capability tokens, file content, and audit detail payloads remain main-process-only.
 
 ## Threat model highlights
 
@@ -46,3 +51,11 @@ Electron keeps context isolation and sandboxing enabled. Preload exposes one typ
 - Local peer spoofing or replay: mitigated by exact native-host origin, capability comparison, expiry, nonce/request caches, rate limits, and bounded framing.
 - Renderer compromise: constrained by context isolation, sandboxing, exact sender validation, and narrow preload methods.
 - Crash inconsistency: mitigated by transactional workflow events/projections and a prepared/dispatching/acknowledged effect journal in SQLite.
+
+## Verification coverage
+
+- File tests cover traversal, escaping symlinks, binary input, secrets, exclusions, size budgets, and deterministic deduplication.
+- Transport tests cover origin/capability rejection, expiry, replay, oversized framing, rate limits, timeouts, reconnect, and correlation.
+- Workflow tests cover approval scope/hash/expiry/consumption, iteration/retry limits, fault rollback, restart recovery, duplicate effects, and ambiguous dispatch.
+- Response tests cover malformed schema, wrong handoff/correlation/project, wrong repository/thread/worktree, prompt mutation, duplicate receipts, and mock lifecycle failure/cancellation.
+- Electron tests cover exact sender identity, strict schemas, bounded workflow identifiers, unknown properties, timeout mapping, audit redaction, and absence of approval or audit secrets from renderer responses.

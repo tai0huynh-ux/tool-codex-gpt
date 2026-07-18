@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 15 - Security hardening.
+Phase 16 - Packaging and release readiness.
 
 ## Current objective
 
-Harden trust boundaries using the now-complete recoverable fixture loop as the regression baseline.
+Produce reproducible Windows desktop and extension artifacts with migration backup, checksums, redacted diagnostics, and clean-profile smoke evidence.
 
 ## Last completed checkpoint
 
-P14-E2E-001 - Dedicated recoverable fixture E2E covering reviewed ChatGPT composer transfer, manual rendered-message acknowledgement, structured response routing, reviewed mock Codex dispatch, restart persistence, duplicate blocking, and ambiguous dispatch recovery. Resolve with `git log -1 --grep "test(e2e): cover recoverable handoff loop"`.
+P15-SEC-001 - Bounded strict workflow IPC identifiers, unknown-property rejection, approval/audit redaction tests, and consolidated threat-model verification across file, transport, workflow, response-routing, extension, and Electron boundaries. Resolve with `git log -1 --grep "security: harden workflow IPC boundary"`.
 
 ## Current verified capabilities
 
@@ -72,6 +72,8 @@ P14-E2E-001 - Dedicated recoverable fixture E2E covering reviewed ChatGPT compos
 - `test:workflow-e2e` composes the real SQLite, project registry, workflow engine, assisted ChatGPT service, response router, and mock Codex adapter across a close/reopen boundary.
 - The golden fixture proves both sends are acknowledged once, the response receipt and thread mapping persist, and repeated ChatGPT or Codex dispatch attempts are rejected.
 - The recovery fixture proves a transport-loss effect remains `dispatching` after restart, is surfaced as `confirmation_required`, and is not inserted again.
+- Workflow IPC rejects oversized identifiers and unknown fields before service execution.
+- Renderer workflow responses expose approval scope and audit outcome only; approval token hashes and audit detail payloads are excluded and regression-tested.
 
 ## Current known failures
 
@@ -84,13 +86,13 @@ P14-E2E-001 - Dedicated recoverable fixture E2E covering reviewed ChatGPT compos
 
 ## Next three actions
 
-1. Implement `P15-SEC-001` adversarial trust-boundary tests and mitigations.
-2. Review renderer IPC, path handling, secret/log redaction, replay, capability expiry, and oversized/malformed payload behavior.
-3. Keep live Codex and authenticated ChatGPT smoke separate from fixture evidence.
+1. Implement `P16-REL-001` reproducible Windows packaging and extension artifacts.
+2. Add migration backup, checksums, redacted diagnostic export, and clean-profile smoke.
+3. Keep public release and signing disabled unless explicitly authorized and credentials are available.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18 for P14: migration parity, 135 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. P13 GitHub Actions run `29642191174` passed in 1m49s.
+`pnpm.cmd run verify` passed on 2026-07-18 for P15: migration parity, 136 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. P14 GitHub Actions run `29642485845` passed in 1m47s.
 
 ## Latest commit
 
@@ -102,4 +104,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 18:22 +07:00.
+2026-07-18 18:30 +07:00.

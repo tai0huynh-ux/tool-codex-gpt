@@ -813,3 +813,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Implement `P15-SEC-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 18:30 +07:00 - P15-SEC-001
+
+### Goal
+
+Close the security-hardening phase by testing and bounding the newest Electron workflow IPC boundary and consolidating the existing adversarial evidence across all trust boundaries.
+
+### Changes
+
+Added maximum lengths for workflow IPC identifiers, destinations, event types, and outcomes; strict schemas already reject unknown properties. Added tests for oversized IDs, injected fields, and renderer response redaction. Seeded real approval and audit rows to prove approval token hashes and audit detail payloads never cross IPC. Updated the security model with implemented duplicate/iteration controls and a verification-coverage inventory.
+
+### Files
+
+Workflow IPC schemas/tests; security policy; roadmap, status, recovery, matrix, worklog, and machine-readable state.
+
+### Decisions
+
+Harden the demonstrated P13 boundary without duplicating already-green file, transport, workflow, response, extension, and routing tests. Preserve useful approval/audit summaries while keeping secrets, content, capability values, and raw detail JSON main-process-only.
+
+### Verification
+
+Targeted workflow IPC plus recoverable fixture tests passed 5/5. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict type-check, 136 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects.
+
+### Failures encountered
+
+Security review found unbounded non-empty workflow IPC identifiers. Existing strict schemas already rejected extra properties, and existing output projection already omitted sensitive database columns.
+
+### Root causes
+
+The first P13 IPC contract focused on shape and sender validation but did not set explicit size budgets for identifier-like input.
+
+### Fixes
+
+Introduced reusable bounded ID schemas and bounded output strings, then added direct regression coverage for oversized input, extra fields, approval-token hash exclusion, and audit-detail redaction.
+
+### Commit
+
+Resolve with `git log -1 --grep "security: harden workflow IPC boundary"`.
+
+### Push
+
+Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/main`; the hashes must match. Watch GitHub Actions to completion.
+
+### Next action
+
+Implement `P16-REL-001` exactly as described in `RECOVERY.md`.

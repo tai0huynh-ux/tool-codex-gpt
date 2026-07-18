@@ -61,6 +61,81 @@ describe('workflow desktop boundary', () => {
     await expect(
       ipc.handlers.get(workflowIpcChannels.start)?.({ sender: { id: 7 } }, { projectId: '' }),
     ).resolves.toMatchObject({ error: { code: 'IPC_SCHEMA_INVALID' } });
+    await expect(
+      ipc.handlers.get(workflowIpcChannels.start)?.(
+        { sender: { id: 7 } },
+        { projectId: 'x'.repeat(257) },
+      ),
+    ).resolves.toMatchObject({ error: { code: 'IPC_SCHEMA_INVALID' } });
+    await expect(
+      ipc.handlers.get(workflowIpcChannels.list)?.(
+        { sender: { id: 7 } },
+        { projectId: 'project-1', injected: true },
+      ),
+    ).resolves.toMatchObject({ error: { code: 'IPC_SCHEMA_INVALID' } });
+    database.close();
+  });
+
+  it('returns approval and audit summaries without secret-bearing database fields', async () => {
+    const database = openDatabase(':memory:');
+    const registry = new ProjectRegistry(database, () => '2026-07-18T11:00:00.000Z');
+    registry.create('Bridge', 'project-1');
+    const workflows = new WorkflowEngine(database, { now: () => '2026-07-18T11:00:00.000Z' });
+    const run = workflows.create({
+      id: 'workflow-1',
+      projectId: 'project-1',
+      correlationId: 'correlation-1',
+      idempotencyKey: 'workflow-key-1',
+    });
+    for (const state of [
+      'project_resolving',
+      'codex_running',
+      'codex_completed',
+      'building_context',
+      'context_review_required',
+      'context_approved',
+    ] as const) {
+      workflows.transition(run.id, {
+        toState: state,
+        eventType: `fixture.${state}`,
+        actor: 'test',
+      });
+    }
+    workflows.issueApproval({
+      workflowRunId: run.id,
+      operation: 'send_chatgpt',
+      destinationType: 'chatgpt_conversation',
+      destinationId: 'conversation-1',
+      payloadHash: 'a'.repeat(64),
+      ttlMs: 60_000,
+    });
+    database
+      .prepare(
+        `INSERT INTO audit_events (
+          id, event_type, actor, project_id, correlation_id, resource_type,
+          resource_id, outcome, details_json, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        'audit-sensitive',
+        'fixture.audit',
+        'test',
+        'project-1',
+        'correlation-1',
+        'fixture',
+        'fixture-1',
+        'allowed',
+        JSON.stringify({ token: 'must-not-cross-ipc', content: 'private file body' }),
+        '2026-07-18T11:00:00.000Z',
+      );
+
+    const serialized = JSON.stringify(
+      await createWorkflowDesktopService(database, workflows).list('project-1'),
+    );
+    expect(serialized).toContain('fixture.audit');
+    expect(serialized).not.toContain('must-not-cross-ipc');
+    expect(serialized).not.toContain('private file body');
+    expect(serialized).not.toContain('approval_token_hash');
     database.close();
   });
 });

@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "Phase 15 - Security hardening",
-  "currentTaskId": "P15-SEC-001",
+  "currentPhase": "Phase 16 - Packaging and release readiness",
+  "currentTaskId": "P16-REL-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P14-E2E-001",
+    "id": "P15-SEC-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T11:22:00.000Z"
+    "completedAt": "2026-07-18T11:30:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -24,6 +24,8 @@
     "Desktop workflow IPC and renderer targeted tests: 12 passed",
     "GitHub Actions Verify run 29642191174 passed for P13 checkpoint 4103e7e",
     "pnpm.cmd run test:workflow-e2e: 2 recoverable fixture tests passed",
+    "GitHub Actions Verify run 29642485845 passed for P14 checkpoint 184b84f",
+    "Workflow IPC security and recoverable fixture targeted tests: 5 passed",
     "Project renderer visual smoke at 1440x1000 and 390x844"
   ],
   "knownFailures": [
@@ -31,10 +33,10 @@
   ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P15-SEC-001 trust-boundary hardening after complete fixture E2E.",
     "Implement P16-REL-001 reproducible packaging after security hardening.",
+    "Run the final release gate and document live integration blockers after packaging.",
     "Prove P3-CODEX-001 live integration when CODEX-SDK-001 is safely resolved."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T11:22:00.000Z"
+  "updatedAt": "2026-07-18T11:30:00.000Z"
 }

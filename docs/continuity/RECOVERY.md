@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Phase 15 - Security hardening. Phase 3 live Codex integration remains independently blocked.
+Phase 16 - Packaging and release readiness. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -60,13 +60,13 @@ Expected known-good baseline: formatting, lint, strict type-check, 130 or more V
 
 ## Exact next task
 
-Implement `P15-SEC-001`: audit and harden cross-project routing, renderer IPC, malicious external text, path/symlink handling, secret and log redaction, replay, duplicate effects, capability expiry, malformed JSON, oversized payloads, and local transport spoofing. Add regression tests for demonstrated gaps only.
+Implement `P16-REL-001`: create reproducible Windows desktop packaging and extension artifacts, backup the SQLite database before upgrade, generate checksums and a redacted diagnostic export, and run a clean-profile install/launch/recovery smoke. Do not publish a GitHub Release or claim signing without explicit authorization and a real certificate.
 
 ## Expected files to modify
 
-- affected trust-boundary modules and their focused tests
-- security threat model/checklist and evidence
-- continuity records for proven findings and remaining risks
+- desktop packaging configuration and scripts
+- extension artifact and checksum manifest
+- migration backup, diagnostic export, and clean-profile smoke tests
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run

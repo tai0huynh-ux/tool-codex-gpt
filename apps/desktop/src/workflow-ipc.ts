@@ -15,13 +15,15 @@ export const workflowIpcChannels = {
   cancel: 'workflows:cancel',
 } as const;
 
+const ipcIdSchema = z.string().min(1).max(256);
+
 const approvalSummarySchema = z
   .object({
-    id: z.string().min(1),
+    id: ipcIdSchema,
     action: z.enum(['send_chatgpt', 'send_codex']),
     scope: z.literal('single_send'),
-    destinationType: z.string().min(1),
-    destinationId: z.string().min(1),
+    destinationType: z.string().min(1).max(128),
+    destinationId: z.string().min(1).max(512),
     approvedAt: z.iso.datetime(),
     expiresAt: z.iso.datetime(),
     consumedAt: z.iso.datetime().optional(),
@@ -30,8 +32,8 @@ const approvalSummarySchema = z
 
 const diagnosticSchema = z
   .object({
-    eventType: z.string().min(1),
-    outcome: z.string().min(1),
+    eventType: z.string().min(1).max(256),
+    outcome: z.string().min(1).max(64),
     createdAt: z.iso.datetime(),
   })
   .strict();
@@ -252,19 +254,19 @@ export function registerWorkflowIpc(
 
   register(
     workflowIpcChannels.list,
-    z.object({ projectId: z.string().min(1).optional() }).strict(),
+    z.object({ projectId: ipcIdSchema.optional() }).strict(),
     workflowListResponseSchema,
     (input) => service.list((input as { projectId?: string }).projectId),
   );
   register(
     workflowIpcChannels.start,
-    z.object({ projectId: z.string().min(1) }).strict(),
+    z.object({ projectId: ipcIdSchema }).strict(),
     workflowViewResponseSchema,
     (input) => service.start((input as { projectId: string }).projectId),
   );
   register(
     workflowIpcChannels.cancel,
-    z.object({ workflowRunId: z.string().min(1) }).strict(),
+    z.object({ workflowRunId: ipcIdSchema }).strict(),
     workflowViewResponseSchema,
     (input) => service.cancel((input as { workflowRunId: string }).workflowRunId),
   );

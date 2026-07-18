@@ -125,10 +125,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 15 - Security hardening
 
-- [ ] P15-SEC-001 Harden every trust boundary
+- [x] P15-SEC-001 Harden every trust boundary
   - Depends on: P14-E2E-001
   - Done when: threat model and injection, traversal, replay, spoofing, IPC, capability, logging, and corruption tests pass
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "security: harden workflow IPC boundary"`
 
 ## Phase 16 - Packaging and release readiness
 
