@@ -47,10 +47,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 5 - Composer and response parsing
 
-- [ ] P5-EXT-001 Harden composer insertion and bounded response parsing
+- [x] P5-EXT-001 Harden composer insertion and bounded response parsing
   - Depends on: P4-EXT-001
   - Done when: controlled input fixtures and paired-marker validated responses pass without automatic submit
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "fix(extension): harden composer and response parsing"`
 
 ## Phase 6 - Desktop and extension transport
 

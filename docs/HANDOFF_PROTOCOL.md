@@ -22,5 +22,8 @@ read a file. The file-store security pipeline must independently approve it.
 
 ## Response contract
 
-Version 1.0 requests `analysis-and-codex-prompt`. A future ChatGPT adapter must locate the structured marker,
-parse the response schema, reject invalid output, and require review before forwarding a prompt to Codex.
+Version 1.0 requests `analysis-and-codex-prompt`. ChatGPT responses use the paired markers
+`<CONTEXT_BRIDGE_RESPONSE>` and `</CONTEXT_BRIDGE_RESPONSE>`. The canonical runtime schema is
+`contextBridgeResponseSchema`; the interoperable schema is `schemas/context-bridge-response.v1.json`.
+Consumers select the latest opening marker and require its matching closing marker, enforce a payload bound,
+validate identity and duplicate state, and require review before forwarding `codexPrompt` to Codex.

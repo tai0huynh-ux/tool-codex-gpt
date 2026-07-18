@@ -65,6 +65,50 @@ export function validateHandoff(input: unknown): HandoffEnvelope {
   return handoffEnvelopeSchema.parse(input);
 }
 
+export const contextBridgeResponseSchema = z
+  .object({
+    protocolVersion: z.literal('1.0'),
+    handoffId: z.string().min(1),
+    correlationId: z.string().min(1),
+    projectId: z.string().min(1),
+    status: z.enum([
+      'ready_for_codex',
+      'requires_user_decision',
+      'needs_more_context',
+      'completed',
+    ]),
+    analysisSummary: z.string().min(1),
+    codexPrompt: z.string().min(1).optional(),
+    attachmentsRequested: z.array(z.string().min(1)),
+    requiresUserDecision: z.boolean(),
+    userDecisionQuestion: z.string().min(1).optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.status === 'ready_for_codex' && !value.codexPrompt) {
+      context.addIssue({ code: 'custom', message: 'A ready response requires codexPrompt.' });
+    }
+    if (value.status === 'requires_user_decision') {
+      if (!value.requiresUserDecision || !value.userDecisionQuestion) {
+        context.addIssue({
+          code: 'custom',
+          message: 'A decision response requires a question and decision flag.',
+        });
+      }
+    } else if (value.requiresUserDecision) {
+      context.addIssue({
+        code: 'custom',
+        message: 'requiresUserDecision must match requires_user_decision status.',
+      });
+    }
+  });
+
+export type ContextBridgeResponse = z.infer<typeof contextBridgeResponseSchema>;
+
+export function validateContextBridgeResponse(input: unknown): ContextBridgeResponse {
+  return contextBridgeResponseSchema.parse(input);
+}
+
 export interface ProjectEvidence {
   type: 'git-remote' | 'repo-root' | 'project-name' | 'repository-marker' | 'agents-hash';
   value: string;

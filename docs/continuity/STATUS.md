@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 5 - Composer and response parsing.
+Phase 6 - Desktop and extension transport.
 
 ## Current objective
 
-Harden controlled composer insertion and bounded structured response parsing without automatic submission.
+Choose and implement an authenticated local extension transport with a typed Electron IPC boundary.
 
 ## Last completed checkpoint
 
-P4-EXT-001 - Lossless virtualized conversation capture with stable identity, ordering, streaming updates, abort handling, and selector failure evidence. Resolve with `git log -1 --grep "fix(extension): preserve virtualized conversation capture"`.
+P5-EXT-001 - Controlled composer insertion and bounded paired-marker response parsing with strict schema, identity, payload, and duplicate validation. Resolve with `git log -1 --grep "fix(extension): harden composer and response parsing"`.
 
 ## Current verified capabilities
 
@@ -25,11 +25,13 @@ P4-EXT-001 - Lossless virtualized conversation capture with stable identity, ord
 - Database runtime SQL is generated from the distributable migration and direct package type-check/build commands reject stale output.
 - Mock Codex runs expose replayable ordered start, progress, completion, failure, and cancellation events without allowing terminal-state overwrite.
 - Long conversation capture accumulates virtualized windows, preserves duplicate messages with stable IDs, updates streaming text, and supports abort.
+- Composer insertion uses native editing behavior for controlled textareas and contenteditable fields, honors cancellation and read-only state, and never submits automatically.
+- Structured ChatGPT responses use strict paired markers, a 100,000-character default bound, schema validation, handoff/correlation/project checks, and duplicate rejection.
 
 ## Current known failures
 
 - Live Codex SDK spike exits before `thread.started` because the configured external model catalog is incompatible with SDK `0.144.5`.
-- Controlled composer state updates and bounded paired-marker response parsing are not yet proven.
+- Authenticated desktop-to-extension transport and typed renderer/main IPC are not yet implemented.
 
 ## Active blockers
 
@@ -37,13 +39,13 @@ P4-EXT-001 - Lossless virtualized conversation capture with stable identity, ord
 
 ## Next three actions
 
-1. Reproduce controlled composer insertion failure and add DOM fixtures.
-2. Insert text through the native editing path without submitting automatically.
-3. Parse only bounded paired structured-response markers with schema validation.
+1. Record an ADR comparing Native Messaging, localhost HTTP, localhost WebSocket, and clipboard fallback.
+2. Implement the selected authenticated transport with runtime validation, reconnect, rate, and spoofing defenses.
+3. Add a typed allowlisted Electron IPC boundary and its security tests.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 34 Vitest tests, virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all builds. GitHub Actions run `29637042416` passed for lifecycle checkpoint `2198c25`.
+`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 45 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all builds. GitHub Actions run `29637231505` passed for checkpoint `2272682` with no annotations.
 
 ## Latest commit
 
@@ -55,4 +57,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 15:16 +07:00.
+2026-07-18 15:28 +07:00.

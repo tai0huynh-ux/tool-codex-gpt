@@ -8,6 +8,9 @@
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@codex-context-bridge/contracts": "workspace:*"
+  },
   "devDependencies": {
     "@types/chrome": "^0.1.0",
     "vite": "^8.0.0"

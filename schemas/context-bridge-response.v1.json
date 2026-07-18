@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex-context-bridge.local/schemas/context-bridge-response.v1.json",
+  "title": "ContextBridgeResponse v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolVersion",
+    "handoffId",
+    "correlationId",
+    "projectId",
+    "status",
+    "analysisSummary",
+    "attachmentsRequested",
+    "requiresUserDecision"
+  ],
+  "properties": {
+    "protocolVersion": { "const": "1.0" },
+    "handoffId": { "type": "string", "minLength": 1 },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "projectId": { "type": "string", "minLength": 1 },
+    "status": {
+      "enum": ["ready_for_codex", "requires_user_decision", "needs_more_context", "completed"]
+    },
+    "analysisSummary": { "type": "string", "minLength": 1 },
+    "codexPrompt": { "type": "string", "minLength": 1 },
+    "attachmentsRequested": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "requiresUserDecision": { "type": "boolean" },
+    "userDecisionQuestion": { "type": "string", "minLength": 1 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "ready_for_codex" } } },
+      "then": {
+        "properties": { "codexPrompt": { "type": "string", "minLength": 1 } },
+        "required": ["codexPrompt"]
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "requires_user_decision" } } },
+      "then": {
+        "properties": {
+          "requiresUserDecision": { "const": true },
+          "userDecisionQuestion": { "type": "string", "minLength": 1 }
+        },
+        "required": ["userDecisionQuestion"]
+      },
+      "else": { "properties": { "requiresUserDecision": { "const": false } } }
+    }
+  ]
+}

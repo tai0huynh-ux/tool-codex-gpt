@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture ext
 
 ## Current phase
 
-Phase 5 - Composer and response parsing. Phase 3 live Codex integration remains independently blocked.
+Phase 6 - Desktop and extension transport. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -56,17 +56,18 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 16 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
+Expected known-good baseline: formatting, lint, strict type-check, 45 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
 
 ## Exact next task
 
-Implement `P5-EXT-001`: reproduce controlled composer insertion failure, update the user-opened ChatGPT composer through native input/editing behavior without automatic submit, and parse only bounded paired structured-response markers with schema validation and clear failure codes.
+Implement `P6-IPC-001`: create an ADR comparing Native Messaging, localhost HTTP, localhost WebSocket, and clipboard fallback; then implement the selected authenticated local transport and typed Electron IPC boundary with runtime validation and security tests.
 
 ## Expected files to modify
 
-- `apps/chatgpt-extension/src/page-actions.ts`
-- extension unit and fixture tests
-- handoff contracts/parser modules if needed
+- `docs/adr/` transport decision record
+- desktop main/preload transport and IPC modules
+- extension background/content transport modules
+- transport and IPC unit/integration tests
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run

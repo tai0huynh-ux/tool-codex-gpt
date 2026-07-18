@@ -3,7 +3,7 @@ import addFormats from 'ajv-formats';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { validateHandoff } from './index';
+import { validateContextBridgeResponse, validateHandoff } from './index';
 
 const validEnvelope = {
   protocolVersion: '1.0',
@@ -24,6 +24,18 @@ const validEnvelope = {
   createdAt: '2026-07-18T00:00:00.000Z',
 };
 
+const validResponse = {
+  protocolVersion: '1.0',
+  handoffId: 'handoff-1',
+  correlationId: 'correlation-1',
+  projectId: 'project-1',
+  status: 'ready_for_codex',
+  analysisSummary: 'Ready for implementation.',
+  codexPrompt: 'Implement the verified change.',
+  attachmentsRequested: [],
+  requiresUserDecision: false,
+};
+
 describe('handoff envelope', () => {
   it('validates through both Zod and the published JSON Schema', () => {
     expect(validateHandoff(validEnvelope).handoffId).toBe('handoff-1');
@@ -40,6 +52,34 @@ describe('handoff envelope', () => {
   it('rejects an existing destination without an identifier', () => {
     expect(() =>
       validateHandoff({ ...validEnvelope, destination: { mode: 'existing-thread' } }),
+    ).toThrow();
+  });
+});
+
+describe('context bridge response', () => {
+  it('validates through both Zod and the published JSON Schema', () => {
+    const response = validateContextBridgeResponse(validResponse);
+    expect(response.codexPrompt).toBe('Implement the verified change.');
+    const schemaPath = path.resolve(
+      import.meta.dirname,
+      '../../../schemas/context-bridge-response.v1.json',
+    );
+    const schema = JSON.parse(readFileSync(schemaPath, 'utf8')) as object;
+    expect(new Ajv2020({ strict: true }).compile(schema)(validResponse)).toBe(true);
+  });
+
+  it('rejects inconsistent decision state', () => {
+    expect(() =>
+      validateContextBridgeResponse({
+        protocolVersion: '1.0',
+        handoffId: 'handoff-1',
+        correlationId: 'correlation-1',
+        projectId: 'project-1',
+        status: 'requires_user_decision',
+        analysisSummary: 'A choice is required.',
+        attachmentsRequested: [],
+        requiresUserDecision: false,
+      }),
     ).toThrow();
   });
 });

@@ -11,7 +11,9 @@ interface InsertRequest {
 }
 interface StatusRequest {
   type: 'page-status';
-  marker?: string;
+  expectedHandoffId?: string;
+  expectedCorrelationId?: string;
+  expectedProjectId?: string;
 }
 type ExtensionRequest = CaptureRequest | InsertRequest | StatusRequest;
 
@@ -29,9 +31,13 @@ if (location.origin === 'https://chatgpt.com' && typeof chrome !== 'undefined') 
 
     sendResponse({
       streaming: isStreaming(document),
-      structuredResponse: request.marker
-        ? findStructuredResponse(document, request.marker)
-        : undefined,
+      structuredResponse: findStructuredResponse(document, {
+        ...(request.expectedHandoffId ? { expectedHandoffId: request.expectedHandoffId } : {}),
+        ...(request.expectedCorrelationId
+          ? { expectedCorrelationId: request.expectedCorrelationId }
+          : {}),
+        ...(request.expectedProjectId ? { expectedProjectId: request.expectedProjectId } : {}),
+      }),
     });
     return false;
   });

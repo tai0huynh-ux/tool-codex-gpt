@@ -261,3 +261,49 @@ Verify HEAD and `origin/main` equality after publication.
 ### Next action
 
 Implement `P5-EXT-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 15:28 +07:00 - P5-EXT-001
+
+### Goal
+
+Update user-opened ChatGPT composers through controlled editing behavior without automatic submission, and parse only a bounded structured response associated with the expected handoff and project.
+
+### Changes
+
+Added native textarea-setter and contenteditable insertion with cancellable `beforeinput`, `input`, and `change` events; rejected missing, disabled, and read-only composers. Added a strict response contract in Zod and JSON Schema, exact paired markers, a 100,000-character default bound, explicit parse errors, identity checks, and duplicate rejection. Updated page status handling and handoff documentation.
+
+### Files
+
+Extension page actions, content script, extension package metadata and tests; response contracts and schema; lockfile; handoff protocol; and continuity records.
+
+### Decisions
+
+Never submit from the insertion helper. Treat all rendered ChatGPT output as untrusted, select the latest opening marker and require its matching close marker, validate before routing, and keep final forwarding subject to user review.
+
+### Verification
+
+Targeted contract and page-action tests passed 13/13. Extension and contracts type-checks passed. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict TypeScript, 45 Vitest tests, one Chromium fixture E2E, and all workspace builds.
+
+### Failures encountered
+
+Initial tests contained a syntax typo; AJV strict mode rejected conditional properties that were not locally declared; ESLint rejected unbound native getter/setter references.
+
+### Root causes
+
+The first schema conditions were semantically valid but did not satisfy AJV's strict conditional-property analysis, and extracting prototype methods directly violated the repository's method-binding safety rule.
+
+### Fixes
+
+Corrected the fixture, declared conditional properties within the strict schema branches, and invoked native accessors through their property descriptor without weakening AJV, TypeScript, or ESLint.
+
+### Commit
+
+Resolve with `git log -1 --grep "fix(extension): harden composer and response parsing"`.
+
+### Push
+
+Verify HEAD and `origin/main` equality after publication.
+
+### Next action
+
+Implement `P6-IPC-001` exactly as described in `RECOVERY.md`, beginning with the transport ADR.
