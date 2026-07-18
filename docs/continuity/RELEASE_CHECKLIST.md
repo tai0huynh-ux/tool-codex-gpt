@@ -15,6 +15,6 @@
 - [x] Explicit `nativeMessaging` permission authorization is recorded and activated.
 - [x] Live user-opened ChatGPT smoke is recorded.
 - [x] Continuity docs and state match the final accepted Git checkpoint.
-- [ ] Final checkpoint is pushed and remote hash verified.
+- [x] Final checkpoint is pushed and remote hash verified.
 
 Do not create a public GitHub Release without explicit user authorization.
