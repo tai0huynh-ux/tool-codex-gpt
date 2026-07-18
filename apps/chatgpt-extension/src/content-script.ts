@@ -1,4 +1,4 @@
-import { captureLongConversation } from './capture';
+import { captureConversationPage } from './capture';
 import {
   clearComposerText,
   findStructuredResponse,
@@ -35,9 +35,11 @@ type ExtensionRequest =
   CaptureRequest | InsertRequest | InspectRequest | ClearRequest | StatusRequest;
 
 if (location.origin === 'https://chatgpt.com' && typeof chrome !== 'undefined') {
+  void chrome.runtime.sendMessage({ type: 'bridge-content-ready' }).catch(() => undefined);
+
   chrome.runtime.onMessage.addListener((request: ExtensionRequest, _sender, sendResponse) => {
     if (request.type === 'capture-conversation') {
-      void captureLongConversation(document).then(sendResponse);
+      void captureConversationPage(document, location).then(sendResponse);
       return true;
     }
 

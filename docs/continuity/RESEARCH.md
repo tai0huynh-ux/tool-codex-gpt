@@ -11,7 +11,7 @@
 
 ## Extension transport
 
-- Decision status: Native Messaging selected in ADR-0001; live permission and host registration are deferred.
+- Decision status: Native Messaging selected in ADR-0001; permission, exact-origin host registration, MV3 wake recovery, and installed Edge acceptance are complete.
 - Constraints: no private ChatGPT API, no cookie/token access, runtime validation, authenticated local peer, replay resistance, and reconnect support.
 - Official Chrome source: `https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging`.
 - Official Chrome findings: exact non-wildcard `allowed_origins`, separate stdio host process, long-lived `connectNative()`, 1 MB host-to-extension messages, and 64 MiB extension-to-host messages.

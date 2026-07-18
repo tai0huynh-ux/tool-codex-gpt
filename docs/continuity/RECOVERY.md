@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Phase 6 installed Native Messaging acceptance. P6-IPC-004 activated the authorized `nativeMessaging` permission; P6-IPC-005 must load the built extension into a user browser and run the redacted live smoke.
+MVP acceptance complete. P6-IPC-005 passed the installed Edge Native Messaging health/capture/no-submit insert/exact-clear smoke.
 
 ## Last known-good commit
 
@@ -56,11 +56,11 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 162 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass. The separate live Codex gate must pass without modifying external configuration. Windows permission activation additionally requires package, packaged smoke, and installed native-host smoke.
+Expected known-good baseline: formatting, lint, strict type-check, 164 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass. The separate live Codex gate must pass without modifying external configuration. Windows release acceptance additionally requires package, packaged smoke, installed native-host smoke, and the redacted installed ChatGPT smoke.
 
 ## Exact next task
 
-With action-time confirmation, load `apps/chatgpt-extension/dist` into Edge from `edge://extensions`, open a user-selected authenticated ChatGPT tab with an empty composer, keep the packaged desktop app running, and execute `pnpm.cmd run smoke:installed-chatgpt:win`. The harness must report health ready, capture count/hash only, `sent: false`, and exact cleanup.
+No implementation task is active. Verify `HEAD == origin/main`, confirm GitHub Actions Verify is green, and begin only an explicitly scoped post-MVP maintenance or release task. Do not create a public GitHub Release without explicit authorization.
 
 ## Expected files to modify
 
@@ -102,4 +102,4 @@ pnpm.cmd run smoke:installed-native-host:win
 
 ## Blockers and safe alternatives
 
-`CODEX-SDK-001` and `EXT-PERM-001` are resolved. `BROWSER-LIVE-001` remains because Computer Use stopped on URL confidence before loading the extension; use a confirmed manual load or a later safe Computer Use attempt, then run the no-submit smoke.
+`CODEX-SDK-001`, `EXT-PERM-001`, and `BROWSER-LIVE-001` are resolved. The final live path used the explicitly loaded Edge extension, a data-free content-ready wake event, exact-origin Native Messaging, and a redacted no-submit smoke without reading browser profile storage.

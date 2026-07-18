@@ -33,17 +33,17 @@
 
 ## BROWSER-LIVE-001
 
-- Status: active
+- Status: resolved
 - First observed: 2026-07-18
-- Last verified: 2026-07-18
-- Affected phase: P6-IPC-004 installed Native Messaging acceptance
+- Last verified: 2026-07-19
+- Affected phase: P6-IPC-005 installed Native Messaging acceptance
 - Reproduction: select the running Edge window through Computer Use, then request its accessibility state before installing the built extension
 - Expected: load the built extension, open an authenticated ChatGPT tab with an empty composer, and run `pnpm.cmd run smoke:installed-chatgpt:win`
-- Actual: Computer Use stopped before any browser action because it could not determine the current Edge URL with enough confidence to enforce policy
-- Root cause: Windows browser URL-confidence policy stop, not repository code or native-host transport
-- Evidence: full verification passed with 162 tests; packaging, packaged smoke, and installed native-host smoke passed; no browser-owned port claim was made
-- Attempts: enumerated one running Edge window, then stopped immediately when Computer Use rejected state capture
+- Actual: the extension was loaded with user confirmation and the live smoke passed health, redacted capture, no-submit insert, and exact clear
+- Root cause: the original external blocker was compounded by three real runtime defects: the packaged Electron main bundle/native SQLite dependency path, MV3 service-worker wake recovery, and inconsistent ChatGPT Project conversation URL parsing
+- Evidence: live `pnpm.cmd run smoke:installed-chatgpt:win` returned `status: passed`, `health: ready`, `capturedMessages: 0`, a SHA-256 snapshot hash, `composerSent: false`, and `composerCleared: true`
+- Attempts: stopped on Computer Use URL policy, used the confirmed manual load once, rejected remote-debugging/profile manipulation, added a data-free content-ready wake event, and ran the final smoke through the installed exact-origin native host
 - Unsafe actions avoided: did not bypass browser policy, inspect profile storage, read cookies/tokens, install the extension without action-time confirmation, or claim host fixtures as live browser evidence
-- Workarounds: the user can manually load `apps/chatgpt-extension/dist` from `edge://extensions`, open a user-selected authenticated ChatGPT tab with an empty composer, and then run the redacted no-submit smoke
-- Independent work available: continuity publication of P6-IPC-004 permission activation
-- Resolution condition: the built extension is loaded with user confirmation and the installed health/capture/insert/clear smoke exits successfully
+- Workarounds: no workaround remains necessary for the accepted path; opening an allowlisted ChatGPT tab now wakes the service worker and native host without browser-profile inspection
+- Independent work available: post-MVP maintenance only
+- Resolution condition: satisfied on 2026-07-19 by the installed Edge health/capture/insert/clear smoke

@@ -127,6 +127,18 @@ export async function captureRenderedConversation(
   return buildSnapshot(document, messages);
 }
 
+export async function captureConversationPage(
+  document: Document,
+  location: Location,
+): Promise<ConversationSnapshot> {
+  const segments = location.pathname.split('/').filter(Boolean);
+  const conversationMarker = segments.lastIndexOf('c');
+  const hasConversationIdentity = conversationMarker >= 0 && segments[conversationMarker + 1];
+  return hasConversationIdentity
+    ? captureLongConversation(document)
+    : captureRenderedConversation(document);
+}
+
 export async function captureLongConversation(
   document: Document,
   scrollContainer: Element = document.scrollingElement ?? document.documentElement,

@@ -38,12 +38,22 @@ export async function runInstalledChatGptSmoke(
   bridge: SmokeBridge,
   createId: () => string = randomUUID,
 ): Promise<InstalledChatGptSmokeResult> {
-  const health = await bridge.execute({ type: 'bridge.health' });
+  const execute = async (operation: LocalTransportOperation): Promise<LocalTransportResult> => {
+    try {
+      return await bridge.execute(operation);
+    } catch (error) {
+      throw new Error(`LIVE_CHATGPT_${operation.type.toUpperCase().replaceAll('.', '_')}_FAILED`, {
+        cause: error,
+      });
+    }
+  };
+
+  const health = await execute({ type: 'bridge.health' });
   if (health.type !== 'bridge.health.result' || health.status !== 'ready') {
     throw new Error('LIVE_CHATGPT_BRIDGE_NOT_READY');
   }
 
-  const inspected = await bridge.execute({ type: 'page.inspect' });
+  const inspected = await execute({ type: 'page.inspect' });
   if (inspected.type !== 'page.inspect.result') throw new Error('LIVE_CHATGPT_INSPECT_INVALID');
   const { page, composer } = inspected.inspection;
   if (page.mode === 'unsupported' || !composer.available || composer.readOnly) {
@@ -51,7 +61,7 @@ export async function runInstalledChatGptSmoke(
   }
   if (composer.textHash) throw new Error('LIVE_CHATGPT_COMPOSER_NOT_EMPTY');
 
-  const captured = await bridge.execute({ type: 'conversation.capture' });
+  const captured = await execute({ type: 'conversation.capture' });
   if (captured.type !== 'conversation.capture.result') {
     throw new Error('LIVE_CHATGPT_CAPTURE_INVALID');
   }
@@ -66,7 +76,7 @@ export async function runInstalledChatGptSmoke(
   let inserted = false;
   let cleared = false;
   try {
-    const insertion = await bridge.execute({
+    const insertion = await execute({
       type: 'composer.insert',
       text,
       effectId,
@@ -82,7 +92,7 @@ export async function runInstalledChatGptSmoke(
     }
     inserted = true;
 
-    const clearing = await bridge.execute({
+    const clearing = await execute({
       type: 'composer.clear',
       effectId,
       expectedTextHash: payloadHash,

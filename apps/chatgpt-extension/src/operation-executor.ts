@@ -16,14 +16,34 @@ export interface BrowserTab {
 export interface BrowserTabs {
   query(queryInfo: { url: string }): Promise<BrowserTab[]>;
   sendMessage(tabId: number, message: unknown): Promise<unknown>;
+  injectContentScript?(tabId: number): Promise<void>;
+}
+
+function isMissingReceiver(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : '';
+  return (
+    message.includes('Receiving end does not exist') ||
+    message.includes('Could not establish connection')
+  );
+}
+
+async function sendToTab(tabs: BrowserTabs, tabId: number, message: unknown): Promise<unknown> {
+  try {
+    return await tabs.sendMessage(tabId, message);
+  } catch (error) {
+    if (!tabs.injectContentScript || !isMissingReceiver(error)) throw error;
+    await tabs.injectContentScript(tabId);
+    return tabs.sendMessage(tabId, message);
+  }
 }
 
 function conversationId(url: string): string | undefined {
   try {
     const parsed = new URL(url);
     if (parsed.origin !== 'https://chatgpt.com') return undefined;
-    const match = /^\/c\/([^/]+)\/?$/.exec(parsed.pathname);
-    return match?.[1];
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    const conversationMarker = segments.lastIndexOf('c');
+    return conversationMarker >= 0 ? segments[conversationMarker + 1] : undefined;
   } catch {
     return undefined;
   }
@@ -134,7 +154,7 @@ export function createExtensionOperationExecutor(tabs: BrowserTabs): {
       const destination = operation.type === 'composer.insert' ? operation.destination : undefined;
       const tab = selectTab(availableTabs, destination);
       if (tab.id === undefined) throw new Error('CHATGPT_TAB_NOT_FOUND');
-      const response = await tabs.sendMessage(tab.id, messageFor(operation));
+      const response = await sendToTab(tabs, tab.id, messageFor(operation));
       return resultFor(operation, response);
     },
   };

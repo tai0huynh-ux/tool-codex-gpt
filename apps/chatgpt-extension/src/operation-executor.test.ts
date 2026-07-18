@@ -6,7 +6,12 @@ function tabs(overrides: Partial<BrowserTabs> = {}): BrowserTabs {
     query: () =>
       Promise.resolve([
         { id: 10, url: 'https://chatgpt.com/c/other', active: false, lastAccessed: 2 },
-        { id: 20, url: 'https://chatgpt.com/c/target', active: false, lastAccessed: 1 },
+        {
+          id: 20,
+          url: 'https://chatgpt.com/g/project-1/c/target',
+          active: false,
+          lastAccessed: 1,
+        },
         { id: 30, url: 'https://chatgpt.com/', active: true, lastAccessed: 3 },
       ]),
     sendMessage: () => Promise.resolve({ inserted: true, sent: false, textHash: 'a'.repeat(64) }),
@@ -47,6 +52,29 @@ describe('extension operation executor', () => {
       effectId: 'effect-1',
       payloadHash: 'a'.repeat(64),
     });
+  });
+
+  it('injects the content script once when an existing tab has no receiver', async () => {
+    const sendMessage = vi
+      .fn<BrowserTabs['sendMessage']>()
+      .mockRejectedValueOnce(
+        new Error('Could not establish connection. Receiving end does not exist.'),
+      )
+      .mockResolvedValueOnce({ inserted: true, sent: false, textHash: 'a'.repeat(64) });
+    const injectContentScript = vi.fn(() => Promise.resolve());
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage, injectContentScript }));
+
+    await expect(
+      executor.execute({
+        type: 'composer.insert',
+        text: 'reviewed text',
+        effectId: 'effect-inject',
+        payloadHash: 'a'.repeat(64),
+        destination: { mode: 'existing', conversationId: 'target' },
+      }),
+    ).resolves.toMatchObject({ type: 'composer.insert.result', inserted: true, sent: false });
+    expect(injectContentScript).toHaveBeenCalledWith(20);
+    expect(sendMessage).toHaveBeenCalledTimes(2);
   });
 
   it('uses the active user-opened tab for a new-chat destination', async () => {

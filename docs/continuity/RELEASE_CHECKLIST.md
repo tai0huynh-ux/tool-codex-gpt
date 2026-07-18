@@ -13,8 +13,8 @@
 - [x] Selected Native Messaging host is packaged and registered with an exact extension origin.
 - [x] Installed host survives restart and unregisters cleanly on uninstall.
 - [x] Explicit `nativeMessaging` permission authorization is recorded and activated.
-- [ ] Live user-opened ChatGPT smoke is recorded.
-- [ ] Continuity docs and state match the final accepted Git checkpoint.
+- [x] Live user-opened ChatGPT smoke is recorded.
+- [x] Continuity docs and state match the final accepted Git checkpoint.
 - [ ] Final checkpoint is pushed and remote hash verified.
 
 Do not create a public GitHub Release without explicit user authorization.

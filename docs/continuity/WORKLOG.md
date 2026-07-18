@@ -1129,3 +1129,53 @@ Publish `main` to `origin`, fetch, and require `HEAD` to equal `origin/main`.
 ### Next action
 
 With action-time confirmation, load `apps/chatgpt-extension/dist` into Edge, open an authenticated ChatGPT tab with an empty composer, run `pnpm.cmd run smoke:installed-chatgpt:win`, and complete P6-IPC-005 only if the redacted no-submit smoke passes.
+
+## 2026-07-19 00:17 +07:00 - P6-IPC-005
+
+### Goal
+
+Prove the installed Edge Native Messaging path end to end and close every runtime defect discovered by the real browser gate without reading browser credentials, profile storage, or rendered conversation content.
+
+### Changes
+
+Fixed the Electron ESM bundle boundary, rebuilt native SQLite against a supported Electron ABI, packaged the required native runtime bindings, and strengthened packaged smoke to require actual bridge initialization. Added MV3 content-ready wake recovery, one-time content-script injection for pre-existing tabs, consistent ChatGPT Project conversation URL parsing, and valid zero-message snapshots for new-chat pages while retaining strict missing-message failure for identified conversations. Added operation-specific redacted smoke errors.
+
+### Files
+
+Desktop build/runtime configuration and startup diagnostics; packaged Windows smoke and electron-builder wrapper; extension capture, content script, service worker, operation routing, tests, lockfile; architecture, security, research, release checklist, continuity records, and machine-readable state.
+
+### Decisions
+
+Use Electron 42 because `better-sqlite3 12.11.1` publishes an official Windows Electron ABI 146 binary but not Electron 43 ABI 148. Keep remote debugging disabled because Microsoft requires restarting Edge with a debug port, which would expose the authenticated profile to a local debugging endpoint. Wake MV3 through a fixed data-free content message rather than browser-profile manipulation or a broader `management` permission.
+
+### Verification
+
+The live installed Edge smoke passed with `health: ready`, `pageMode: new`, `capturedMessages: 0`, a SHA-256 snapshot hash, `composerInserted: true`, `composerSent: false`, and `composerCleared: true`. Targeted extension and smoke tests passed. `pnpm.cmd run verify` passed migration parity, formatting, lint, strict type-check, 164 Vitest tests, two workflow E2E tests, two Chromium E2E tests, and all 15 workspace builds.
+
+### Failures encountered
+
+The prior packaged smoke accepted an Electron shell process after the main bundle had already failed. The main bundle incorrectly embedded Electron CommonJS into ESM, native SQLite used the Node ABI instead of Electron ABI, pnpm transitive packaging omitted `bindings`, old ChatGPT tabs lacked content receivers, project conversation URLs were parsed inconsistently, MV3 did not wake after browser restart, and new-chat capture rejected the valid empty state.
+
+### Root causes
+
+The release gate checked process survival instead of application readiness; Electron 43 had no matching prebuilt `better-sqlite3` binary; electron-builder's pnpm traversal did not retain every native runtime dependency; extension lifecycle assumptions treated service workers as eager; and page identity logic was duplicated with different URL rules.
+
+### Fixes
+
+Externalize Electron from tsup, use the supported Electron ABI, invoke electron-builder without the non-executable pnpm `.mjs` path, declare native runtime dependencies at the app boundary, isolate packaged smoke app data, capture startup stderr, stop the exact test process tree, retry only missing content receivers, unify conversation path parsing, wake the worker from allowlisted ChatGPT content, and distinguish new-chat empty snapshots from broken existing-conversation capture.
+
+### Security
+
+No new permission was added. Host access remains exactly `https://chatgpt.com/*`; the native host still allows only `chrome-extension://ccchffnkidpolmnnlonbnakjjmphfdjp/`. The live output contained count/hash/status only, insertion was never submitted, cleanup required the exact hash, and no cookie, token, browser history, profile database, conversation title, message text, or conversation ID was read or printed.
+
+### Commit
+
+Resolve with `git log -1 --grep "fix(release): complete installed browser acceptance"`.
+
+### Push
+
+Publish `main` to `origin`, fetch, and require `HEAD` to equal `origin/main`.
+
+### Next action
+
+Confirm the published GitHub Actions Verify run is green, then begin only explicitly scoped post-MVP maintenance or release work.

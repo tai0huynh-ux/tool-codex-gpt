@@ -23,6 +23,9 @@ const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const trustedRendererIds = new Set<number>();
 let projectDatabase: SqliteDatabase | undefined;
 
+const applicationDataOverride = process.env.CODEX_CONTEXT_BRIDGE_APP_DATA;
+if (applicationDataOverride) app.setPath('appData', path.resolve(applicationDataOverride));
+
 function createWindow(): void {
   const window = new BrowserWindow({
     width: 1040,
@@ -101,4 +104,7 @@ async function startDesktop(): Promise<void> {
   });
 }
 
-void startDesktop().catch(() => app.quit());
+void startDesktop().catch((error: unknown) => {
+  console.error('DESKTOP_START_FAILED', error);
+  app.quit();
+});

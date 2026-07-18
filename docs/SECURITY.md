@@ -8,7 +8,7 @@ single-use approval before any send operation; automatic send is not implemented
 
 ## Browser extension
 
-The extension has only `storage`, `activeTab`, and `scripting`, with host access limited to
+The extension has only `storage`, `activeTab`, `scripting`, and the explicitly authorized `nativeMessaging`, with host access limited to
 `https://chatgpt.com/*`. It reads rendered DOM only after the user opens the tab. It must never read or store
 cookies, tokens, authorization headers, browser history, passwords, or unpublished endpoints. DOM selectors
 are isolated because they are inherently unstable.
@@ -35,7 +35,7 @@ durable response receipts, and idempotent effect keys before either destination 
 
 ADR-0001 selects Native Messaging and the user explicitly authorized its manifest permission for P6-IPC-004. The installed native host uses one exact extension origin and authenticates the desktop side over a per-user named pipe with an ephemeral capability, then strips that capability before forwarding commands into the browser. The extension service worker independently validates version, operation, request ID, nonce, short expiry, replay, and the 256 KiB application limit before DOM execution. Capability files are restricted to the current user where the platform supports it; capabilities and payload content never enter extension messages or logs.
 
-The installed ChatGPT smoke refuses a non-empty or read-only composer, captures only redacted count/hash evidence, inserts a generated non-sensitive marker without submitting, verifies `sent: false`, and clears only when the exact marker hash still matches. It never prints conversation titles, message content, conversation IDs, cookies, tokens, or browser storage.
+The installed ChatGPT smoke refuses a non-empty or read-only composer, captures only redacted count/hash evidence, inserts a generated non-sensitive marker without submitting, verifies `sent: false`, and clears only when the exact marker hash still matches. A new-chat page may produce an honest zero-message snapshot; an identified existing conversation still fails if no messages are found. The wake event contains only a fixed type string. The smoke never prints conversation titles, message content, conversation IDs, cookies, tokens, or browser storage.
 
 Electron keeps context isolation and sandboxing enabled. Preload exposes one typed method per allowlisted IPC channel and validates responses before returning them. The renderer never receives raw `ipcRenderer`, filesystem, shell, child-process, database, or native-port access. Main-process handlers validate the exact renderer identity, request schema, timeout, and transport failure code.
 

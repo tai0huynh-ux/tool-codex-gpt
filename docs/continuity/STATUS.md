@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 6 installed Native Messaging acceptance. Permission activation is complete; live browser proof remains.
+MVP acceptance complete. Phase 6 installed Native Messaging browser proof passed; final publication and CI confirmation remain.
 
 ## Current objective
 
-Load the authorized extension into a user-selected browser, then prove health, capture, no-submit insertion, and exact cleanup through the installed native host.
+Publish the accepted P6-IPC-005 browser path, confirm the remote verification workflow, and leave a restartable maintenance state.
 
 ## Last completed checkpoint
 
-P6-IPC-004 - Activate the explicitly authorized `nativeMessaging` permission, align desktop/release status, and add a redacted no-submit installed ChatGPT smoke harness. Resolve with `git log -1 --grep "feat(transport): activate authorized native messaging"`.
+P6-IPC-005 - Prove the installed Edge-to-native-host-to-ChatGPT path with redacted capture evidence, no-submit insertion, and exact cleanup. Resolve with `git log -1 --grep "fix(release): complete installed browser acceptance"`.
 
 ## Current verified capabilities
 
@@ -86,24 +86,28 @@ P6-IPC-004 - Activate the explicitly authorized `nativeMessaging` permission, al
 - Windows installation writes one exact extension origin and registers Chrome, Edge, and Chromium in both per-user registry views; silent uninstall removes every registration and installed payload.
 - Packaged and installed native-host smokes prove correlated bidirectional relay, restart behavior, and capability-free extension frames with release metadata reporting the permission active.
 - The installed ChatGPT harness refuses existing drafts, captures only count/hash evidence, inserts a generated marker without submit, and clears only the exact matching hash.
+- The live Edge smoke passed with `health: ready`, a redacted zero-message new-chat snapshot hash, `composerSent: false`, and exact composer cleanup.
+- MV3 recovery no longer depends on manually opening the extension page: an allowlisted ChatGPT content script sends a data-free readiness event that wakes the service worker and reconnects Native Messaging.
+- Browser routing recognizes both root conversations and ChatGPT Project URLs containing `/g/.../c/<conversationId>`, while insertions still require an exact conversation identity.
+- Windows packaging now proves the Electron main process initialized the bridge, rebuilds a compatible native SQLite binary, packages required runtime bindings, and fails with captured startup diagnostics instead of accepting a surviving shell process.
 
 ## Current known failures
 
-- The built extension has not yet been loaded into the user browser, so no live browser-owned port or ChatGPT DOM result is claimed.
+- None in the accepted MVP scope.
 
 ## Active blockers
 
-- `BROWSER-LIVE-001` blocks live acceptance because Computer Use could not determine the current Edge URL and stopped before any browser action.
+- None.
 
 ## Next three actions
 
-1. Obtain action-time confirmation to load the built extension into Edge, or have the user load `apps/chatgpt-extension/dist` manually.
-2. Open a user-selected authenticated ChatGPT tab with an empty composer.
-3. Run `pnpm.cmd run smoke:installed-chatgpt:win`, then complete P6-IPC-004 and the release checklist.
+1. Publish the P6-IPC-005 checkpoint to `origin/main` without force.
+2. Confirm GitHub Actions Verify passes from the published commit.
+3. Start only explicitly scoped post-MVP maintenance or release work; do not create a public GitHub Release without authorization.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed locally on 2026-07-18 for P6-IPC-004: migration parity, formatting, lint, strict type-check, 162 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. Windows packaging, packaged smoke, and installed native-host smoke passed with `permissionActive: true`; P6-IPC-005 live browser smoke remains unrun.
+`pnpm.cmd run verify` passed locally on 2026-07-19: migration parity, formatting, lint, strict type-check, 164 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. The live installed Edge smoke passed with health ready, redacted capture count/hash, `sent: false`, and exact cleanup. Windows package, packaged smoke, and installed native-host smoke are the remaining publication reruns.
 
 ## Latest commit
 
@@ -115,4 +119,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 23:08 +07:00.
+2026-07-19 00:17 +07:00.

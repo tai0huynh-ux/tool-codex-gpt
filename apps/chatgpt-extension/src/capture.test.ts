@@ -1,8 +1,24 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { captureLongConversation, captureRenderedConversation } from './capture';
+import {
+  captureConversationPage,
+  captureLongConversation,
+  captureRenderedConversation,
+} from './capture';
 
 describe('ChatGPT capture spike', () => {
+  it('captures a valid empty snapshot for a new ChatGPT page', async () => {
+    document.body.innerHTML = '<main><textarea id="prompt-textarea"></textarea></main>';
+
+    const snapshot = await captureConversationPage(
+      document,
+      new URL('https://chatgpt.com/') as unknown as Location,
+    );
+
+    expect(snapshot.messages).toEqual([]);
+    expect(snapshot.contentHash).toMatch(/^[a-f0-9]{64}$/);
+  });
+
   it('reads the visible title, project, and rendered messages from a fixture page', async () => {
     document.body.innerHTML = `
       <main>
