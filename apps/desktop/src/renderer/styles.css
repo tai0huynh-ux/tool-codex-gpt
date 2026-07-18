@@ -103,6 +103,197 @@ h1 {
     monospace;
 }
 
+.workflow-deck {
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--ink);
+  background: #17251d;
+  color: #f7f1e5;
+  box-shadow: 12px 14px 0 rgba(170, 73, 39, 0.16);
+}
+.workflow-deck-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(247, 241, 229, 0.25);
+}
+.workflow-deck-header h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(1.8rem, 3vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+.workflow-notice {
+  margin: 0.7rem 0 0;
+  color: #c8d0c7;
+  font-size: 0.8rem;
+}
+.workflow-actions {
+  display: flex;
+  gap: 0.55rem;
+}
+.workflow-actions button,
+.cancel-action {
+  border: 1px solid rgba(247, 241, 229, 0.45);
+  background: transparent;
+  color: #f7f1e5;
+  padding: 0.75rem 0.9rem;
+  white-space: nowrap;
+}
+.workflow-actions .workflow-primary {
+  border-color: var(--rust);
+  background: var(--rust);
+  font-weight: 750;
+}
+.workflow-columns {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.65fr) minmax(24rem, 1.5fr) minmax(16rem, 0.85fr);
+}
+.run-list,
+.timeline-panel,
+.review-panel {
+  min-height: 18rem;
+  padding: 1.25rem;
+}
+.timeline-panel {
+  border-inline: 1px solid rgba(247, 241, 229, 0.25);
+}
+.section-heading.compact {
+  margin-bottom: 0.9rem;
+}
+.section-heading.compact h2 {
+  color: #f7f1e5;
+  font-size: 1rem;
+}
+.run-list {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+}
+.run-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(247, 241, 229, 0.18);
+  background: transparent;
+  color: #f7f1e5;
+  text-align: left;
+}
+.run-card.active {
+  border-color: #e07b51;
+  background: rgba(170, 73, 39, 0.18);
+}
+.run-card small {
+  color: #aeb8af;
+}
+.state-badge {
+  width: fit-content;
+  padding: 0.18rem 0.4rem;
+  border: 1px solid currentColor;
+  color: #9fb3a5;
+  font:
+    700 0.62rem ui-monospace,
+    monospace;
+  text-transform: uppercase;
+}
+.state-badge.success,
+.timeline-marker.success {
+  color: #7fcb96;
+}
+.state-badge.warning,
+.timeline-marker.warning {
+  color: #efbd66;
+}
+.state-badge.failed,
+.timeline-marker.failed {
+  color: #ee7d68;
+}
+.state-badge.cancelled,
+.timeline-marker.cancelled {
+  color: #aeb0ae;
+}
+.timeline {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.timeline li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.7rem;
+  align-items: start;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(247, 241, 229, 0.12);
+}
+.timeline-marker {
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-top: 0.2rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  color: #77a78a;
+}
+.timeline li div {
+  display: grid;
+  gap: 0.2rem;
+}
+.timeline small,
+.timeline time {
+  color: #aeb8af;
+  font:
+    0.67rem ui-monospace,
+    monospace;
+}
+.review-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-block: 1px solid rgba(247, 241, 229, 0.2);
+}
+.review-facts p {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.7rem 0;
+}
+.review-facts span,
+.recovery-callout span {
+  color: #aeb8af;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+.recovery-callout {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.8rem;
+  padding: 0.75rem;
+  border-left: 3px solid #efbd66;
+  background: rgba(239, 189, 102, 0.08);
+}
+.diagnostic-list {
+  margin: 0.8rem 0;
+}
+.diagnostic-list p {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.35rem 0;
+  color: #d5dbd4;
+  font-size: 0.72rem;
+}
+.diagnostic-list span {
+  color: #7fcb96;
+  text-transform: uppercase;
+}
+.cancel-action {
+  width: 100%;
+  border-color: #ee7d68;
+  color: #ee7d68;
+}
+
 .workspace-grid {
   display: grid;
   grid-template-columns: minmax(13rem, 0.72fr) minmax(28rem, 1.75fr) minmax(16rem, 0.9fr);
@@ -409,6 +600,13 @@ dd {
 }
 
 @media (max-width: 1050px) {
+  .workflow-columns {
+    grid-template-columns: 13rem 1fr;
+  }
+  .review-panel {
+    grid-column: 1 / -1;
+    border-top: 1px solid rgba(247, 241, 229, 0.25);
+  }
   .workspace-grid {
     grid-template-columns: 14rem 1fr;
   }
@@ -428,6 +626,19 @@ dd {
   .masthead {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .workflow-deck-header,
+  .workflow-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .workflow-columns {
+    display: block;
+  }
+  .timeline-panel,
+  .review-panel {
+    border: 0;
+    border-top: 1px solid rgba(247, 241, 229, 0.25);
   }
   .mode-card {
     width: 100%;

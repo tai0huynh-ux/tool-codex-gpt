@@ -19,6 +19,13 @@ import {
   type RepositoryInput,
   type RepositoryPreviewResponse,
 } from './project-ipc';
+import {
+  workflowIpcChannels,
+  workflowListResponseSchema,
+  workflowViewResponseSchema,
+  type WorkflowListResponse,
+  type WorkflowViewResponse,
+} from './workflow-ipc';
 
 export interface ContextBridgeDesktopApi {
   getTransportStatus(): Promise<TransportStatusResponse>;
@@ -32,6 +39,9 @@ export interface ContextBridgeDesktopApi {
   chooseRepositoryRoot(): Promise<ChooseRootResponse>;
   previewRepository(repository: RepositoryInput): Promise<RepositoryPreviewResponse>;
   confirmRepository(projectId: string, repository: RepositoryInput): Promise<ProjectViewResponse>;
+  listWorkflows(projectId?: string): Promise<WorkflowListResponse>;
+  startWorkflow(projectId: string): Promise<WorkflowViewResponse>;
+  cancelWorkflow(workflowRunId: string): Promise<WorkflowViewResponse>;
 }
 
 const api: ContextBridgeDesktopApi = {
@@ -76,10 +86,24 @@ const api: ContextBridgeDesktopApi = {
         confirmed: true,
       })) as unknown,
     ),
+  listWorkflows: async (projectId) =>
+    workflowListResponseSchema.parse(
+      (await ipcRenderer.invoke(workflowIpcChannels.list, {
+        ...(projectId ? { projectId } : {}),
+      })) as unknown,
+    ),
+  startWorkflow: async (projectId) =>
+    workflowViewResponseSchema.parse(
+      (await ipcRenderer.invoke(workflowIpcChannels.start, { projectId })) as unknown,
+    ),
+  cancelWorkflow: async (workflowRunId) =>
+    workflowViewResponseSchema.parse(
+      (await ipcRenderer.invoke(workflowIpcChannels.cancel, { workflowRunId })) as unknown,
+    ),
 };
 
 contextBridge.exposeInMainWorld('contextBridgeDesktop', api);
 contextBridge.exposeInMainWorld('contextBridgeInfo', {
-  phase: 'project-mapping',
+  phase: 'guided-workflow',
   assistedMode: true,
 });

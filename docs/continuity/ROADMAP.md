@@ -111,10 +111,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 13 - Desktop workflow UI
 
-- [ ] P13-UI-001 Add guided accessible workflow interface
+- [x] P13-UI-001 Add guided accessible workflow interface
   - Depends on: P7-PROJ-001, P8-CTX-001, P10-WF-001, P12-HANDOFF-001
   - Done when: projects, timeline, review, approvals, audit, diagnostics, recovery, keyboard, and Electron smoke tests pass
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(desktop): add guided workflow timeline"`
 
 ## Phase 14 - End-to-end workflow
 

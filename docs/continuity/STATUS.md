@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 13 - Desktop workflow UI.
+Phase 14 - End-to-end workflow.
 
 ## Current objective
 
-Expose the verified project, context, memory, workflow, assisted-send, and response-routing capabilities through one guided desktop workflow.
+Prove the complete recoverable fixture loop across project identity, context review, assisted transfer, response routing, Codex lifecycle, restart, and duplicate prevention.
 
 ## Last completed checkpoint
 
-P12-HANDOFF-001 - Migration v5 response receipts, strict structured-response identity and replay guards, reviewed Codex prompt preview, existing/new/worktree destination validation, P10 approval/effect integration, persisted thread mapping, and mock-only lifecycle routing. Resolve with `git log -1 --grep "feat(routing): route validated prompts to codex"`.
+P13-UI-001 - Typed workflow IPC plus a responsive guided timeline, persisted event history, approval scope summaries, recovery effects, redacted diagnostics, start/cancel controls, and renderer accessibility coverage. Resolve with `git log -1 --grep "feat(desktop): add guided workflow timeline"`.
 
 ## Current verified capabilities
 
@@ -66,6 +66,9 @@ P12-HANDOFF-001 - Migration v5 response receipts, strict structured-response ide
 - Existing Codex threads resume only through persisted project/fingerprint mappings; new threads persist their mapping; new-worktree routes require an explicit provider.
 - Codex prompt approval and preparation use P10 single-use capabilities and iteration limits; ambiguous adapter failures remain `dispatching` and are never retried automatically.
 - Mock lifecycle events advance `codex_running` to completed/failed/cancelled states, but do not satisfy the active live SDK blocker.
+- Desktop workflow data is reconstructed in the main process from persisted runs, ordered events, recovery effects, approval metadata, and redacted audit outcomes.
+- Renderer actions create, refresh, and cancel workflows only through validated typed preload IPC; approval tokens, database handles, and audit details never cross the boundary.
+- The responsive workflow deck exposes textual state badges, keyboard-native controls, event timelines, iteration/retry limits, and explicit recovery status without claiming that review-only states were sent.
 
 ## Current known failures
 
@@ -78,13 +81,13 @@ P12-HANDOFF-001 - Migration v5 response receipts, strict structured-response ide
 
 ## Next three actions
 
-1. Implement `P13-UI-001` guided workflow timeline, review, approval, diagnostics, and recovery surfaces.
-2. Wire renderer actions only through typed Electron IPC into the verified domain packages.
-3. Add keyboard/accessibility tests and responsive desktop/mobile visual smoke.
+1. Implement `P14-E2E-001` golden-path fixture across the persisted workflow loop.
+2. Add restart, duplicate handoff, cancellation, invalid response, wrong-project, and ambiguous-effect negative paths.
+3. Run live smoke only after fixture E2E is green and keep `CODEX-SDK-001` explicit.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18 after adding source aliases for `@codex-context-bridge/codex-adapter`: migration parity, 130 Vitest tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. P12 GitHub Actions run `29641649890` exposed the missing clean-checkout alias; replacement CI is pending publication of the fix.
+`pnpm.cmd run verify` passed on 2026-07-18 for P13: migration parity, 133 Vitest tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. P12 CI fix run `29641802598` passed on Ubuntu with Node.js 24.
 
 ## Latest commit
 
@@ -96,4 +99,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 18:02 +07:00.
+2026-07-18 18:12 +07:00.

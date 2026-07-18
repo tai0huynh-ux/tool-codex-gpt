@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Phase 13 - Desktop workflow UI. Phase 3 live Codex integration remains independently blocked.
+Phase 14 - End-to-end workflow. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -60,13 +60,13 @@ Expected known-good baseline: formatting, lint, strict type-check, 130 or more V
 
 ## Exact next task
 
-Implement `P13-UI-001`: add a guided desktop workflow timeline for context review, assisted ChatGPT transfer, response validation, Codex prompt review, destination selection, approvals, diagnostics, cancellation, and recovery. Keep database, repository, clipboard, transport, and adapter access in validated main-process/domain boundaries.
+Implement `P14-E2E-001`: exercise the complete recoverable fixture loop from a registered project through mock Codex completion, context review, assisted ChatGPT acknowledgement, structured response routing, resumed Codex execution, restart recovery, and no-duplicate assertions. Keep live Codex and authenticated ChatGPT smoke separate.
 
 ## Expected files to modify
 
-- desktop workflow IPC/preload contracts and main-process orchestration
-- responsive accessible renderer timeline, previews, approval and recovery controls
-- unit, Electron boundary, keyboard, and visual smoke tests
+- fixture orchestration across the existing project, workflow, assisted ChatGPT, and response-router packages
+- restart and duplicate-prevention test harnesses
+- golden-path and negative-path E2E coverage
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run

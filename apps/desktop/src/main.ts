@@ -7,9 +7,11 @@ import {
   type SqliteDatabase,
 } from '@codex-context-bridge/database';
 import { ProjectRegistry } from '@codex-context-bridge/project-registry';
+import { WorkflowEngine } from '@codex-context-bridge/workflow-engine';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { registerDesktopIpc, type DesktopBridgeService } from './ipc';
 import { createProjectDesktopService, registerProjectIpc } from './project-ipc';
+import { createWorkflowDesktopService, registerWorkflowIpc } from './workflow-ipc';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const trustedRendererIds = new Set<number>();
@@ -49,6 +51,7 @@ void app.whenReady().then(() => {
   });
   projectDatabase = openDatabase(path.join(app.getPath('userData'), 'context-bridge.sqlite'));
   const registry = new ProjectRegistry(projectDatabase);
+  const workflows = new WorkflowEngine(projectDatabase);
   registerProjectIpc(
     ipcMain,
     createProjectDesktopService(registry, async () => {
@@ -68,6 +71,9 @@ void app.whenReady().then(() => {
       },
     },
   );
+  registerWorkflowIpc(ipcMain, createWorkflowDesktopService(projectDatabase, workflows), {
+    validateSender: (event) => trustedRendererIds.has(event.sender.id),
+  });
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

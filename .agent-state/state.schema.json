@@ -31,14 +31,14 @@
       "description": "Symbolic ref resolved after fetch."
     },
     "currentPhase": { "type": "string", "minLength": 1 },
-    "currentTaskId": { "type": "string", "pattern": "^P[0-9]+-[A-Z]+-[0-9]{3}$" },
+    "currentTaskId": { "type": "string", "pattern": "^P[0-9]+-[A-Z0-9]+-[0-9]{3}$" },
     "status": { "enum": ["in_progress", "blocked", "complete"] },
     "lastCheckpoint": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "commit", "completedAt"],
       "properties": {
-        "id": { "type": "string", "pattern": "^P[0-9]+-[A-Z]+-[0-9]{3}$" },
+        "id": { "type": "string", "pattern": "^P[0-9]+-[A-Z0-9]+-[0-9]{3}$" },
         "commit": {
           "const": "STATE_FILE_COMMIT",
           "description": "Resolve with git log -1 -- .agent-state/state.json to avoid impossible self-referential hashes."

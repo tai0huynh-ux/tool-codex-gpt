@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type SyntheticEvent } from 'react';
 import type { ProjectView, RepositoryInput, RepositoryPreview } from '../project-ipc';
+import { WorkflowWorkspace } from './workflow-ui';
 
 const evidenceLabels: Record<string, string> = {
   'git-remote': 'Git remote',
@@ -216,6 +217,8 @@ export function App(): React.JSX.Element {
       <p className="notice" role="status">
         {notice}
       </p>
+
+      {selectedProject && <WorkflowWorkspace projectId={selectedProject.project.id} />}
 
       <div className="workspace-grid">
         <aside className="project-rail" aria-label="Danh sách project">

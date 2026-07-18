@@ -66,6 +66,9 @@ describe('project mapping renderer', () => {
         },
       }),
       confirmRepository,
+      listWorkflows: vi.fn().mockResolvedValue({ ok: true, value: [] }),
+      startWorkflow: vi.fn(),
+      cancelWorkflow: vi.fn(),
     };
     Object.defineProperty(window, 'contextBridgeDesktop', { configurable: true, value: api });
     await act(async () => {

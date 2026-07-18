@@ -721,3 +721,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Publish this CI fix, watch its GitHub Actions run to completion, then implement `P13-UI-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 18:12 +07:00 - P13-UI-001
+
+### Goal
+
+Expose persisted workflow state as a guided, accessible desktop timeline without moving database, approval-token, audit-detail, repository, or adapter access into the renderer.
+
+### Changes
+
+Added a typed workflow IPC/preload boundary that lists persisted runs, ordered events, recovery effects, approval metadata, and redacted audit outcomes. Added main-process workflow creation and cancellation through `WorkflowEngine`. Added a responsive workflow deck with run selection, textual state badges, timeline, iteration/retry limits, approval/recovery summaries, diagnostics refresh, start, and cancellation controls.
+
+### Files
+
+Desktop workflow IPC/service/tests; main and preload registration; workflow renderer/tests/styles; desktop workspace dependency and lockfile; roadmap, status, recovery, matrix, worklog, and machine-readable state.
+
+### Decisions
+
+Return approval scope and expiry but never capability tokens. Return audit event type/outcome/time but never detail payloads. Do not invent generic retry or send actions where the domain requires a reviewed context or prompt preview; the UI reports persisted state and exposes only safe actions currently backed by verified domain methods.
+
+### Verification
+
+Targeted desktop lint, strict type-check, build, IPC tests, project renderer tests, and workflow accessibility tests passed. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict type-check, 133 Vitest tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects.
+
+### Failures encountered
+
+The first workflow test used a rejected-promise assertion around a synchronous service error, and strict lint rejected unused type imports, `Array<T>` style, an unsafe button cast, and an unbound mocked method reference.
+
+### Root causes
+
+The service intentionally supports synchronous domain execution behind an async IPC wrapper, while the initial test assumed every boundary helper returned a promise. Test ergonomics also did not initially match the repository's strict lint conventions.
+
+### Fixes
+
+Asserted the synchronous domain error directly, retained async behavior at IPC, normalized strict array/import style, narrowed the button with a runtime guard, and held the cancellation spy in a bound local variable.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(desktop): add guided workflow timeline"`.
+
+### Push
+
+Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/main`; the hashes must match. Watch the replacement GitHub Actions run to completion.
+
+### Next action
+
+Implement `P14-E2E-001` exactly as described in `RECOVERY.md`.
