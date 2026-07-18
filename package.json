@@ -8,18 +8,18 @@
     "node": ">=20.19"
   },
   "scripts": {
-    "build": "pnpm.cmd -r --if-present build",
-    "clean": "pnpm.cmd -r --if-present clean",
+    "build": "pnpm -r --if-present build",
+    "clean": "pnpm -r --if-present clean",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0",
     "status": "node scripts/project-status.mjs",
-    "typecheck": "tsc --noEmit -p tsconfig.json && pnpm.cmd -r --if-present typecheck",
+    "typecheck": "tsc --noEmit -p tsconfig.json && pnpm -r --if-present typecheck",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "test:codex-spike": "tsx tests/spikes/codex-sdk-spike.ts",
-    "verify": "pnpm.cmd run format:check && pnpm.cmd run lint && pnpm.cmd run typecheck && pnpm.cmd run test && pnpm.cmd run test:e2e && pnpm.cmd run build"
+    "verify": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run test:e2e && pnpm run build"
   },
   "devDependencies": {
     "@openai/codex-sdk": "0.144.5",

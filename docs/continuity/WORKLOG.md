@@ -47,3 +47,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Implement `P1-TOOL-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 14:45 +07:00 - P1-TOOL-001
+
+### Goal
+
+Make workspace commands portable without changing Windows operator instructions.
+
+### Changes
+
+Replaced Windows-only `pnpm.cmd` inside package scripts and the Playwright web-server command with portable `pnpm` invocations. Added regression tests that scan every workspace package script and the Playwright configuration.
+
+### Files
+
+`package.json`, `playwright.config.ts`, `tests/tooling/cross-platform-scripts.test.ts`, and continuity records.
+
+### Decisions
+
+Keep `pnpm.cmd` in Windows PowerShell documentation, but never embed it in package-managed scripts that execute through the platform shell.
+
+### Verification
+
+Targeted tooling tests passed 2/2. Full verification passed with 21 Vitest tests, one Chromium Playwright test, formatting, lint, strict type-check, and all builds.
+
+### Failures encountered
+
+The first full gate after advancing state failed because the continuity helper test still expected the completed task ID.
+
+### Root causes
+
+The initial root scripts were authored specifically for PowerShell execution-policy constraints rather than package-manager portability. The continuity test encoded a historical task ID instead of validating that the helper reflects the current state file.
+
+### Fixes
+
+Moved the Windows-specific choice to the operator boundary and added a regression test for future scripts. Changed the continuity assertion to compare helper output with the current machine-readable state.
+
+### Commit
+
+Resolve with `git log -1 --grep "chore(tooling): make workspace scripts cross-platform"`.
+
+### Push
+
+Verify HEAD and `origin/main` equality after publication.
+
+### Next action
+
+Implement `P1-CI-001` exactly as described in `RECOVERY.md`.

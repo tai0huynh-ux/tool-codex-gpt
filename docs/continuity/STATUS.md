@@ -6,7 +6,7 @@ Phase 1 - CI and foundation stabilization.
 
 ## Current objective
 
-Make root scripts cross-platform, establish credential-free GitHub Actions verification, and remove duplicated migration sources.
+Establish credential-free GitHub Actions verification, then remove duplicated migration sources.
 
 ## Last completed checkpoint
 
@@ -25,7 +25,6 @@ P0-CONT-001 - Persistent recovery workflow. Resolve the checkpoint commit with `
 ## Current known failures
 
 - Live Codex SDK spike exits before `thread.started` because the configured external model catalog is incompatible with SDK `0.144.5`.
-- Root workspace scripts hardcode `pnpm.cmd` and are not Linux CI compatible.
 - Mock Codex adapter lifecycle reliability and virtualized chat capture are not yet proven.
 
 ## Active blockers
@@ -34,13 +33,13 @@ P0-CONT-001 - Persistent recovery workflow. Resolve the checkpoint commit with `
 
 ## Next three actions
 
-1. Replace hardcoded `pnpm.cmd` inside package scripts with cross-platform `pnpm` calls.
-2. Add GitHub Actions verification with frozen lockfile and Chromium fixture E2E.
-3. Select one canonical migration source and add schema/migration parity coverage.
+1. Add GitHub Actions verification with frozen lockfile and Chromium fixture E2E.
+2. Select one canonical migration source and add schema/migration parity coverage.
+3. Add a lossless typed Codex run lifecycle contract.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: 19 Vitest tests, 1 Chromium Playwright test, lint, strict type-check, and all builds. Both project skills passed the official skill validator.
+`pnpm.cmd run verify` passed on 2026-07-18: 21 Vitest tests, 1 Chromium Playwright test, lint, strict type-check, and all builds. Package scripts and the Playwright server command are verified free of Windows-only pnpm shims.
 
 ## Latest commit
 
@@ -52,4 +51,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 14:41 +07:00.
+2026-07-18 14:45 +07:00.

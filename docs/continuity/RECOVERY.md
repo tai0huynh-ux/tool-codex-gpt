@@ -60,13 +60,13 @@ Expected known-good baseline: formatting, lint, strict type-check, 16 or more Vi
 
 ## Exact next task
 
-Implement `P1-TOOL-001`: replace `pnpm.cmd` embedded inside root package scripts and Playwright web-server commands with cross-platform invocations while keeping Windows operator instructions on `pnpm.cmd`. Add tests or CI evidence that Linux command construction no longer references `pnpm.cmd`. Do not add CI until the portable scripts pass locally.
+Implement `P1-CI-001`: add a GitHub Actions workflow that uses the root Node and pnpm versions, frozen lockfile installation, Chromium installation, and `pnpm run verify`. Add timeouts, branch concurrency cancellation, and Playwright failure artifacts. Do not run live Codex or authenticated ChatGPT tests in CI.
 
 ## Expected files to modify
 
-- `package.json`
-- `playwright.config.ts`
-- targeted tooling tests if needed
+- `.github/workflows/verify.yml`
+- `README.md`
+- CI or tooling tests if needed
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run
@@ -83,7 +83,6 @@ pnpm.cmd run build
 ## Known traps
 
 - PowerShell blocks `pnpm.ps1`; use `pnpm.cmd` at the interactive Windows shell only.
-- Package scripts containing `pnpm.cmd` fail on Linux.
 - Electron and Playwright downloads need explicit pnpm build-script permission.
 - Live Codex tests are separate from CI and must never be represented by mock or fixture results.
 - SQLite migration SQL currently exists in both a `.sql` file and a TypeScript string.

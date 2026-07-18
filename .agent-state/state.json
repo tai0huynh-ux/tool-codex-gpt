@@ -5,12 +5,12 @@
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
   "currentPhase": "Phase 1 - CI and foundation stabilization",
-  "currentTaskId": "P1-TOOL-001",
+  "currentTaskId": "P1-CI-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P0-CONT-001",
+    "id": "P1-TOOL-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T07:41:31.869Z"
+    "completedAt": "2026-07-18T07:45:10.136Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -19,16 +19,15 @@
     "skill-creator quick_validate.py for both project skills"
   ],
   "knownFailures": [
-    "Root package scripts embed pnpm.cmd and are not Linux compatible.",
     "Mock Codex adapter lifecycle reliability is not yet proven.",
     "Virtualized conversation capture is not yet proven."
   ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P1-TOOL-001 cross-platform workspace scripts.",
     "Implement P1-CI-001 credential-free GitHub Actions verification.",
-    "Implement P1-DATA-001 canonical migration source."
+    "Implement P1-DATA-001 canonical migration source.",
+    "Implement P2-CODEX-001 lossless typed run lifecycle."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T07:41:31.869Z"
+  "updatedAt": "2026-07-18T07:45:10.136Z"
 }

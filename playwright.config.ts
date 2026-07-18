@@ -12,7 +12,7 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command:
-      'pnpm.cmd --filter @codex-context-bridge/chatgpt-extension exec vite --host 127.0.0.1 --port 4173',
+      'pnpm --filter @codex-context-bridge/chatgpt-extension exec vite --host 127.0.0.1 --port 4173',
     url: 'http://127.0.0.1:4173/fixture/index.html',
     reuseExistingServer: false,
   },

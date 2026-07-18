@@ -7,9 +7,9 @@ import { describe, expect, it } from 'vitest';
 import { scanTextForSecrets } from '@codex-context-bridge/secret-scanner';
 
 const root = path.resolve(import.meta.dirname, '../..');
-const state = JSON.parse(
-  readFileSync(path.join(root, '.agent-state/state.json'), 'utf8'),
-) as object;
+const state = JSON.parse(readFileSync(path.join(root, '.agent-state/state.json'), 'utf8')) as {
+  currentTaskId: string;
+};
 const schema = JSON.parse(
   readFileSync(path.join(root, '.agent-state/state.schema.json'), 'utf8'),
 ) as object;
@@ -40,7 +40,7 @@ describe('project continuity', () => {
     };
 
     expect(report.head).toMatch(/^[a-f0-9]{40}$/);
-    expect(report.currentTask).toBe('P1-TOOL-001');
+    expect(report.currentTask).toBe(state.currentTaskId);
     expect(report.activeBlockers).toContain('CODEX-SDK-001');
   });
 

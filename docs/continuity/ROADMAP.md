@@ -11,10 +11,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 1 - CI and foundation stabilization
 
-- [ ] P1-TOOL-001 Make workspace scripts cross-platform
+- [x] P1-TOOL-001 Make workspace scripts cross-platform
   - Depends on: P0-CONT-001
   - Done when: Windows uses `pnpm.cmd` externally while package scripts use portable commands
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "chore(tooling): make workspace scripts cross-platform"`
 - [ ] P1-CI-001 Add credential-free repository verification workflow
   - Depends on: P1-TOOL-001
   - Done when: frozen install, format, lint, type-check, unit, Chromium fixture E2E, and build run with timeout and failure artifacts
