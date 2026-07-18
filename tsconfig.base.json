@@ -20,6 +20,7 @@
       "@codex-context-bridge/database": ["packages/database/src/index.ts"],
       "@codex-context-bridge/project-registry": ["packages/project-registry/src/index.ts"],
       "@codex-context-bridge/project-detector": ["packages/project-detector/src/index.ts"],
+      "@codex-context-bridge/local-transport": ["packages/local-transport/src/index.ts"],
       "@codex-context-bridge/file-store": ["packages/file-store/src/index.ts"],
       "@codex-context-bridge/secret-scanner": ["packages/secret-scanner/src/index.ts"]
     }

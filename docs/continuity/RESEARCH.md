@@ -11,6 +11,13 @@
 
 ## Extension transport
 
-- Decision status: not selected.
+- Decision status: Native Messaging selected in ADR-0001; live permission and host registration are deferred.
 - Constraints: no private ChatGPT API, no cookie/token access, runtime validation, authenticated local peer, replay resistance, and reconnect support.
-- Candidate decision must be recorded as an ADR before production transport work.
+- Official Chrome source: `https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging`.
+- Official Chrome findings: exact non-wildcard `allowed_origins`, separate stdio host process, long-lived `connectNative()`, 1 MB host-to-extension messages, and 64 MiB extension-to-host messages.
+- Official MV3 WebSocket source: `https://developer.chrome.com/docs/extensions/how-to/web-platform/websockets`.
+- WebSocket finding: Chrome 116+ supports service-worker WebSockets, but keepalive traffic is required inside the 30-second activity window.
+- Official network source: `https://developer.chrome.com/docs/extensions/develop/concepts/network-requests`.
+- Network finding: cross-origin extension network requests require host permission, so localhost HTTP/WebSocket would also broaden the manifest and add an open loopback listener.
+- Official Electron sources: `https://www.electronjs.org/docs/latest/tutorial/ipc` and `https://www.electronjs.org/docs/latest/tutorial/context-isolation`.
+- Electron finding: expose one filtered method per IPC message through preload; never expose raw `ipcRenderer`.

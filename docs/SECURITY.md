@@ -26,6 +26,12 @@ Every handoff uses protocol `1.0` and is validated at input and output. Routing 
 repository fingerprint, destination ID, correlation ID, and idempotency key. Confidence below `0.60` blocks
 sending. Duplicate/iteration controls belong to the deferred persistent workflow engine.
 
+## Local transport and Electron IPC
+
+ADR-0001 selects Native Messaging without activating new extension permissions in the current manifest. The native boundary uses an exact extension origin plus an ephemeral capability, versioned operation schemas, request IDs, nonces, short expiry, replay protection, a 256 KiB application limit, rate limiting, timeout, reconnect, and redacted audit events. Capabilities and payload content must never be logged.
+
+Electron keeps context isolation and sandboxing enabled. Preload exposes one typed method per allowlisted IPC channel and validates responses before returning them. The renderer never receives raw `ipcRenderer`, filesystem, shell, child-process, database, or native-port access. Main-process handlers validate the exact renderer identity, request schema, timeout, and transport failure code.
+
 ## Threat model highlights
 
 - Cross-project disclosure: mitigated by multi-signal identity and confirmation thresholds.
@@ -33,4 +39,6 @@ sending. Duplicate/iteration controls belong to the deferred persistent workflow
 - Credential exfiltration: mitigated by exclusions and content scanning before copy.
 - Browser account theft: mitigated by prohibiting cookie/token/header access.
 - Infinite handoff loops: planned state-machine iteration, retry, correlation, and approval limits.
+- Local peer spoofing or replay: mitigated by exact native-host origin, capability comparison, expiry, nonce/request caches, rate limits, and bounded framing.
+- Renderer compromise: constrained by context isolation, sandboxing, exact sender validation, and narrow preload methods.
 - Crash inconsistency: planned event-sourced workflow transitions in SQLite.

@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "Phase 6 - Desktop and extension transport",
-  "currentTaskId": "P6-IPC-001",
+  "currentPhase": "Phase 7 - Project mapping",
+  "currentTaskId": "P7-PROJ-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P5-EXT-001",
+    "id": "P6-IPC-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T08:28:00.000Z"
+    "completedAt": "2026-07-18T08:50:15.046Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -18,17 +18,17 @@
     "pnpm.cmd exec vitest run tests/continuity/state-schema.test.ts",
     "pnpm.cmd status -- --json",
     "skill-creator quick_validate.py for both project skills",
-    "GitHub Actions Verify run 29637231505"
+    "GitHub Actions Verify run 29637608281"
   ],
   "knownFailures": [
-    "Authenticated local transport and typed Electron IPC are not yet implemented."
+    "Native Messaging host registration and manifest permission activation are deferred; no live transport is claimed."
   ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P6-IPC-001 authenticated local transport and typed IPC.",
     "Implement P7-PROJ-001 repository registration and mapping UI.",
+    "Implement P8-CTX-001 deterministic reviewed context packs.",
     "Prove P3-CODEX-001 live integration when CODEX-SDK-001 is safely resolved."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T08:28:00.000Z"
+  "updatedAt": "2026-07-18T08:50:15.046Z"
 }

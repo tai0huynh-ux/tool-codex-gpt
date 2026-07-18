@@ -307,3 +307,49 @@ Verify HEAD and `origin/main` equality after publication.
 ### Next action
 
 Implement `P6-IPC-001` exactly as described in `RECOVERY.md`, beginning with the transport ADR.
+
+## 2026-07-18 15:50 +07:00 - P6-IPC-001
+
+### Goal
+
+Choose a safe local extension boundary and implement authenticated, bounded transport contracts plus a typed Electron renderer/main boundary.
+
+### Changes
+
+Accepted ADR-0001 selecting Native Messaging after comparing localhost HTTP, localhost WebSocket, and manual clipboard. Added operation-specific transport schemas, capability authentication, short expiry, replay caches, rate limiting, bounded framing, explicit errors, reconnecting extension client behavior, and exact request correlation. Added Electron IPC sender validation, runtime schemas, timeout/error mapping, transfer audit metadata, and narrow preload methods.
+
+### Files
+
+ADR, research/security/architecture docs; contracts; new `packages/local-transport`; extension native client and tests; desktop IPC/main/preload and tests; workspace aliases, package metadata, lockfile, and continuity records.
+
+### Decisions
+
+Use Native Messaging for production because it has an exact browser-managed extension origin and no listening socket. Keep host registration and `nativeMessaging` manifest permission activation separate and deferred; the current manifest is unchanged and desktop reports `permissionActive: false`. Manual clipboard remains Assisted-mode fallback only.
+
+### Verification
+
+Official Chrome and Electron documentation was reviewed for native framing/origin rules, MV3 WebSocket lifecycle, cross-origin permissions, and context-isolated IPC guidance. Targeted transport/client/IPC tests passed 12/12. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict TypeScript, 57 Vitest tests, one Chromium fixture E2E, and all workspace builds.
+
+### Failures encountered
+
+The first timeout test attached its rejection assertion after fake time advanced, producing an unhandled-rejection warning. Initial strict lint also rejected promise-only async fixtures, an unused destructured capability, and unformatted new files.
+
+### Root causes
+
+The test promise rejected before Vitest observed the assertion, and the first implementation used async syntax and omission patterns that did not satisfy the repository's strict lint contract.
+
+### Fixes
+
+Attached the rejection expectation before advancing time, returned explicit promises in fixtures, constructed a capability-free authenticated request explicitly, formatted the changed files, bounded replay caches to request expiry, and narrowed trusted IPC senders to registered renderer IDs.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(transport): add authenticated local extension bridge"`.
+
+### Push
+
+Verify HEAD and `origin/main` equality after publication.
+
+### Next action
+
+Implement `P7-PROJ-001` exactly as described in `RECOVERY.md`.

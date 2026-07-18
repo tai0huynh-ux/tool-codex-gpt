@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 6 - Desktop and extension transport.
+Phase 7 - Project mapping.
 
 ## Current objective
 
-Choose and implement an authenticated local extension transport with a typed Electron IPC boundary.
+Add repository registration and mapping workflows that preserve multi-signal project identity.
 
 ## Last completed checkpoint
 
-P5-EXT-001 - Controlled composer insertion and bounded paired-marker response parsing with strict schema, identity, payload, and duplicate validation. Resolve with `git log -1 --grep "fix(extension): harden composer and response parsing"`.
+P6-IPC-001 - Native Messaging protocol, authenticated host guard, reconnecting extension client, and typed Electron IPC boundary. Resolve with `git log -1 --grep "feat(transport): add authenticated local extension bridge"`.
 
 ## Current verified capabilities
 
@@ -27,11 +27,14 @@ P5-EXT-001 - Controlled composer insertion and bounded paired-marker response pa
 - Long conversation capture accumulates virtualized windows, preserves duplicate messages with stable IDs, updates streaming text, and supports abort.
 - Composer insertion uses native editing behavior for controlled textareas and contenteditable fields, honors cancellation and read-only state, and never submits automatically.
 - Structured ChatGPT responses use strict paired markers, a 100,000-character default bound, schema validation, handoff/correlation/project checks, and duplicate rejection.
+- ADR-0001 selects Native Messaging without opening a LAN listener or silently activating extension permissions.
+- Local transport validates versioned operations, capability, expiry, replay, payload size, rate, timeout, correlation, and reconnect behavior.
+- Electron preload exposes only allowlisted typed status and operation methods with exact renderer validation and redacted transfer audit events.
 
 ## Current known failures
 
 - Live Codex SDK spike exits before `thread.started` because the configured external model catalog is incompatible with SDK `0.144.5`.
-- Authenticated desktop-to-extension transport and typed renderer/main IPC are not yet implemented.
+- Native Messaging host registration and manifest permission activation are intentionally deferred to the packaging/security gate; no live transport is claimed yet.
 
 ## Active blockers
 
@@ -39,13 +42,13 @@ P5-EXT-001 - Controlled composer insertion and bounded paired-marker response pa
 
 ## Next three actions
 
-1. Record an ADR comparing Native Messaging, localhost HTTP, localhost WebSocket, and clipboard fallback.
-2. Implement the selected authenticated transport with runtime validation, reconnect, rate, and spoofing defenses.
-3. Add a typed allowlisted Electron IPC boundary and its security tests.
+1. Add repository create, update, archive, and fingerprint refresh services.
+2. Persist aliases and ChatGPT/Codex mapping evidence with confirmation history.
+3. Build the first project registration and ambiguity-confirmation UI.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 45 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all builds. GitHub Actions run `29637231505` passed for checkpoint `2272682` with no annotations.
+`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 57 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all builds. GitHub Actions run `29637608281` passed for checkpoint `58c49c0` with no annotations.
 
 ## Latest commit
 
@@ -57,4 +60,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 15:28 +07:00.
+2026-07-18 15:50 +07:00.

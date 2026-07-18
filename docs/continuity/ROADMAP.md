@@ -54,10 +54,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 6 - Desktop and extension transport
 
-- [ ] P6-IPC-001 Add authenticated local transport and typed IPC
+- [x] P6-IPC-001 Add authenticated local transport and typed IPC
   - Depends on: P2-CODEX-001, P5-EXT-001
   - Done when: transport threat model, runtime validation, reconnect, spoofing, rate, and Electron IPC tests pass
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(transport): add authenticated local extension bridge"`
 
 ## Phase 7 - Project mapping
 

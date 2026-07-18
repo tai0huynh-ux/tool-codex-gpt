@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture ext
 
 ## Current phase
 
-Phase 6 - Desktop and extension transport. Phase 3 live Codex integration remains independently blocked.
+Phase 7 - Project mapping. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -56,18 +56,18 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 45 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
+Expected known-good baseline: formatting, lint, strict type-check, 57 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
 
 ## Exact next task
 
-Implement `P6-IPC-001`: create an ADR comparing Native Messaging, localhost HTTP, localhost WebSocket, and clipboard fallback; then implement the selected authenticated local transport and typed Electron IPC boundary with runtime validation and security tests.
+Implement `P7-PROJ-001`: extend repository registration and mapping persistence, then add a project UI for multiple repositories, aliases, ambiguity confirmation, worktrees, ChatGPT sources, and Codex thread mappings.
 
 ## Expected files to modify
 
-- `docs/adr/` transport decision record
-- desktop main/preload transport and IPC modules
-- extension background/content transport modules
-- transport and IPC unit/integration tests
+- `packages/project-registry/` services and tests
+- `packages/project-detector/` identity evidence and tests
+- database migration only if the existing mapping tables are insufficient
+- desktop renderer project registration and mapping UI
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run
@@ -86,6 +86,7 @@ pnpm.cmd run build
 - PowerShell blocks `pnpm.ps1`; use `pnpm.cmd` at the interactive Windows shell only.
 - Electron and Playwright downloads need explicit pnpm build-script permission.
 - Live Codex tests are separate from CI and must never be represented by mock or fixture results.
+- Native Messaging protocol fixtures are not live registration evidence; the manifest permission and host installer remain deferred to the packaging/security gate.
 - Edit `packages/database/migrations/0001_initial.sql`, then run `pnpm.cmd migrations:generate`; generated migration drift fails verify, database type-check, and database build.
 
 ## Blockers and safe alternatives
