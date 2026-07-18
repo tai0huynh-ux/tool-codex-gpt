@@ -20,9 +20,9 @@ const manifest = JSON.parse(
 };
 
 describe('extension production manifest boundary', () => {
-  it('builds the dormant service worker without silently activating native messaging', () => {
+  it('activates only the explicitly authorized native messaging boundary', () => {
     expect(manifest.background?.service_worker).toBe('service-worker.js');
-    expect(manifest.permissions).not.toContain('nativeMessaging');
+    expect(manifest.permissions).toEqual(['storage', 'activeTab', 'scripting', 'nativeMessaging']);
     expect(manifest.host_permissions).toEqual(['https://chatgpt.com/*']);
     expect(JSON.stringify(manifest)).not.toContain('<all_urls>');
     const publicKey = Buffer.from(manifest.key ?? '', 'base64');
@@ -49,5 +49,20 @@ describe('extension production manifest boundary', () => {
     expect(installer).toContain('Google\\Chrome\\NativeMessagingHosts');
     expect(installer).toContain('Microsoft\\Edge\\NativeMessagingHosts');
     expect(installer).toContain('customUnInstall');
+  });
+
+  it('reports the authorized permission consistently from desktop and release metadata', () => {
+    const desktopMain = readFileSync(
+      path.join(import.meta.dirname, '../../apps/desktop/src/main.ts'),
+      'utf8',
+    );
+    const packaging = readFileSync(
+      path.join(import.meta.dirname, '../../scripts/package-windows.ps1'),
+      'utf8',
+    );
+    expect(desktopMain).toContain('permissionActive: true');
+    expect(packaging).toContain('permissionActive = $true');
+    expect(desktopMain).not.toContain('permissionActive: false');
+    expect(packaging).not.toContain('permissionActive = $false');
   });
 });

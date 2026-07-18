@@ -5,12 +5,12 @@
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
   "currentPhase": "Phase 6 - Installed Native Messaging acceptance",
-  "currentTaskId": "P6-IPC-004",
+  "currentTaskId": "P6-IPC-005",
   "status": "blocked",
   "lastCheckpoint": {
-    "id": "P3-CODEX-001",
+    "id": "P6-IPC-004",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T14:00:00.000Z"
+    "completedAt": "2026-07-18T16:08:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -39,17 +39,21 @@
     "GitHub Actions Verify run 29645472474 passed clean-checkout Linux verification in 1m47s for P6-IPC-003",
     "P3-CODEX-001 production adapter tests passed with 12 ordered lifecycle, resume, cancellation, failure-redaction, and disposal cases",
     "pnpm.cmd run verify passed with 159 Vitest tests, two workflow E2E tests, two Chromium E2E tests, and 15 workspace builds",
-    "pnpm.cmd run test:codex-spike passed live start, lifecycle, read-only sandbox, resume, cancellation, and failure mapping"
+    "pnpm.cmd run test:codex-spike passed live start, lifecycle, read-only sandbox, resume, cancellation, and failure mapping",
+    "P6-IPC-004A targeted manifest, native bridge, operation executor, desktop relay, and installed ChatGPT harness tests passed: 16 tests",
+    "pnpm.cmd run verify passed with 162 Vitest tests, two workflow E2E tests, two Chromium E2E tests, and 15 workspace builds",
+    "pnpm.cmd run package:win and pnpm.cmd run smoke:packaged:win passed with nativeMessaging permission active",
+    "pnpm.cmd run smoke:installed-native-host:win passed with two relay runs, six registry checks, and uninstall cleanup"
   ],
   "knownFailures": [
-    "The nativeMessaging extension permission is intentionally inactive pending explicit authorization; installed live browser transport has not run."
+    "The authorized extension has not yet been loaded into a user browser; installed live ChatGPT transport has not run."
   ],
-  "activeBlockers": ["EXT-PERM-001"],
+  "activeBlockers": ["BROWSER-LIVE-001"],
   "nextActions": [
-    "Request explicit authorization before adding nativeMessaging for P6-IPC-004.",
-    "After authorization, add only the nativeMessaging permission and its boundary tests.",
-    "Run the installed user-opened ChatGPT health/capture/assisted-insert smoke with redacted evidence."
+    "Obtain action-time confirmation to load the built extension into Edge, or have the user load apps/chatgpt-extension/dist manually.",
+    "Open a user-selected authenticated ChatGPT tab with an empty composer while the packaged desktop app is running.",
+    "Run pnpm.cmd run smoke:installed-chatgpt:win and publish final P6 acceptance if it passes."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T14:00:00.000Z"
+  "updatedAt": "2026-07-18T16:08:00.000Z"
 }

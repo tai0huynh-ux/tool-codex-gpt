@@ -62,7 +62,7 @@ async function startDesktop(): Promise<void> {
     ipcMain,
     createNativeDesktopBridgeService({
       ...transportPaths,
-      permissionActive: false,
+      permissionActive: true,
     }),
     {
       validateSender: (event) => trustedRendererIds.has(event.sender.id),

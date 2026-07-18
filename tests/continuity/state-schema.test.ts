@@ -41,7 +41,7 @@ describe('project continuity', () => {
 
     expect(report.head).toMatch(/^[a-f0-9]{40}$/);
     expect(report.currentTask).toBe(state.currentTaskId);
-    expect(report.activeBlockers).toEqual(['EXT-PERM-001']);
+    expect(report.activeBlockers).toEqual(['BROWSER-LIVE-001']);
   });
 
   it('keeps continuity records free of detected secrets', () => {

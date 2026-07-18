@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Phase 6 installed Native Messaging acceptance. P3-CODEX-001 is live-verified; P6-IPC-004 remains authorization-gated because it adds the `nativeMessaging` extension permission.
+Phase 6 installed Native Messaging acceptance. P6-IPC-004 activated the authorized `nativeMessaging` permission; P6-IPC-005 must load the built extension into a user browser and run the redacted live smoke.
 
 ## Last known-good commit
 
@@ -56,16 +56,16 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 159 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass. The separate live Codex gate must pass without modifying external configuration. Windows transport acceptance additionally requires package, packaged smoke, and installed native-host smoke.
+Expected known-good baseline: formatting, lint, strict type-check, 162 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass. The separate live Codex gate must pass without modifying external configuration. Windows permission activation additionally requires package, packaged smoke, and installed native-host smoke.
 
 ## Exact next task
 
-Request explicit authorization for `P6-IPC-004` before adding the `nativeMessaging` extension permission. After authorization, run the installed user-opened ChatGPT health/capture/assisted-insert smoke. Until then, keep the permission absent and do not claim live browser integration.
+With action-time confirmation, load `apps/chatgpt-extension/dist` into Edge from `edge://extensions`, open a user-selected authenticated ChatGPT tab with an empty composer, keep the packaged desktop app running, and execute `pnpm.cmd run smoke:installed-chatgpt:win`. The harness must report health ready, capture count/hash only, `sent: false`, and exact cleanup.
 
 ## Expected files to modify
 
-- extension manifest permission and permission-boundary tests only after explicit authorization
-- installed user-opened ChatGPT smoke harness and redacted evidence
+- browser loading/installation only after action-time confirmation
+- redacted live smoke evidence and continuity completion
 - continuity and state updates reflecting the live result or blocker
 
 ## Tests to run
@@ -88,7 +88,7 @@ pnpm.cmd run smoke:installed-native-host:win
 - PowerShell blocks `pnpm.ps1`; use `pnpm.cmd` at the interactive Windows shell only.
 - Electron and Playwright downloads need explicit pnpm build-script permission.
 - Live Codex tests are separate from CI and must never be represented by mock or fixture results.
-- The extension service worker is dormant while `nativeMessaging` is absent. Do not add that permission without explicit authorization.
+- Browser extension installation through UI requires action-time confirmation even though the manifest permission was authorized.
 - Native Messaging protocol and service-worker fixtures are not live host registration evidence.
 - Installed host relay evidence is not a live browser integration while `nativeMessaging` is absent.
 - The installer source under `apps/desktop/build` is intentionally unignored; do not replace it with generated output.
@@ -102,4 +102,4 @@ pnpm.cmd run smoke:installed-native-host:win
 
 ## Blockers and safe alternatives
 
-`CODEX-SDK-001` is resolved through a per-process bundled catalog and no external configuration edits. `P6-IPC-004` requires explicit authorization before changing extension permissions; no remaining live transport work is safe to claim without it.
+`CODEX-SDK-001` and `EXT-PERM-001` are resolved. `BROWSER-LIVE-001` remains because Computer Use stopped on URL confidence before loading the extension; use a confirmed manual load or a later safe Computer Use attempt, then run the no-submit smoke.

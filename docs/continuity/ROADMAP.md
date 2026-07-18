@@ -66,9 +66,13 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
   - Depends on: P6-IPC-002
   - Done when: a separate packaged host authenticates desktop requests, relays bounded operations bidirectionally, installs an exact-origin manifest and per-user registry entries, and passes install/restart/uninstall smoke without activating extension permissions
   - Commit: resolve with `git log -1 --grep "feat(transport): install authenticated native host relay"`
-- [ ] P6-IPC-004 Activate and prove the installed Native Messaging path
+- [x] P6-IPC-004 Activate the explicitly authorized Native Messaging permission
   - Depends on: P6-IPC-003, explicit authorization to add the `nativeMessaging` extension permission
-  - Done when: the installed extension and host complete a user-opened authenticated ChatGPT health/capture/assisted-insert smoke with redacted evidence
+  - Done when: the manifest, desktop status, release metadata, boundary tests, package, packaged smoke, and installed host smoke all require and report the permission active
+  - Commit: resolve with `git log -1 --grep "feat(transport): activate authorized native messaging"`
+- [ ] P6-IPC-005 Prove the installed Native Messaging browser path
+  - Depends on: P6-IPC-004, action-time confirmation to install/load the browser extension
+  - Done when: the installed extension and host complete a user-opened authenticated ChatGPT health/capture/assisted-insert/clear smoke with redacted evidence
   - Commit: pending
 
 ## Phase 7 - Project mapping

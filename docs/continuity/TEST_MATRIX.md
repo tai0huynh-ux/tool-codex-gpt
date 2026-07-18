@@ -5,7 +5,7 @@
 | Formatting            | automated                       | `pnpm.cmd run format:check`                    | local Windows                                      | pass                                      | `87bd00f` baseline |
 | Lint                  | automated                       | `pnpm.cmd run lint`                            | local Windows                                      | pass                                      | `87bd00f` baseline |
 | TypeScript            | automated                       | `pnpm.cmd run typecheck`                       | local Windows                                      | pass                                      | `87bd00f` baseline |
-| Domain packages       | unit                            | `pnpm.cmd run test`                            | local Windows                                      | 159 pass                                  | checkpoint         |
+| Domain packages       | unit                            | `pnpm.cmd run test`                            | local Windows                                      | 162 pass                                  | checkpoint         |
 | Extension capture     | virtualized fixture E2E         | `pnpm.cmd run test:e2e`                        | Chromium                                           | 1 pass                                    | checkpoint         |
 | Assisted composer     | no-submit/clear fixture E2E     | `pnpm.cmd run test:e2e`                        | Chromium                                           | 1 pass                                    | checkpoint         |
 | Workspace build       | automated                       | `pnpm.cmd run build`                           | local Windows                                      | pass                                      | `87bd00f` baseline |
@@ -49,5 +49,6 @@
 | ChatGPT selectors     | live manual                     | documented manual smoke                        | user-opened authenticated tab                      | not run                                   | not implemented    |
 | Extension worker      | host-to-DOM operation routing   | `pnpm.cmd run test`                            | Vitest native-port and tab fixtures                | 10 tests pass                             | checkpoint         |
 | Native host install   | relay, registry, restart        | `pnpm.cmd run smoke:installed-native-host:win` | clean per-user Chrome/Edge/Chromium registration   | pass twice; uninstall clean               | checkpoint         |
+| Installed ChatGPT     | live no-submit browser smoke    | `pnpm.cmd run smoke:installed-chatgpt:win`     | user-selected authenticated ChatGPT tab            | blocked by `BROWSER-LIVE-001`             | pending            |
 
 Fixture and mock results never count as live integration evidence.

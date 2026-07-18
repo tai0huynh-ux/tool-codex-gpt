@@ -29,10 +29,10 @@ runner, while the mock adapter remains available only for deterministic fixtures
 
 ADR-0001 selects Native Messaging for the production extension boundary. The browser-owned native port is protected by exact `allowed_origins`; the packaged native host authenticates desktop-originated operations over a per-user named pipe with an ephemeral application capability before forwarding a capability-free request into the extension. Requests are versioned, operation-specific, short-lived, replay-protected, size-bounded, rate-limited, and audited without payload or capability logging.
 
-The extension service worker reconnects only through a fixed native-host name, receives host-forwarded commands, revalidates expiry/replay/size, and routes DOM work to an exact user-opened ChatGPT tab. It never receives the desktop capability. Electron preload exposes allowlisted status and operation methods; the renderer never receives raw `ipcRenderer`, the capability, or a native port. Windows packaging installs a console launcher, bundled Node-mode host, exact-origin manifest, and per-user Chrome/Edge/Chromium registration in both registry views. The service worker remains dormant while the `nativeMessaging` manifest permission is intentionally inactive.
+The extension service worker reconnects only through a fixed native-host name, receives host-forwarded commands, revalidates expiry/replay/size, and routes DOM work to an exact user-opened ChatGPT tab. It never receives the desktop capability. Electron preload exposes allowlisted status and operation methods; the renderer never receives raw `ipcRenderer`, the capability, or a native port. Windows packaging installs a console launcher, bundled Node-mode host, exact-origin manifest, and per-user Chrome/Edge/Chromium registration in both registry views. The explicitly authorized `nativeMessaging` permission now activates this browser-owned port; live acceptance still requires loading the built extension into a user browser and running the no-submit smoke.
 
-Live installed ChatGPT sending remains authorization-gated. Adapter and transport domain boundaries stay
-separate from renderer and extension trust boundaries.
+Live installed ChatGPT acceptance remains browser-environment-gated. Adapter and transport domain boundaries
+stay separate from renderer and extension trust boundaries.
 
 ## Dependency direction
 

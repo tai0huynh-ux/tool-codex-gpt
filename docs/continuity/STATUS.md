@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 6 installed Native Messaging acceptance. Phase 3 production Codex integration is complete.
+Phase 6 installed Native Messaging acceptance. Permission activation is complete; live browser proof remains.
 
 ## Current objective
 
-Keep the verified production Codex runtime isolated and read-only while awaiting explicit authorization for the installed browser permission gate.
+Load the authorized extension into a user-selected browser, then prove health, capture, no-submit insertion, and exact cleanup through the installed native host.
 
 ## Last completed checkpoint
 
-P3-CODEX-001 - Isolate the production Codex runtime and prove live start, lifecycle, read-only sandbox, resume, cancellation, failure mapping, and cleanup. Resolve with `git log -1 --grep "feat(codex): isolate production runtime lifecycle"`.
+P6-IPC-004 - Activate the explicitly authorized `nativeMessaging` permission, align desktop/release status, and add a redacted no-submit installed ChatGPT smoke harness. Resolve with `git log -1 --grep "feat(transport): activate authorized native messaging"`.
 
 ## Current verified capabilities
 
@@ -29,7 +29,7 @@ P3-CODEX-001 - Isolate the production Codex runtime and prove live start, lifecy
 - Composer insertion uses native editing behavior for controlled textareas and contenteditable fields, honors cancellation and read-only state, and never submits automatically.
 - Structured ChatGPT responses use strict paired markers, a 100,000-character default bound, schema validation, handoff/correlation/project checks, and duplicate rejection.
 - ADR-0001 selects Native Messaging without opening a LAN listener or silently activating extension permissions.
-- The extension build includes a dormant service worker that activates only when `nativeMessaging` is explicitly present in the manifest.
+- The extension manifest explicitly includes the user-authorized `nativeMessaging` permission and activates the fixed-host service worker without adding `<all_urls>`.
 - Host-forwarded operations are validated without a desktop capability, replay/expiry/oversize are rejected before DOM execution, and existing-conversation inserts require an exact URL identity.
 - Local transport validates versioned operations, capability, expiry, replay, payload size, rate, timeout, correlation, and reconnect behavior.
 - Electron preload exposes only allowlisted typed status and operation methods with exact renderer validation and redacted transfer audit events.
@@ -84,25 +84,26 @@ P3-CODEX-001 - Isolate the production Codex runtime and prove live start, lifecy
 - Desktop requests reach the native host over a per-user named pipe authenticated by a local capability that is stripped before the browser boundary.
 - The packaged console launcher runs the bundled native host through Electron's Node mode and preserves framed stdin/stdout without exposing a listening network socket.
 - Windows installation writes one exact extension origin and registers Chrome, Edge, and Chromium in both per-user registry views; silent uninstall removes every registration and installed payload.
-- Packaged and installed native-host smokes prove correlated bidirectional relay, restart behavior, and capability-free extension frames while `nativeMessaging` remains absent.
+- Packaged and installed native-host smokes prove correlated bidirectional relay, restart behavior, and capability-free extension frames with release metadata reporting the permission active.
+- The installed ChatGPT harness refuses existing drafts, captures only count/hash evidence, inserts a generated marker without submit, and clears only the exact matching hash.
 
 ## Current known failures
 
-- The `nativeMessaging` extension permission remains intentionally inactive; no live transport is claimed.
+- The built extension has not yet been loaded into the user browser, so no live browser-owned port or ChatGPT DOM result is claimed.
 
 ## Active blockers
 
-- `EXT-PERM-001` blocks installed browser acceptance until the user explicitly authorizes `nativeMessaging`.
+- `BROWSER-LIVE-001` blocks live acceptance because Computer Use could not determine the current Edge URL and stopped before any browser action.
 
 ## Next three actions
 
-1. Request explicit authorization before adding the `nativeMessaging` permission for P6-IPC-004.
-2. After authorization, add only the permission and its boundary tests.
-3. Run the installed user-opened ChatGPT health/capture/assisted-insert smoke with redacted evidence.
+1. Obtain action-time confirmation to load the built extension into Edge, or have the user load `apps/chatgpt-extension/dist` manually.
+2. Open a user-selected authenticated ChatGPT tab with an empty composer.
+3. Run `pnpm.cmd run smoke:installed-chatgpt:win`, then complete P6-IPC-004 and the release checklist.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed locally on 2026-07-18 for P3-CODEX-001: migration parity, formatting, lint, strict type-check, 159 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. `pnpm.cmd run test:codex-spike` separately passed live start/lifecycle/read-only/resume/cancellation/failure acceptance without modifying external Codex configuration.
+`pnpm.cmd run verify` passed locally on 2026-07-18 for P6-IPC-004: migration parity, formatting, lint, strict type-check, 162 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. Windows packaging, packaged smoke, and installed native-host smoke passed with `permissionActive: true`; P6-IPC-005 live browser smoke remains unrun.
 
 ## Latest commit
 
@@ -114,4 +115,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 21:00 +07:00.
+2026-07-18 23:08 +07:00.

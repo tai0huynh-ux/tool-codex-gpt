@@ -52,7 +52,7 @@ try {
       hostName = 'com.codex_context_bridge.host'
       extensionOrigin = 'chrome-extension://ccchffnkidpolmnnlonbnakjjmphfdjp/'
       registeredBrowsers = @('Chrome', 'Edge', 'Chromium')
-      permissionActive = $false
+      permissionActive = $true
     }
     files = $files
   }

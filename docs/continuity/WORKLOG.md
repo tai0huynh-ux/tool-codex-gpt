@@ -1079,3 +1079,53 @@ Publish `main` to `origin`, fetch, and require `HEAD` to equal `origin/main`.
 ### Next action
 
 Stop at `EXT-PERM-001` and request explicit authorization before adding `nativeMessaging` for P6-IPC-004.
+
+## 2026-07-18 23:08 +07:00 - P6-IPC-004
+
+### Goal
+
+Activate the explicitly authorized Native Messaging permission and prepare a safe, repeatable installed ChatGPT acceptance harness without claiming the browser path before it runs.
+
+### Changes
+
+Added `nativeMessaging` to the exact-scope extension manifest, changed desktop and release metadata to report the permission active, and added an installed ChatGPT smoke command. The harness checks bridge health, inspects a user-selected ChatGPT page, refuses unsupported/read-only/non-empty composers, captures only redacted message-count and snapshot-hash evidence, inserts a generated marker with `sent: false`, and clears only the exact matching hash.
+
+### Files
+
+Extension manifest and boundary tests; desktop permission status; Windows release metadata; installed ChatGPT smoke harness and integration tests; architecture, security, continuity, release checklist, and machine-readable state.
+
+### Decisions
+
+Treat permission activation and live browser evidence as separate proof layers. Never overwrite an existing draft, never submit the ChatGPT form, never print conversation titles/messages/IDs, and never use host-only or fixture evidence to claim a browser-owned native port.
+
+### Verification
+
+Targeted manifest, extension bridge/executor, desktop relay, and smoke-harness verification passed with 16 tests. `pnpm.cmd run verify` passed migration parity, formatting, lint, strict type-check, 162 Vitest tests, two workflow E2E tests, two Chromium E2E tests, and all 15 workspace builds. `package:win`, packaged smoke, and installed native-host smoke passed; release metadata reports `permissionActive: true`.
+
+### Failures encountered
+
+Computer Use enumerated the single running Edge window, then stopped before any browser action because it could not determine the current browser URL with enough confidence to enforce policy.
+
+### Root causes
+
+The remaining failure is a Windows browser URL-confidence policy stop, not a repository, extension, installer, registry, or native-host transport defect.
+
+### Fixes
+
+Recorded `BROWSER-LIVE-001`, preserved a manual/action-time-confirmed extension-loading path, and created P6-IPC-005 for the real health/capture/insert/clear acceptance.
+
+### Security
+
+The manifest adds only `nativeMessaging`; host access remains exactly `https://chatgpt.com/*` with no `<all_urls>`. The host still accepts one fixed extension origin, the desktop capability never crosses into the browser, the smoke does not submit or expose rendered content, and no browser profile storage, cookies, tokens, or credentials were read.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(transport): activate authorized native messaging"`.
+
+### Push
+
+Publish `main` to `origin`, fetch, and require `HEAD` to equal `origin/main`.
+
+### Next action
+
+With action-time confirmation, load `apps/chatgpt-extension/dist` into Edge, open an authenticated ChatGPT tab with an empty composer, run `pnpm.cmd run smoke:installed-chatgpt:win`, and complete P6-IPC-005 only if the redacted no-submit smoke passes.
