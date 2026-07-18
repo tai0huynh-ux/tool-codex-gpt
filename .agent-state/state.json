@@ -9,8 +9,8 @@
   "status": "complete",
   "lastCheckpoint": {
     "id": "P6-IPC-005",
-    "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T17:17:00.000Z"
+    "commit": "fd2ceb620d4c89407523e621f7cf67ca33c4ec0d",
+    "completedAt": "2026-07-18T17:35:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -46,15 +46,16 @@
     "pnpm.cmd run smoke:installed-native-host:win passed with two relay runs, six registry checks, and uninstall cleanup",
     "P6-IPC-005 targeted extension capture, routing, wake recovery, native bridge, and smoke-harness tests passed",
     "pnpm.cmd run verify passed with 164 Vitest tests, two workflow E2E tests, two Chromium E2E tests, and 15 workspace builds",
-    "pnpm.cmd run smoke:installed-chatgpt:win passed live Edge health, zero-message new-chat capture hash, no-submit insertion, and exact cleanup"
+    "pnpm.cmd run smoke:installed-chatgpt:win passed live Edge health, zero-message new-chat capture hash, no-submit insertion, and exact cleanup",
+    "GitHub Actions Verify run 29653888516 passed for P6-IPC-005",
+    "GitHub Actions Verify run 29653971791 passed for published continuity checkpoint"
   ],
   "knownFailures": [],
   "activeBlockers": [],
   "nextActions": [
-    "Publish the P6-IPC-005 checkpoint to origin/main without force and verify the remote hash.",
-    "Confirm GitHub Actions Verify passes from the published commit.",
-    "Begin only an explicitly scoped post-MVP maintenance or release task; do not create a public release without authorization."
+    "Begin only an explicitly scoped post-MVP maintenance or release task; do not create a public release without authorization.",
+    "Keep the accepted MVP in maintenance mode; do not create a public release without authorization."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T17:17:00.000Z"
+  "updatedAt": "2026-07-18T17:35:00.000Z"
 }
