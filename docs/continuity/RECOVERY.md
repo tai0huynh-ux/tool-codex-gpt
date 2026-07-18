@@ -60,13 +60,14 @@ Expected known-good baseline: formatting, lint, strict type-check, 16 or more Vi
 
 ## Exact next task
 
-Implement `P1-CI-001`: add a GitHub Actions workflow that uses the root Node and pnpm versions, frozen lockfile installation, Chromium installation, and `pnpm run verify`. Add timeouts, branch concurrency cancellation, and Playwright failure artifacts. Do not run live Codex or authenticated ChatGPT tests in CI.
+Implement `P1-DATA-001`: make `packages/database/migrations/0001_initial.sql` the canonical initial migration source, generate the runtime TypeScript representation deterministically, and add a check that fails when generated runtime SQL drifts from the distributable SQL. Preserve the existing schema and migration version.
 
 ## Expected files to modify
 
-- `.github/workflows/verify.yml`
-- `README.md`
-- CI or tooling tests if needed
+- `packages/database/migrations/0001_initial.sql`
+- `packages/database/src/migration.ts`
+- migration generation/check tooling and tests
+- root/package scripts if needed
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run

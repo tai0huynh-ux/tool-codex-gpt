@@ -15,10 +15,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
   - Depends on: P0-CONT-001
   - Done when: Windows uses `pnpm.cmd` externally while package scripts use portable commands
   - Commit: resolve with `git log -1 --grep "chore(tooling): make workspace scripts cross-platform"`
-- [ ] P1-CI-001 Add credential-free repository verification workflow
+- [x] P1-CI-001 Add credential-free repository verification workflow
   - Depends on: P1-TOOL-001
   - Done when: frozen install, format, lint, type-check, unit, Chromium fixture E2E, and build run with timeout and failure artifacts
-  - Commit: pending
+  - Commits: `3787b41` workflow and `b091234` Node.js 24 action runtimes
 - [ ] P1-DATA-001 Establish a canonical migration source
   - Depends on: P0-CONT-001
   - Done when: runtime migrations and distributable SQL cannot drift silently

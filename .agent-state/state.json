@@ -5,18 +5,19 @@
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
   "currentPhase": "Phase 1 - CI and foundation stabilization",
-  "currentTaskId": "P1-CI-001",
+  "currentTaskId": "P1-DATA-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P1-TOOL-001",
+    "id": "P1-CI-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T07:45:10.136Z"
+    "completedAt": "2026-07-18T07:57:24.473Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
     "pnpm.cmd exec vitest run tests/continuity/state-schema.test.ts",
     "pnpm.cmd status -- --json",
-    "skill-creator quick_validate.py for both project skills"
+    "skill-creator quick_validate.py for both project skills",
+    "GitHub Actions Verify run 29636579711"
   ],
   "knownFailures": [
     "Mock Codex adapter lifecycle reliability is not yet proven.",
@@ -24,10 +25,10 @@
   ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P1-CI-001 credential-free GitHub Actions verification.",
     "Implement P1-DATA-001 canonical migration source.",
-    "Implement P2-CODEX-001 lossless typed run lifecycle."
+    "Implement P2-CODEX-001 lossless typed run lifecycle.",
+    "Implement P4-EXT-001 virtualized conversation capture."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T07:45:10.136Z"
+  "updatedAt": "2026-07-18T07:57:24.473Z"
 }

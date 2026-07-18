@@ -93,3 +93,49 @@ Verify HEAD and `origin/main` equality after publication.
 ### Next action
 
 Implement `P1-CI-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 14:57 +07:00 - P1-CI-001
+
+### Goal
+
+Run the repository's full credential-free verification contract on every push and pull request.
+
+### Changes
+
+Added a Linux GitHub Actions workflow with frozen pnpm installation, Chromium setup, timeout and concurrency controls, the full verification gate, and failure-only Playwright artifacts. Updated the action majors to their Node.js 24 runtime releases and added workflow regression coverage.
+
+### Files
+
+`.github/workflows/verify.yml`, `README.md`, `tests/tooling/ci-workflow.test.ts`, and continuity records.
+
+### Decisions
+
+Keep live Codex and authenticated ChatGPT checks outside CI. Pin action major versions that use Node.js 24 while pinning the project pnpm version exactly.
+
+### Verification
+
+Local `pnpm.cmd run verify` passed with 24 Vitest tests, one Chromium Playwright test, formatting, lint, strict type-check, and all builds. GitHub Actions runs `29636449824` and `29636579711` passed; the final run completed in 1m18s and returned no check annotations.
+
+### Failures encountered
+
+The first successful workflow used action releases that emitted a Node.js 20 deprecation annotation.
+
+### Root causes
+
+The original action major versions still executed on the deprecated Node.js 20 action runtime even though the project itself tested on Node.js 24.
+
+### Fixes
+
+Updated checkout and setup-node to v7, pnpm/action-setup to v6, and upload-artifact to v7, with tests locking those runtime-compatible majors.
+
+### Commit
+
+Implementation: `3787b41`. Runtime update: `b091234`.
+
+### Push
+
+Both commits were pushed to `origin/main`; `HEAD` and `origin/main` matched at `b0912340068440c16e618ba479d81776c836f335` before this continuity update.
+
+### Next action
+
+Implement `P1-DATA-001` exactly as described in `RECOVERY.md`.

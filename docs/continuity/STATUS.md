@@ -6,11 +6,11 @@ Phase 1 - CI and foundation stabilization.
 
 ## Current objective
 
-Establish credential-free GitHub Actions verification, then remove duplicated migration sources.
+Remove duplicated migration sources by making one SQL file canonical and enforcing generated runtime parity.
 
 ## Last completed checkpoint
 
-P0-CONT-001 - Persistent recovery workflow. Resolve the checkpoint commit with `git log -1 -- docs/continuity/STATUS.md`.
+P1-CI-001 - Credential-free cross-platform repository verification. Implementation commits: `3787b41` and `b091234`.
 
 ## Current verified capabilities
 
@@ -21,6 +21,7 @@ P0-CONT-001 - Persistent recovery workflow. Resolve the checkpoint commit with `
 - Handoff validation passes Zod and JSON Schema checks.
 - ChatGPT capture fixture passes in jsdom and Chromium.
 - Electron uses context isolation, sandboxing, and no renderer Node integration.
+- GitHub Actions runs frozen installation, Chromium fixture E2E, and the full verification gate on Linux with Node.js 24.
 
 ## Current known failures
 
@@ -33,13 +34,13 @@ P0-CONT-001 - Persistent recovery workflow. Resolve the checkpoint commit with `
 
 ## Next three actions
 
-1. Add GitHub Actions verification with frozen lockfile and Chromium fixture E2E.
-2. Select one canonical migration source and add schema/migration parity coverage.
+1. Make `packages/database/migrations/0001_initial.sql` the canonical initial migration source.
+2. Generate and verify the runtime TypeScript migration without silent drift.
 3. Add a lossless typed Codex run lifecycle contract.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: 21 Vitest tests, 1 Chromium Playwright test, lint, strict type-check, and all builds. Package scripts and the Playwright server command are verified free of Windows-only pnpm shims.
+`pnpm.cmd run verify` passed on 2026-07-18: 24 Vitest tests, 1 Chromium Playwright test, formatting, lint, strict type-check, and all builds. GitHub Actions run `29636579711` passed in 1m18s with no annotations.
 
 ## Latest commit
 
@@ -51,4 +52,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 14:45 +07:00.
+2026-07-18 14:57 +07:00.
