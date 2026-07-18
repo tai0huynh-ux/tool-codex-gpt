@@ -33,8 +33,12 @@ intentionally deferred. Their database boundaries exist so Phase 1 does not forc
 Contracts and database are foundational. Registry depends on database. Detector depends on contracts.
 File store depends on secret scanning. Apps may consume packages later but no package depends on an app.
 
+Database migrations are an ordered, generated version list sourced from `packages/database/migrations/*.sql`. Each version runs in its own transaction and advances SQLite `user_version` only after success. Migration v2 adds non-destructive project/repository archive state, worktree metadata, and append-only mapping confirmation history.
+
 ## Project identity
 
 A fingerprint hashes normalized Git remote, canonical root, project name, repository marker, and optional
 `AGENTS.md` hash. Detection scores matching evidence. A score of at least `0.85` can auto-select, `0.60` to
 `0.84` requires confirmation, and lower scores are blocked from sending.
+
+Branch is operational metadata, not repository identity. Distinct worktree roots remain distinct repository registrations while normalized remote and other evidence can associate them with the same project. Equal-confidence candidates return an explicit ambiguity and never select the first database row implicitly. Confirmations retain evidence and supersede older active mappings without deleting history.

@@ -25,8 +25,11 @@ export function normalizeGitRemote(remote: string): string {
 }
 
 export function canonicalizeRepositoryRoot(repoRoot: string): string {
-  const resolved = path.resolve(repoRoot).replace(/\\/g, '/');
-  return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
+  const normalized = repoRoot.trim().replace(/\\/g, '/');
+  if (/^[a-z]:\//i.test(normalized) || normalized.startsWith('//')) {
+    return path.win32.resolve(normalized).replace(/\\/g, '/').toLowerCase();
+  }
+  return path.resolve(normalized).replace(/\\/g, '/');
 }
 
 export function createRepositoryFingerprint(
@@ -59,6 +62,7 @@ export function detectProject(
 ): ProjectDetectionResult {
   const normalizedObserved = createRepositoryFingerprint(observed);
   let best: { projectId: string; confidence: number; evidence: ProjectEvidence[] } | undefined;
+  let ambiguousProjectIds: string[] = [];
 
   for (const candidate of candidates) {
     const normalizedCandidate = createRepositoryFingerprint(candidate.fingerprint);
@@ -77,14 +81,26 @@ export function detectProject(
     );
     compare('agents-hash', normalizedObserved.agentsHash, normalizedCandidate.agentsHash);
     const confidence = Number(evidence.reduce((total, item) => total + item.score, 0).toFixed(2));
-    if (!best || confidence > best.confidence)
+    if (!best || confidence > best.confidence) {
       best = { projectId: candidate.projectId, confidence, evidence };
+      ambiguousProjectIds = [candidate.projectId];
+    } else if (confidence === best.confidence) {
+      ambiguousProjectIds.push(candidate.projectId);
+    }
   }
 
   if (!best || best.confidence < 0.6) {
     return {
       confidence: best?.confidence ?? 0,
       evidence: best?.evidence ?? [],
+      requiresConfirmation: true,
+    };
+  }
+  if (ambiguousProjectIds.length > 1) {
+    return {
+      ambiguousProjectIds,
+      confidence: best.confidence,
+      evidence: best.evidence,
       requiresConfirmation: true,
     };
   }

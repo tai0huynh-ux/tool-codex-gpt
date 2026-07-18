@@ -263,14 +263,19 @@ export type LocalTransportRequest = z.infer<typeof localTransportRequestSchema>;
 export type LocalTransportResult = z.infer<typeof localTransportResultSchema>;
 export type LocalTransportResponse = z.infer<typeof localTransportResponseSchema>;
 
-export interface ProjectEvidence {
-  type: 'git-remote' | 'repo-root' | 'project-name' | 'repository-marker' | 'agents-hash';
-  value: string;
-  score: number;
-}
+export const projectEvidenceSchema = z
+  .object({
+    type: z.enum(['git-remote', 'repo-root', 'project-name', 'repository-marker', 'agents-hash']),
+    value: z.string().min(1),
+    score: z.number().min(0).max(1),
+  })
+  .strict();
+
+export type ProjectEvidence = z.infer<typeof projectEvidenceSchema>;
 
 export interface ProjectDetectionResult {
   projectId?: string;
+  ambiguousProjectIds?: string[];
   confidence: number;
   evidence: ProjectEvidence[];
   requiresConfirmation: boolean;

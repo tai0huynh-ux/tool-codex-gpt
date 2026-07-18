@@ -2,7 +2,8 @@ import BetterSqlite3 from 'better-sqlite3';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { appendAuditEvent, openDatabase } from './index';
+import { appendAuditEvent, migrate, openDatabase } from './index';
+import { initialMigration } from './migration';
 
 describe('database migrations and audit log', () => {
   it('creates the required schema and records an audit event', () => {
@@ -39,6 +40,43 @@ describe('database migrations and audit log', () => {
     ).toEqual({
       name: 'settings',
     });
+    database.close();
+  });
+
+  it('upgrades an existing v1 database without losing project data', () => {
+    const database = new BetterSqlite3(':memory:');
+    database.pragma('foreign_keys = ON');
+    database.exec(initialMigration);
+    database.pragma('user_version = 1');
+    database
+      .prepare('INSERT INTO projects (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)')
+      .run('project-1', 'Bridge', '2026-07-18T00:00:00.000Z', '2026-07-18T00:00:00.000Z');
+
+    migrate(database);
+
+    expect(database.pragma('user_version', { simple: true })).toBe(2);
+    expect(database.prepare('SELECT name FROM projects WHERE id = ?').get('project-1')).toEqual({
+      name: 'Bridge',
+    });
+    expect(
+      database
+        .prepare("SELECT name FROM pragma_table_info('projects') WHERE name = 'archived_at'")
+        .get(),
+    ).toEqual({ name: 'archived_at' });
+    expect(
+      database
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'mapping_confirmations'",
+        )
+        .get(),
+    ).toEqual({ name: 'mapping_confirmations' });
+    database.close();
+  });
+
+  it('refuses to open a database created by a newer runtime', () => {
+    const database = new BetterSqlite3(':memory:');
+    database.pragma('user_version = 999');
+    expect(() => migrate(database)).toThrow('DATABASE_SCHEMA_NEWER_THAN_RUNTIME');
     database.close();
   });
 });

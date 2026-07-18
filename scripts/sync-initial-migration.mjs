@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -15,10 +15,8 @@ function optionPath(name, fallback) {
   return path.resolve(process.cwd(), value);
 }
 
-const sourcePath = optionPath(
-  '--source',
-  path.join(repositoryRoot, 'packages/database/migrations/0001_initial.sql'),
-);
+const sourcePath = optionPath('--source', null);
+const migrationsDirectory = path.join(repositoryRoot, 'packages/database/migrations');
 const targetPath = optionPath(
   '--target',
   path.join(repositoryRoot, 'packages/database/src/migration.ts'),
@@ -32,7 +30,7 @@ function normalizeSql(value) {
   return `${normalizeNewlines(value).replace(/\n*$/, '')}\n`;
 }
 
-function renderModule(sql) {
+function renderLegacyModule(sql) {
   return [
     '// Generated from migrations/0001_initial.sql by scripts/sync-initial-migration.mjs.',
     '// Edit the SQL source, then run `pnpm migrations:generate`.',
@@ -42,7 +40,51 @@ function renderModule(sql) {
   ].join('\n');
 }
 
-const expected = renderModule(normalizeSql(readFileSync(sourcePath, 'utf8')));
+function readMigrations() {
+  const entries = readdirSync(migrationsDirectory)
+    .filter((name) => /^\d{4}_[a-z0-9_]+\.sql$/i.test(name))
+    .sort()
+    .map((name) => {
+      const version = Number(name.slice(0, 4));
+      if (!Number.isSafeInteger(version) || version < 1) {
+        throw new Error(`Invalid migration version: ${name}`);
+      }
+      return {
+        version,
+        name: name.replace(/^\d{4}_/, '').replace(/\.sql$/i, ''),
+        sql: normalizeSql(readFileSync(path.join(migrationsDirectory, name), 'utf8')),
+      };
+    });
+  for (const [index, entry] of entries.entries()) {
+    if (entry.version !== index + 1) {
+      throw new Error(`Migration versions must be contiguous from 0001; found ${entry.version}`);
+    }
+  }
+  return entries;
+}
+
+function renderMigrationsModule(entries) {
+  const lines = [
+    '// Generated from migrations/*.sql by scripts/sync-initial-migration.mjs.',
+    '// Edit the SQL sources, then run `pnpm migrations:generate`.',
+    'export const migrations = [',
+  ];
+  for (const entry of entries) {
+    lines.push(
+      '  {',
+      `    version: ${entry.version},`,
+      `    name: '${entry.name}',`,
+      `    sql: ${JSON.stringify(entry.sql)},`,
+      '  },',
+    );
+  }
+  lines.push('] as const;', '', 'export const initialMigration = migrations[0].sql;', '');
+  return lines.join('\n');
+}
+
+const expected = sourcePath
+  ? renderLegacyModule(normalizeSql(readFileSync(sourcePath, 'utf8')))
+  : renderMigrationsModule(readMigrations());
 
 if (argumentsList.includes('--check')) {
   let actual;

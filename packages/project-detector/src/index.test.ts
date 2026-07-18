@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createRepositoryFingerprint, detectProject, normalizeGitRemote } from './index';
+import {
+  canonicalizeRepositoryRoot,
+  createRepositoryFingerprint,
+  detectProject,
+  normalizeGitRemote,
+} from './index';
 
 describe('repository identity', () => {
   it('normalizes equivalent Git remotes', () => {
@@ -18,6 +23,19 @@ describe('repository identity', () => {
       projectName: 'tool',
     });
     expect(first.fingerprint).not.toBe(second.fingerprint);
+  });
+
+  it('normalizes Windows paths independent of host OS and ignores branch changes', () => {
+    expect(canonicalizeRepositoryRoot('C:\\Work\\Bridge')).toBe('c:/work/bridge');
+    const main = createRepositoryFingerprint({
+      repoRoot: 'C:/Work/Bridge',
+      gitRemote: 'https://github.com/acme/bridge.git',
+    });
+    const feature = createRepositoryFingerprint({
+      repoRoot: 'c:/work/bridge',
+      gitRemote: 'git@github.com:acme/bridge.git',
+    });
+    expect(main.fingerprint).toBe(feature.fingerprint);
   });
 
   it('enforces automatic, confirmation, and blocked confidence thresholds', () => {
@@ -44,6 +62,24 @@ describe('repository identity', () => {
     ).toMatchObject({ confidence: 0.7, requiresConfirmation: true });
     expect(detectProject({ repoRoot: 'C:/elsewhere' }, [candidate])).toMatchObject({
       confidence: 0,
+      requiresConfirmation: true,
+    });
+  });
+
+  it('returns an explicit ambiguity instead of selecting the first tied project', () => {
+    const observed = {
+      repoRoot: 'C:/work/new-tree',
+      gitRemote: 'https://github.com/acme/bridge.git',
+      projectName: 'bridge',
+      repositoryMarker: 'same-marker',
+    };
+    expect(
+      detectProject(observed, [
+        { projectId: 'project-1', fingerprint: { ...observed, repoRoot: 'C:/work/one' } },
+        { projectId: 'project-2', fingerprint: { ...observed, repoRoot: 'C:/work/two' } },
+      ]),
+    ).toMatchObject({
+      ambiguousProjectIds: ['project-1', 'project-2'],
       requiresConfirmation: true,
     });
   });

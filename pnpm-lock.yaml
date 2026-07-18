@@ -144,9 +144,15 @@ importers:
 
   packages/project-registry:
     dependencies:
+      '@codex-context-bridge/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@codex-context-bridge/database':
         specifier: workspace:*
         version: link:../database
+      '@codex-context-bridge/project-detector':
+        specifier: workspace:*
+        version: link:../project-detector
 
   packages/secret-scanner: {}
 

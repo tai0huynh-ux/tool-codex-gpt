@@ -1,5 +1,5 @@
 import BetterSqlite3 from 'better-sqlite3';
-import { initialMigration } from './migration';
+import { migrations } from './migration';
 
 export type SqliteDatabase = BetterSqlite3.Database;
 
@@ -12,13 +12,17 @@ export function openDatabase(filename: string): SqliteDatabase {
 }
 
 export function migrate(database: SqliteDatabase): void {
-  const version = database.pragma('user_version', { simple: true }) as number;
-  if (version >= 1) return;
-
-  database.transaction(() => {
-    database.exec(initialMigration);
-    database.pragma('user_version = 1');
-  })();
+  let currentVersion = database.pragma('user_version', { simple: true }) as number;
+  const latestVersion = Math.max(...migrations.map((migration) => migration.version));
+  if (currentVersion > latestVersion) throw new Error('DATABASE_SCHEMA_NEWER_THAN_RUNTIME');
+  for (const migration of migrations) {
+    if (migration.version <= currentVersion) continue;
+    database.transaction(() => {
+      database.exec(migration.sql);
+      database.pragma(`user_version = ${String(migration.version)}`);
+    })();
+    currentVersion = migration.version;
+  }
 }
 
 export interface AuditEventInput {

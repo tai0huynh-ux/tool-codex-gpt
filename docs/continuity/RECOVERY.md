@@ -56,18 +56,18 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 57 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
+Expected known-good baseline: formatting, lint, strict type-check, 63 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
 
 ## Exact next task
 
-Implement `P7-PROJ-001`: extend repository registration and mapping persistence, then add a project UI for multiple repositories, aliases, ambiguity confirmation, worktrees, ChatGPT sources, and Codex thread mappings.
+Implement `P7-UI-001`: add typed project-registry IPC and a desktop project UI for multiple repositories, aliases, ambiguity evidence/confirmation, archive state, and persisted reload.
 
 ## Expected files to modify
 
-- `packages/project-registry/` services and tests
-- `packages/project-detector/` identity evidence and tests
-- database migration only if the existing mapping tables are insufficient
-- desktop renderer project registration and mapping UI
+- desktop main/preload project IPC and tests
+- desktop database lifecycle/configuration
+- desktop renderer project list, detail, registration, evidence, and confirmation UI
+- renderer/component and Electron smoke fixtures
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run
@@ -87,7 +87,7 @@ pnpm.cmd run build
 - Electron and Playwright downloads need explicit pnpm build-script permission.
 - Live Codex tests are separate from CI and must never be represented by mock or fixture results.
 - Native Messaging protocol fixtures are not live registration evidence; the manifest permission and host installer remain deferred to the packaging/security gate.
-- Edit `packages/database/migrations/0001_initial.sql`, then run `pnpm.cmd migrations:generate`; generated migration drift fails verify, database type-check, and database build.
+- Add database changes as ordered `NNNN_name.sql` files, then run `pnpm.cmd migrations:generate`; never rewrite an accepted migration to simulate an upgrade.
 
 ## Blockers and safe alternatives
 

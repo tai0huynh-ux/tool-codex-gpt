@@ -353,3 +353,49 @@ Verify HEAD and `origin/main` equality after publication.
 ### Next action
 
 Implement `P7-PROJ-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 16:07 +07:00 - P7-DATA-001
+
+### Goal
+
+Create the non-destructive persistence and identity foundation required for multi-repository project mapping before exposing it through the desktop UI.
+
+### Changes
+
+Generalized generated runtime migrations into an ordered version list and added migration v2 for project/repository archive state, branch/worktree metadata, and mapping confirmation history. Extended the registry with archive/restore, aliases, repository registration/refresh/archive, ChatGPT source and Codex thread registration, validated evidence, and atomic mapping supersession. Made Windows path identity host-independent and added explicit tied-candidate ambiguity.
+
+### Files
+
+Migration generator and SQL/runtime migration files; database migration runner/tests; contracts; project detector; project registry/package/lockfile; architecture and continuity records.
+
+### Decisions
+
+Never hard-delete projects through the registry's supported lifecycle. Keep branch outside the repository fingerprint, distinguish worktrees by canonical root, and refuse to auto-select when multiple candidates share the highest confidence. Preserve all mapping decisions as confirmed, rejected, or superseded history.
+
+### Verification
+
+Targeted migration, detector, and registry tests passed 14/14. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict TypeScript, 63 Vitest tests, one Chromium fixture E2E, and all workspace builds.
+
+### Failures encountered
+
+The initial multi-migration generator emitted double-quoted migration names that Prettier rewrote, causing deterministic parity checks to fail. Strict lint also rejected numeric template interpolation and optional string handling.
+
+### Root causes
+
+The generated module was semantically correct but not byte-identical to repository formatting, and the first implementation did not fully follow strict interpolation/nullish conventions.
+
+### Fixes
+
+Made the generator emit Prettier-stable single-quoted names, stringified migration versions explicitly, normalized optional metadata through a dedicated helper, and retained deterministic drift checking.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(projects): add mapping persistence"`.
+
+### Push
+
+Verify HEAD and `origin/main` equality after publication.
+
+### Next action
+
+Implement `P7-UI-001` exactly as described in `RECOVERY.md`.
