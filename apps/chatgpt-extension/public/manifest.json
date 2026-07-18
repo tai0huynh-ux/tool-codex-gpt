@@ -3,6 +3,7 @@
   "name": "Codex Context Bridge Capture Spike",
   "version": "0.1.0",
   "description": "User-initiated capture spike for rendered ChatGPT conversations.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp43zi5/sK8D524lFWdXwcQjdheCiyStJtMOZ81/C7IF2aBUNaWuxWuSxXcy5H1LnBgnaCtXuH7DPE0zWbN0sf++UEakuzxbZKMAd3OXbvsdhiE5xsMNaqzVjO+vGuI+VLxcIg0FWC+JBbWubQ+f7TnyigpAr1axHruhhzlpnf/6mP2DpvAEcX68wweWdX4zQg95ojAR9/kJ9WQ1VnYsQTq69t4oYsomTZpj2dB23GJtvnGmFrsSU0oAWtMSRNq8Fsyv9ZbLpbPw09crj/QEDtraKHAeP2Gqp4MQ2DRPDN7VmlrjRAyHfsuOZkfSE6o9EEdxYdy/8XVCjN9SOdypJewIDAQAB",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["https://chatgpt.com/*"],
   "background": {

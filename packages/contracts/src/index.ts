@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export const NATIVE_MESSAGING_HOST_NAME = 'com.codex_context_bridge.host';
+export const NATIVE_MESSAGING_EXTENSION_ID = 'ccchffnkidpolmnnlonbnakjjmphfdjp';
+
 export const handoffEnvelopeSchema = z
   .object({
     protocolVersion: z.literal('1.0'),
@@ -341,6 +344,7 @@ export type LocalTransportOperation = z.infer<typeof localTransportOperationSche
 export type LocalTransportRequest = z.infer<typeof localTransportRequestSchema>;
 export type ExtensionTransportRequest = z.infer<typeof extensionTransportRequestSchema>;
 export type LocalTransportResult = z.infer<typeof localTransportResultSchema>;
+export type LocalTransportErrorCode = z.infer<typeof localTransportErrorCodeSchema>;
 export type LocalTransportResponse = z.infer<typeof localTransportResponseSchema>;
 
 export const projectEvidenceSchema = z

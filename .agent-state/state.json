@@ -5,12 +5,12 @@
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
   "currentPhase": "Phase 6 - Production Native Messaging completion",
-  "currentTaskId": "P6-IPC-003",
-  "status": "in_progress",
+  "currentTaskId": "P6-IPC-004",
+  "status": "blocked",
   "lastCheckpoint": {
-    "id": "P6-IPC-002",
+    "id": "P6-IPC-003",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T12:03:00.000Z"
+    "completedAt": "2026-07-18T12:59:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -31,18 +31,21 @@
     "P6-IPC-002 full verification passed with 145 Vitest tests and a two-entry extension build",
     "GitHub Actions Verify run 29643866680 reproduced a missing Vite fixture source alias",
     "Extension type-check, two workflow E2E, two Chromium E2E, and two-entry build passed after restoring the dev-server alias",
-    "Project renderer visual smoke at 1440x1000 and 390x844"
+    "Project renderer visual smoke at 1440x1000 and 390x844",
+    "P6-IPC-003 targeted local relay, desktop named-pipe, and installer identity tests passed",
+    "pnpm.cmd run verify passed with 153 Vitest tests, two workflow E2E tests, two Chromium E2E tests, and 15 workspace builds",
+    "pnpm.cmd run package:win and pnpm.cmd run smoke:packaged:win passed",
+    "pnpm.cmd run smoke:installed-native-host:win passed with two relay runs, six registry checks, and uninstall cleanup"
   ],
   "knownFailures": [
-    "Desktop-to-native-host relay, packaged host executable, and Windows host registration are not implemented.",
-    "The nativeMessaging extension permission is intentionally inactive pending explicit authorization."
+    "The nativeMessaging extension permission is intentionally inactive pending explicit authorization; installed live browser transport has not run."
   ],
-  "activeBlockers": ["CODEX-SDK-001"],
+  "activeBlockers": ["CODEX-SDK-001", "EXT-PERM-001"],
   "nextActions": [
-    "Implement P6-IPC-003 authenticated desktop-to-host relay and native host process.",
-    "Add exact-origin Chrome and Edge per-user registration plus install/restart/uninstall smoke.",
-    "Request explicit permission activation before the live user-opened ChatGPT smoke."
+    "Request explicit authorization before adding nativeMessaging for P6-IPC-004.",
+    "After authorization, run the installed user-opened ChatGPT health/capture/assisted-insert smoke.",
+    "Resolve CODEX-SDK-001 externally without modifying the user's Codex configuration."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T12:14:00.000Z"
+  "updatedAt": "2026-07-18T12:59:00.000Z"
 }

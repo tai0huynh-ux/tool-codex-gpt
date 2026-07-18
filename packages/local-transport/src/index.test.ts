@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   NativeMessageDecoder,
   createAuthenticatedNativeHost,
+  createNativeRelay,
   encodeNativeMessage,
   reconnectDelay,
   type TransportAuditEvent,
@@ -117,4 +118,95 @@ describe('native message framing', () => {
 it('uses bounded exponential reconnect delay with injectable jitter', () => {
   expect(reconnectDelay(0, { random: () => 0.5 })).toBe(250);
   expect(reconnectDelay(10, { random: () => 0.5 })).toBe(5_000);
+});
+
+describe('desktop to extension native relay', () => {
+  it('authenticates the desktop and strips the capability before forwarding', async () => {
+    const forwarded: unknown[] = [];
+    const relay = createNativeRelay({
+      capability,
+      now: () => now,
+      sendToExtension: (message) => forwarded.push(message),
+    });
+
+    const response = relay.handleDesktopRequest(request());
+    await vi.waitFor(() => expect(forwarded).toHaveLength(1));
+    expect(JSON.stringify(forwarded[0])).not.toContain('capability');
+    relay.handleExtensionResponse({
+      protocolVersion: '1.0',
+      requestId: 'request-0000000001',
+      ok: true,
+      result: { type: 'bridge.health.result', status: 'ready' },
+    });
+    await expect(response).resolves.toMatchObject({
+      ok: true,
+      result: { type: 'bridge.health.result', status: 'ready' },
+    });
+  });
+
+  it('does not forward unauthenticated desktop requests', async () => {
+    const sendToExtension = vi.fn();
+    const relay = createNativeRelay({
+      capability,
+      now: () => now,
+      sendToExtension,
+    });
+    await expect(
+      relay.handleDesktopRequest(request({ capability: 'b'.repeat(48) })),
+    ).resolves.toMatchObject({ error: { code: 'AUTHENTICATION_FAILED' } });
+    expect(sendToExtension).not.toHaveBeenCalled();
+  });
+
+  it('maps extension timeout and disconnect without retrying the operation', async () => {
+    vi.useFakeTimers();
+    const sent: unknown[] = [];
+    const relay = createNativeRelay({
+      capability,
+      now: () => now,
+      timeoutMs: 10,
+      sendToExtension: (message) => sent.push(message),
+    });
+
+    const timedOut = relay.handleDesktopRequest(request());
+    await vi.advanceTimersByTimeAsync(10);
+    await expect(timedOut).resolves.toMatchObject({ error: { code: 'REQUEST_TIMEOUT' } });
+    expect(sent).toHaveLength(1);
+
+    const disconnected = relay.handleDesktopRequest(
+      request({ requestId: 'request-0000000002', nonce: 'nonce-000000000002' }),
+    );
+    relay.disconnect();
+    await expect(disconnected).resolves.toMatchObject({
+      error: { code: 'TRANSPORT_DISCONNECTED' },
+    });
+    expect(sent).toHaveLength(2);
+    vi.useRealTimers();
+  });
+
+  it('ignores malformed, unknown, and duplicate extension responses', async () => {
+    vi.useFakeTimers();
+    const relay = createNativeRelay({
+      capability,
+      now: () => now,
+      timeoutMs: 10,
+      sendToExtension: () => undefined,
+    });
+    const response = relay.handleDesktopRequest(request());
+    relay.handleExtensionResponse({ requestId: 'request-0000000001', ok: true });
+    relay.handleExtensionResponse({
+      protocolVersion: '1.0',
+      requestId: 'unknown-request-id',
+      ok: true,
+      result: { type: 'bridge.health.result', status: 'ready' },
+    });
+    await vi.advanceTimersByTimeAsync(10);
+    await expect(response).resolves.toMatchObject({ error: { code: 'REQUEST_TIMEOUT' } });
+    relay.handleExtensionResponse({
+      protocolVersion: '1.0',
+      requestId: 'request-0000000001',
+      ok: true,
+      result: { type: 'bridge.health.result', status: 'ready' },
+    });
+    vi.useRealTimers();
+  });
 });

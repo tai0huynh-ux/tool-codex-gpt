@@ -1,6 +1,11 @@
 node_modules/
 dist/
 build/
+!apps/desktop/build/
+apps/desktop/build/*
+!apps/desktop/build/compile-native-host.ps1
+!apps/desktop/build/installer.nsh
+!apps/desktop/build/native-host-launcher.cs
 coverage/
 .vite/
 .env

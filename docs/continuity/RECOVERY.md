@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Phase 6 production transport completion. P6-IPC-002 corrects the extension-side command direction; P6-IPC-003 must add the separate native host, desktop relay, and Windows registration. Live Codex remains independently blocked.
+Phase 6 production transport completion. P6-IPC-003 packages and installs the authenticated native host and desktop relay; P6-IPC-004 remains authorization-gated because it adds the `nativeMessaging` extension permission. Live Codex remains independently blocked.
 
 ## Last known-good commit
 
@@ -56,18 +56,17 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 130 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass.
+Expected known-good baseline: formatting, lint, strict type-check, 153 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass. Windows acceptance additionally requires package, packaged smoke, and installed native-host smoke.
 
 ## Exact next task
 
-Implement `P6-IPC-003`: add a separate authenticated native-host relay, a desktop client over a per-user local IPC boundary, and exact-origin Chrome/Edge registration in the Windows installer. Keep `nativeMessaging` absent until explicit permission authorization.
+Request explicit authorization for `P6-IPC-004` before adding the `nativeMessaging` extension permission. After authorization, run the installed user-opened ChatGPT health/capture/assisted-insert smoke. Until then, keep the permission absent and do not claim live browser integration.
 
 ## Expected files to modify
 
-- native-host runtime and tests
-- desktop transport client/service and tests
-- Windows installer host manifest/registry integration and smoke tests
-- architecture, security, release, test matrix, worklog, recovery, and state
+- extension manifest permission and permission-boundary tests only after explicit authorization
+- installed user-opened ChatGPT smoke harness and redacted evidence
+- continuity and state updates reflecting the live result or blocker
 
 ## Tests to run
 
@@ -78,6 +77,9 @@ pnpm.cmd run typecheck
 pnpm.cmd run test
 pnpm.cmd run test:e2e
 pnpm.cmd run build
+pnpm.cmd run package:win
+pnpm.cmd run smoke:packaged:win
+pnpm.cmd run smoke:installed-native-host:win
 ```
 
 ## Known traps
@@ -87,6 +89,8 @@ pnpm.cmd run build
 - Live Codex tests are separate from CI and must never be represented by mock or fixture results.
 - The extension service worker is dormant while `nativeMessaging` is absent. Do not add that permission without explicit authorization.
 - Native Messaging protocol and service-worker fixtures are not live host registration evidence.
+- Installed host relay evidence is not a live browser integration while `nativeMessaging` is absent.
+- The installer source under `apps/desktop/build` is intentionally unignored; do not replace it with generated output.
 - Add database changes as ordered `NNNN_name.sql` files, then run `pnpm.cmd migrations:generate`; never rewrite an accepted migration to simulate an upgrade.
 - Renderer code must not read repositories directly; context collection and secret decisions belong in validated main/domain boundaries.
 - Only approved memories may enter retrieval or bootstrap output; candidate content must never be auto-approved.
@@ -97,4 +101,4 @@ pnpm.cmd run build
 
 ## Blockers and safe alternatives
 
-`CODEX-SDK-001` blocks the live SDK path because an external model catalog is incompatible. Do not modify external Codex configuration. Continue the native-host relay, installer registration, and permission-inactive smoke independently.
+`CODEX-SDK-001` blocks the live SDK path because an external model catalog is incompatible. Do not modify external Codex configuration. `P6-IPC-004` separately requires explicit authorization before changing extension permissions; no remaining live transport work is safe to claim without it.

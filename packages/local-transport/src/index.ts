@@ -1,7 +1,10 @@
 import {
+  extensionTransportRequestSchema,
   localTransportRequestSchema,
   localTransportResponseSchema,
+  type ExtensionTransportRequest,
   type LocalTransportRequest,
+  type LocalTransportErrorCode,
   type LocalTransportResponse,
   type LocalTransportResult,
 } from '@codex-context-bridge/contracts';
@@ -11,7 +14,19 @@ export const DEFAULT_MAX_NATIVE_MESSAGE_BYTES = 256 * 1024;
 
 export type TransportAuditEvent =
   | { type: 'transport.accepted'; requestId: string; operation: string }
-  | { type: 'transport.rejected'; requestId?: string; code: string };
+  | { type: 'transport.rejected'; requestId?: string; code: string }
+  | { type: 'relay.forwarded'; requestId: string; operation: string }
+  | { type: 'relay.completed'; requestId: string; outcome: 'accepted' | 'rejected' };
+
+export class TransportRequestError extends Error {
+  public constructor(
+    public readonly code: LocalTransportErrorCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'TransportRequestError';
+  }
+}
 
 export interface AuthenticatedHostOptions {
   capability: string;
@@ -151,9 +166,123 @@ export function createAuthenticatedNativeHost(options: AuthenticatedHostOptions)
           ok: true,
           result,
         });
-      } catch {
+      } catch (error) {
+        if (error instanceof TransportRequestError) {
+          return errorResponse(request.requestId, error.code, error.message);
+        }
         return errorResponse(request.requestId, 'INTERNAL_ERROR', 'Transport handler failed.');
       }
+    },
+  };
+}
+
+export interface NativeRelayOptions {
+  capability: string;
+  sendToExtension: (request: ExtensionTransportRequest) => void;
+  audit?: (event: TransportAuditEvent) => void;
+  now?: () => number;
+  timeoutMs?: number;
+  maxPayloadBytes?: number;
+  rateLimit?: { maxRequests: number; windowMs: number };
+  setTimer?: (callback: () => void, delay: number) => ReturnType<typeof setTimeout>;
+  clearTimer?: (timer: ReturnType<typeof setTimeout>) => void;
+}
+
+interface RelayPendingRequest {
+  resolve: (result: LocalTransportResult) => void;
+  reject: (error: TransportRequestError) => void;
+  timer: ReturnType<typeof setTimeout>;
+}
+
+export interface NativeRelay {
+  handleDesktopRequest(input: unknown): Promise<LocalTransportResponse>;
+  handleExtensionResponse(input: unknown): void;
+  disconnect(): void;
+}
+
+export function createNativeRelay(options: NativeRelayOptions): NativeRelay {
+  const pending = new Map<string, RelayPendingRequest>();
+  const setTimer = options.setTimer ?? setTimeout;
+  const clearTimer = options.clearTimer ?? clearTimeout;
+  const timeoutMs = options.timeoutMs ?? 10_000;
+  const host = createAuthenticatedNativeHost({
+    capability: options.capability,
+    ...(options.audit ? { audit: options.audit } : {}),
+    ...(options.now ? { now: options.now } : {}),
+    ...(options.maxPayloadBytes ? { maxPayloadBytes: options.maxPayloadBytes } : {}),
+    ...(options.rateLimit ? { rateLimit: options.rateLimit } : {}),
+    handler: (request) =>
+      new Promise<LocalTransportResult>((resolve, reject) => {
+        const timer = setTimer(() => {
+          pending.delete(request.requestId);
+          options.audit?.({
+            type: 'relay.completed',
+            requestId: request.requestId,
+            outcome: 'rejected',
+          });
+          reject(new TransportRequestError('REQUEST_TIMEOUT', 'Extension request timed out.'));
+        }, timeoutMs);
+        pending.set(request.requestId, { resolve, reject, timer });
+        const forwarded = extensionTransportRequestSchema.parse(request);
+        options.audit?.({
+          type: 'relay.forwarded',
+          requestId: request.requestId,
+          operation: request.operation.type,
+        });
+        try {
+          options.sendToExtension(forwarded);
+        } catch {
+          clearTimer(timer);
+          pending.delete(request.requestId);
+          reject(
+            new TransportRequestError(
+              'TRANSPORT_DISCONNECTED',
+              'Extension transport is disconnected.',
+            ),
+          );
+        }
+      }),
+  });
+
+  return {
+    handleDesktopRequest: (input) => host.handle(input),
+    handleExtensionResponse(input): void {
+      const response = localTransportResponseSchema.safeParse(input);
+      if (!response.success) return;
+      const current = pending.get(response.data.requestId);
+      if (!current) return;
+      clearTimer(current.timer);
+      pending.delete(response.data.requestId);
+      if (response.data.ok) {
+        options.audit?.({
+          type: 'relay.completed',
+          requestId: response.data.requestId,
+          outcome: 'accepted',
+        });
+        current.resolve(response.data.result);
+        return;
+      }
+      options.audit?.({
+        type: 'relay.completed',
+        requestId: response.data.requestId,
+        outcome: 'rejected',
+      });
+      current.reject(
+        new TransportRequestError(response.data.error.code, response.data.error.message),
+      );
+    },
+    disconnect(): void {
+      for (const [requestId, current] of pending) {
+        clearTimer(current.timer);
+        current.reject(
+          new TransportRequestError(
+            'TRANSPORT_DISCONNECTED',
+            'Extension transport is disconnected.',
+          ),
+        );
+        options.audit?.({ type: 'relay.completed', requestId, outcome: 'rejected' });
+      }
+      pending.clear();
     },
   };
 }

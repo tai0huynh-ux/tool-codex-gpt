@@ -979,3 +979,53 @@ Extension strict type-check passed, both recoverable workflow E2E tests passed, 
 ### Next action
 
 Publish the CI fix, wait for clean-checkout verification, then continue P6-IPC-003.
+
+## 2026-07-18 19:59 +07:00 - P6-IPC-003 (publication pending)
+
+### Goal
+
+Install an authenticated desktop-to-native-host relay on Windows without activating new extension permissions.
+
+### Changes
+
+Added a capability-authenticated desktop relay over a per-user named pipe, a framed Native Messaging host, a packaged console launcher, exact-origin host manifest generation, and Chrome/Edge/Chromium per-user registration in both registry views. Added a stable extension identity while keeping `nativeMessaging` absent, real socket/framing tests, packaged host smoke, and install/restart/uninstall smoke.
+
+### Files
+
+Contracts and local transport relay/tests; desktop native transport, host entry, launcher, build configuration, main-process integration, and tests; extension identity/service worker; NSIS installer; Windows packaging/smoke scripts; lint generated-output boundary; continuity and state.
+
+### Decisions
+
+Use an application-data-derived per-user named-pipe name plus a local capability file, strip the capability before the browser frame, and run the bundled host through Electron's Node mode behind a small console launcher. Register only the deterministic extension origin. Keep the service worker dormant until explicit permission authorization.
+
+### Verification
+
+`pnpm.cmd run verify` passed migration parity, formatting, lint, strict type-check, 153 Vitest tests, two recoverable workflow E2E tests, two Chromium fixture E2E tests, and all 15 buildable projects. `pnpm.cmd run package:win` and `pnpm.cmd run smoke:packaged:win` passed. `pnpm.cmd run smoke:installed-native-host:win` parsed the installed manifest, verified six registry entries, relayed twice across the packaged host, removed all registrations and payload, and passed.
+
+### Failures encountered
+
+The first installed manifest contained unescaped Windows separators. After switching to forward slashes, the smoke compared equivalent path strings without canonicalization. NSIS then left the smoke-owned install root empty after removing its payload. Lint also scanned an earlier generated packaged bundle.
+
+### Root causes
+
+`$INSTDIR` was interpolated directly into JSON; Windows path separators differed textually; NSIS cannot remove its active install root during uninstall; and the flat ESLint ignores omitted the root artifact directory.
+
+### Fixes
+
+Normalize `$INSTDIR` to forward slashes before writing JSON, compare canonical paths, require the uninstall root to be empty before non-recursive smoke cleanup, and ignore `artifacts/**` in ESLint. Intentionally unignore the three installer source files so clean checkouts can package.
+
+### Security
+
+The host rejects missing/incorrect/expired capabilities, malformed frames, disconnects, timeouts, and mismatched responses. Extension frames contain no capability. Registration contains one exact origin, no wildcard, and no new manifest permission. Logs and errors remain bounded and redacted.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(transport): install authenticated native host relay"`.
+
+### Push
+
+Pending commit, remote hash verification, and clean-checkout GitHub Actions.
+
+### Next action
+
+Request explicit authorization for P6-IPC-004 before adding `nativeMessaging`; independently keep `CODEX-SDK-001` external.

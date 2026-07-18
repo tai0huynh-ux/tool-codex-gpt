@@ -62,10 +62,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
   - Depends on: P6-IPC-001
   - Done when: a dormant MV3 service worker receives host-forwarded operations, routes them to the exact user-opened ChatGPT tab, rejects expiry/replay/oversize, and never receives the desktop capability
   - Commit: resolve with `git log -1 --grep "fix(transport): route native operations through extension"`
-- [ ] P6-IPC-003 Add the desktop-to-host relay and Windows native-host registration
+- [x] P6-IPC-003 Add the desktop-to-host relay and Windows native-host registration
   - Depends on: P6-IPC-002
   - Done when: a separate packaged host authenticates desktop requests, relays bounded operations bidirectionally, installs an exact-origin manifest and per-user registry entries, and passes install/restart/uninstall smoke without activating extension permissions
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(transport): install authenticated native host relay"`
 - [ ] P6-IPC-004 Activate and prove the installed Native Messaging path
   - Depends on: P6-IPC-003, explicit authorization to add the `nativeMessaging` extension permission
   - Done when: the installed extension and host complete a user-opened authenticated ChatGPT health/capture/assisted-insert smoke with redacted evidence
@@ -148,7 +148,7 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
   - Depends on: P15-SEC-001
   - Done when: installer, migration backup, extension artifact, redacted diagnostics, checksums, clean-profile smoke, and release gate pass
   - Commit: resolve with `git log -1 --grep "build(release): add reproducible Windows packaging"`
-- [ ] P16-REL-002 Include and verify the selected Native Messaging host
+- [x] P16-REL-002 Include and verify the selected Native Messaging host
   - Depends on: P6-IPC-003
   - Done when: installer registration, exact-origin manifest, packaged host smoke, upgrade, and uninstall cleanup pass
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(transport): install authenticated native host relay"`

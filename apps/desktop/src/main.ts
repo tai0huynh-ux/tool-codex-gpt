@@ -9,8 +9,13 @@ import {
 import { ProjectRegistry } from '@codex-context-bridge/project-registry';
 import { WorkflowEngine } from '@codex-context-bridge/workflow-engine';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
-import { registerDesktopIpc, type DesktopBridgeService } from './ipc';
+import { registerDesktopIpc } from './ipc';
 import { backupDatabaseBeforeUpgrade } from './database-backup';
+import {
+  createNativeDesktopBridgeService,
+  ensureNativeCapability,
+  nativeTransportPaths,
+} from './native-transport';
 import { createProjectDesktopService, registerProjectIpc } from './project-ipc';
 import { createWorkflowDesktopService, registerWorkflowIpc } from './workflow-ipc';
 
@@ -36,23 +41,35 @@ function createWindow(): void {
   void window.loadFile(path.join(currentDirectory, '../renderer/index.html'));
 }
 
-const disconnectedService: DesktopBridgeService = {
-  getStatus: () =>
-    Promise.resolve({
-      transport: 'native_messaging',
-      state: 'disconnected',
-      permissionActive: false,
-    }),
-  execute: () => Promise.reject(new Error('TRANSPORT_DISCONNECTED')),
-};
-
-void app.whenReady().then(() => {
-  registerDesktopIpc(ipcMain, disconnectedService, {
-    validateSender: (event) => trustedRendererIds.has(event.sender.id),
+function auditDesktopTransfer(operation: string, outcome: 'allowed' | 'blocked' | 'failed'): void {
+  if (!projectDatabase) return;
+  appendAuditEvent(projectDatabase, {
+    id: randomUUID(),
+    eventType: `desktop.transport.${operation}`,
+    actor: 'desktop.ipc',
+    outcome,
   });
+}
+
+async function startDesktop(): Promise<void> {
+  await app.whenReady();
   const databasePath = path.join(app.getPath('userData'), 'context-bridge.sqlite');
   backupDatabaseBeforeUpgrade(databasePath, app.getVersion());
   projectDatabase = openDatabase(databasePath);
+  const transportPaths = nativeTransportPaths(app.getPath('appData'));
+  ensureNativeCapability(transportPaths.capabilityPath);
+  registerDesktopIpc(
+    ipcMain,
+    createNativeDesktopBridgeService({
+      ...transportPaths,
+      permissionActive: false,
+    }),
+    {
+      validateSender: (event) => trustedRendererIds.has(event.sender.id),
+      audit: ({ operation, outcome }) =>
+        auditDesktopTransfer(operation, outcome === 'accepted' ? 'allowed' : 'blocked'),
+    },
+  );
   const registry = new ProjectRegistry(projectDatabase);
   const workflows = new WorkflowEngine(projectDatabase);
   registerProjectIpc(
@@ -64,13 +81,7 @@ void app.whenReady().then(() => {
     {
       validateSender: (event) => trustedRendererIds.has(event.sender.id),
       audit: ({ action, outcome }) => {
-        if (!projectDatabase) return;
-        appendAuditEvent(projectDatabase, {
-          id: randomUUID(),
-          eventType: action,
-          actor: 'desktop.ipc',
-          outcome,
-        });
+        auditDesktopTransfer(action, outcome);
       },
     },
   );
@@ -81,13 +92,13 @@ void app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
-});
+  app.on('before-quit', () => {
+    projectDatabase?.close();
+    projectDatabase = undefined;
+  });
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+  });
+}
 
-app.on('before-quit', () => {
-  projectDatabase?.close();
-  projectDatabase = undefined;
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+void startDesktop().catch(() => app.quit());

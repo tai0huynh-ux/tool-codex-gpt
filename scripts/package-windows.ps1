@@ -11,6 +11,18 @@ Push-Location $repositoryRoot
 try {
   & pnpm.cmd --filter '@codex-context-bridge/desktop' run dist:win
   if ($LASTEXITCODE -ne 0) { throw 'Desktop packaging failed.' }
+  $unpackedRoot = Join-Path $artifactRoot 'desktop/win-unpacked'
+  $nativeHostExecutable = Join-Path $unpackedRoot 'resources/CodexContextBridgeNativeHost.exe'
+  $nativeHostManifestDirectory = Join-Path $unpackedRoot 'native-messaging'
+  $nativeHostManifest = Join-Path $nativeHostManifestDirectory 'com.codex_context_bridge.host.json'
+  New-Item -ItemType Directory -Force -Path $nativeHostManifestDirectory | Out-Null
+  [ordered]@{
+    name = 'com.codex_context_bridge.host'
+    description = 'Codex Context Bridge native relay'
+    path = $nativeHostExecutable
+    type = 'stdio'
+    allowed_origins = @('chrome-extension://ccchffnkidpolmnnlonbnakjjmphfdjp/')
+  } | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $nativeHostManifest -Encoding utf8
   & pnpm.cmd --filter '@codex-context-bridge/chatgpt-extension' run build
   if ($LASTEXITCODE -ne 0) { throw 'Extension build failed.' }
 
@@ -36,6 +48,12 @@ try {
     signed = $signature.Status -eq 'Valid'
     signatureStatus = $signature.Status.ToString()
     generatedAt = (Get-Date).ToUniversalTime().ToString('o')
+    nativeMessaging = [ordered]@{
+      hostName = 'com.codex_context_bridge.host'
+      extensionOrigin = 'chrome-extension://ccchffnkidpolmnnlonbnakjjmphfdjp/'
+      registeredBrowsers = @('Chrome', 'Edge', 'Chromium')
+      permissionActive = $false
+    }
     files = $files
   }
   $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $artifactRoot 'release-manifest.json') -Encoding utf8

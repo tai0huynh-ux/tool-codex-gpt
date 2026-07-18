@@ -6,11 +6,11 @@ Phase 6 production transport completion. Phase 3 live Codex acceptance remains e
 
 ## Current objective
 
-Implement the authenticated desktop-to-native-host relay and Windows registration required by ADR-0001 without silently activating new extension permissions.
+Preserve the completed authenticated native-host relay while keeping permission activation and live user-opened ChatGPT acceptance explicitly authorization-gated.
 
 ## Last completed checkpoint
 
-P6-IPC-002 - Correctly route host-forwarded operations through a dormant MV3 service worker to the exact user-opened ChatGPT tab, with browser-side expiry, replay, size, schema, and redaction guards. Resolve with `git log -1 --grep "fix(transport): route native operations through extension"`.
+P6-IPC-003 - Package an authenticated desktop-to-native-host relay with exact-origin per-user Windows registration and install/restart/uninstall evidence. Resolve with `git log -1 --grep "feat(transport): install authenticated native host relay"`.
 
 ## Current verified capabilities
 
@@ -80,11 +80,14 @@ P6-IPC-002 - Correctly route host-forwarded operations through a dormant MV3 ser
 - A versioned SQLite copy is created before an existing desktop database is opened for migration; the first recovery point is not overwritten.
 - Packaged smoke passed for unpacked launch and silent install/clean-profile launch/silent uninstall; the manifest explicitly reports `NotSigned`.
 - Diagnostic export contains platform, Git, phase, blocker, and verification identity only; it does not read environment variables or database/chat/file content.
+- Desktop requests reach the native host over a per-user named pipe authenticated by a local capability that is stripped before the browser boundary.
+- The packaged console launcher runs the bundled native host through Electron's Node mode and preserves framed stdin/stdout without exposing a listening network socket.
+- Windows installation writes one exact extension origin and registers Chrome, Edge, and Chromium in both per-user registry views; silent uninstall removes every registration and installed payload.
+- Packaged and installed native-host smokes prove correlated bidirectional relay, restart behavior, and capability-free extension frames while `nativeMessaging` remains absent.
 
 ## Current known failures
 
 - Live Codex SDK spike exits before `thread.started` because the configured external model catalog is incompatible with SDK `0.144.5`.
-- The desktop-to-native-host relay, packaged native executable, exact-origin host manifest, and Windows registry installation are not implemented yet.
 - The `nativeMessaging` extension permission remains intentionally inactive; no live transport is claimed.
 
 ## Active blockers
@@ -93,13 +96,13 @@ P6-IPC-002 - Correctly route host-forwarded operations through a dormant MV3 ser
 
 ## Next three actions
 
-1. Implement a separate authenticated native-host relay and desktop client over a local per-user IPC boundary.
-2. Add exact-origin Chrome/Edge per-user registration to the installer and verify install/restart/uninstall cleanup.
-3. Request explicit authorization before adding `nativeMessaging`, then run the installed user-opened ChatGPT smoke; independently resolve `CODEX-SDK-001` externally.
+1. Request explicit authorization before adding the `nativeMessaging` permission for P6-IPC-004.
+2. After authorization, run the installed user-opened ChatGPT health/capture/assisted-insert smoke with redacted evidence.
+3. Independently resolve `CODEX-SDK-001` externally without editing the user's Codex configuration.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed locally on 2026-07-18 for P6-IPC-002: migration parity, 145 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. GitHub Actions run `29643866680` then exposed a clean-checkout Vite fixture alias regression; the source-only alias was restored and the extension type-check, workflow E2E, Chromium E2E, and two-entry build passed locally. Replacement clean-checkout CI is pending publication.
+`pnpm.cmd run verify` passed locally on 2026-07-18 for P6-IPC-003: migration parity, formatting, lint, strict type-check, 153 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. `package:win`, unpacked/package native smoke, and installed native-host smoke passed; the installed host relayed twice, all six per-user registry registrations matched, and uninstall removed registrations and payload.
 
 ## Latest commit
 
@@ -111,4 +114,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 19:14 +07:00.
+2026-07-18 19:59 +07:00.

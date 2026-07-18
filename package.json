@@ -18,6 +18,8 @@
     "migrations:generate": "node scripts/sync-initial-migration.mjs",
     "package:win": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-windows.ps1",
     "smoke:packaged:win": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-packaged-windows.ps1",
+    "smoke:native-host:win": "node scripts/smoke-native-host.mjs artifacts/desktop/win-unpacked/resources/CodexContextBridgeNativeHost.exe",
+    "smoke:installed-native-host:win": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/smoke-installed-native-host.ps1",
     "status": "node scripts/project-status.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm -r --if-present typecheck",
     "test": "vitest run",
