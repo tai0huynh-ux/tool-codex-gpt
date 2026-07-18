@@ -13,6 +13,9 @@ describe('repository verification workflow', () => {
     expect(workflow).toContain('pnpm install --frozen-lockfile');
     expect(workflow).toContain('playwright install --with-deps chromium');
     expect(workflow).toContain('pnpm run verify');
+    expect(workflow).toContain('actions/checkout@v7');
+    expect(workflow).toContain('actions/setup-node@v7');
+    expect(workflow).toContain('pnpm/action-setup@v6');
   });
 
   it('keeps live and Windows-only commands out of CI', () => {
@@ -24,7 +27,7 @@ describe('repository verification workflow', () => {
 
   it('retains Playwright diagnostics when verification fails', () => {
     expect(workflow).toContain('if: failure()');
-    expect(workflow).toContain('actions/upload-artifact@v4');
+    expect(workflow).toContain('actions/upload-artifact@v7');
     expect(workflow).toContain('playwright-report/');
     expect(workflow).toContain('test-results/');
   });
