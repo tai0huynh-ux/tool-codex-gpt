@@ -16,7 +16,11 @@ import {
   ensureNativeCapability,
   nativeTransportPaths,
 } from './native-transport';
-import { createProjectDesktopService, registerProjectIpc } from './project-ipc';
+import {
+  createProjectDesktopService,
+  registerProjectIpc,
+  validateGitRepositoryInput,
+} from './project-ipc';
 import { createWorkflowDesktopService, registerWorkflowIpc } from './workflow-ipc';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -34,7 +38,7 @@ function createWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      preload: path.join(currentDirectory, 'preload.js'),
+      preload: path.join(currentDirectory, 'preload.cjs'),
     },
   });
   const rendererId = window.webContents.id;
@@ -77,10 +81,14 @@ async function startDesktop(): Promise<void> {
   const workflows = new WorkflowEngine(projectDatabase);
   registerProjectIpc(
     ipcMain,
-    createProjectDesktopService(registry, async () => {
-      const selection = await dialog.showOpenDialog({ properties: ['openDirectory'] });
-      return selection.canceled ? null : (selection.filePaths[0] ?? null);
-    }),
+    createProjectDesktopService(
+      registry,
+      async () => {
+        const selection = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+        return selection.canceled ? null : (selection.filePaths[0] ?? null);
+      },
+      validateGitRepositoryInput,
+    ),
     {
       validateSender: (event) => trustedRendererIds.has(event.sender.id),
       audit: ({ action, outcome }) => {

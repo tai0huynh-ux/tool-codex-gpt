@@ -1209,3 +1209,29 @@ No permission, submission behavior, browser profile, credential, or public distr
 ### Next action
 
 Publish the Internal Beta Ready checkpoint, require final GitHub Actions Verify success, then distribute the checksum-verified build only to a small internal group.
+
+## 2026-07-19 02:01 +07:00 - P17-BETA-002
+
+### Goal
+
+Exercise the desktop UI from the beginning with real keyboard/click input, fix runtime defects, and repeat the acceptance pass until the isolated fixture is clean.
+
+### Changes
+
+Fixed packaged Electron preload parity by emitting/loading `preload.cjs`; retained relative Vite assets, bundled sandboxed preload contracts, Git-root validation, and a picker timeout exception. The acceptance harness can now target the packaged executable through `CODEX_CONTEXT_BRIDGE_ACCEPTANCE_EXECUTABLE`.
+
+### Verification
+
+Computer Use observed the packaged window with a rendered workspace instead of a white screen. The packaged Playwright acceptance run recorded 12 initial interactive nodes and 7/7 passing checks (project creation, invalid/valid repository preview, mapping confirmation, alias, workflow start/cancel, and diagnostics refresh) under `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`. Full `pnpm.cmd run verify` passed with 169 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 workspace builds. Internal-beta UAT passed 43 targeted tests plus two Chromium flows. Windows packaging and packaged smoke passed.
+
+### Failures encountered
+
+The first packaged launch was blank because an ESM package interpreted the CommonJS preload emitted as `.js`. A separate dev-harness attempt exposed the expected Node/Electron SQLite ABI mismatch after packaging; the repository's package-and-restore path was used, and the final packaged acceptance avoided the shared ABI boundary.
+
+### Security and limitations
+
+Only temporary Git fixtures and temporary app data were used. No user project, browser profile, cookies, tokens, credentials, Edge session, or destructive archive action was touched. Live Edge and clean-install smoke remain intentionally excluded from this checkpoint.
+
+### Next action
+
+Fetch, verify ancestry, commit the accepted checkpoint, push `main`, confirm `HEAD == origin/main`, and monitor the final GitHub Actions Verify run.

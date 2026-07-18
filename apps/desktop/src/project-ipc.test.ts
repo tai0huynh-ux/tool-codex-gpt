@@ -6,6 +6,7 @@ import {
   createProjectDesktopService,
   projectIpcChannels,
   registerProjectIpc,
+  validateGitRepositoryInput,
   type ProjectDesktopService,
 } from './project-ipc';
 
@@ -47,6 +48,21 @@ function setupRegistry(): { registry: ProjectRegistry; close: () => void } {
 }
 
 describe('project desktop service', () => {
+  it('rejects missing Git metadata before preview or registration', () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'context-bridge-root-'));
+    try {
+      expect(() => validateGitRepositoryInput({ repoRoot: directory })).toThrow(
+        'REPOSITORY_ROOT_INVALID',
+      );
+      mkdirSync(path.join(directory, '.git'));
+      expect(validateGitRepositoryInput({ repoRoot: directory }).repoRoot).toBe(
+        realpathSync(directory),
+      );
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it('previews tied candidates and persists an explicit user confirmation', async () => {
     const { registry, close } = setupRegistry();
     const service = createProjectDesktopService(registry, () => 'C:/work/new-tree');
@@ -115,6 +131,30 @@ describe('project desktop service', () => {
 });
 
 describe('project IPC boundary', () => {
+  it('allows the user-controlled folder picker to remain open beyond the IPC timeout', async () => {
+    const { registry, close } = setupRegistry();
+    vi.useFakeTimers();
+    try {
+      const ipc = new FakeIpcMain();
+      registerProjectIpc(
+        ipc,
+        createProjectDesktopService(
+          registry,
+          () => new Promise((resolve) => setTimeout(() => resolve(null), 20)),
+        ),
+        { validateSender: () => true, timeoutMs: 10 },
+      );
+      const result = ipc.handlers.get(projectIpcChannels.chooseRepositoryRoot)?.({
+        sender: { id: 7 },
+      });
+      await vi.advanceTimersByTimeAsync(20);
+      await expect(result).resolves.toEqual({ ok: true, value: null });
+    } finally {
+      vi.useRealTimers();
+      close();
+    }
+  });
+
   it('validates sender and input while auditing outcomes without repository payloads', async () => {
     const { registry, close } = setupRegistry();
     const ipc = new FakeIpcMain();
@@ -179,6 +219,6 @@ describe('project IPC boundary', () => {
     close();
   });
 });
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';

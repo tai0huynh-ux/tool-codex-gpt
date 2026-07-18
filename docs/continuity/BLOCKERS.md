@@ -5,6 +5,7 @@
 - Active P0/P1 blockers: none.
 - Accepted limitations: unsigned Windows artifacts, unpacked internal extension distribution, no automatic ChatGPT submission, no public GitHub Release, and no store publication.
 - Environment-limited reruns: destructive clean-install and live Edge smoke were not rerun because the installed app, native host, and user browser session are active; prior acceptance remains recorded separately.
+- Desktop UI acceptance: resolved in P17-BETA-002. The packaged renderer was non-blank and all seven available non-destructive acceptance checks passed against isolated fixtures.
 
 ## CODEX-SDK-001
 

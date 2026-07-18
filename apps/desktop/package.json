@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/main/main.js",
   "scripts": {
-    "build": "tsup src/main.ts src/preload.ts --format esm --external electron --out-dir dist/main --clean && tsup --config tsup.native-host.config.ts && vite build",
+    "build": "tsup --config tsup.desktop.config.ts && tsup --config tsup.native-host.config.ts && vite build",
     "dist:win": "pnpm run build && powershell -NoProfile -ExecutionPolicy Bypass -File build/compile-native-host.ps1 && node ../../scripts/run-electron-builder.mjs --win nsis --x64 --publish never",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "typecheck": "tsc --noEmit"

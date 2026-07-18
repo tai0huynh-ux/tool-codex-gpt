@@ -6,11 +6,11 @@ Internal Beta Ready. The accepted MVP is published, the internal-beta UAT and Wi
 
 ## Current objective
 
-Distribute the verified unsigned build to a small internal group, collect feedback, and keep all sends explicitly reviewed and approved.
+Distribute the verified unsigned build to a small internal group, collect feedback, and keep all sends explicitly reviewed and approved. Desktop UI acceptance is complete for the available non-destructive controls.
 
 ## Last completed checkpoint
 
-P17-BETA-001 - Prepare the Internal Beta UAT gate, team documentation, reproducible staging manifest, and post-package Node native-runtime recovery. Resolve with `git log -1 --grep "internal beta"`.
+P17-BETA-002 - Complete live desktop UI acceptance and packaged parity. Resolve with `git log -1 --grep "desktop UI acceptance"`.
 
 ## Current verified capabilities
 
@@ -111,7 +111,7 @@ P17-BETA-001 - Prepare the Internal Beta UAT gate, team documentation, reproduci
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed locally on 2026-07-19 with migration parity, formatting, lint, strict type-check, 165 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. `test:internal-beta-uat` passed 43 targeted tests plus two Chromium flows. Windows package, packaged smoke, and three non-destructive native-host relay runs passed. The previously accepted live Edge smoke was not rerun to avoid disrupting the active user session; clean-install smoke was also not rerun because the app is installed and active.
+`pnpm.cmd run verify` passed locally on 2026-07-19 with migration parity, formatting, lint, strict type-check, 169 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. `pnpm.cmd run test:internal-beta-uat` passed 43 targeted tests plus two Chromium flows. Windows package and packaged smoke passed after the preload parity fix. The isolated packaged UI acceptance recorded 12 controls and 7/7 passing checks. The previously accepted live Edge smoke was not rerun to avoid disrupting the active user session; clean-install smoke was also not rerun because the app is installed and active.
 
 ## Latest commit
 
@@ -123,4 +123,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-19 01:00 +07:00.
+2026-07-19 02:01 +07:00.

@@ -163,3 +163,7 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
   - Depends on: P16-REL-001, P16-REL-002, P6-IPC-005
   - Done when: full verify, targeted internal-beta UAT, Windows packaging, packaged smoke, non-destructive native relay, Node ABI recovery, team documentation, checksums, staging manifest, continuity, push, and final CI pass
   - Commit: resolve with `git log -1 --grep "internal beta"`
+- [x] P17-BETA-002 Complete live desktop UI acceptance and packaged parity
+  - Depends on: P17-BETA-001
+  - Done when: each available project/workflow control is exercised against an isolated fixture, runtime defects are fixed and retested from the beginning, packaged Electron UI is non-blank, and the acceptance evidence is recorded
+  - Evidence: `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`; 12 controls inventoried; 7 checks passed

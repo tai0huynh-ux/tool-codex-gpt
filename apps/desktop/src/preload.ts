@@ -1,31 +1,27 @@
 import type { LocalTransportOperation } from '@codex-context-bridge/contracts';
 import { contextBridge, ipcRenderer } from 'electron';
 import {
-  desktopIpcChannels,
-  transportOperationResponseSchema,
-  transportStatusResponseSchema,
-  type TransportOperationResponse,
-  type TransportStatusResponse,
-} from './ipc';
-import {
   chooseRootResponseSchema,
+  desktopIpcChannels,
   projectIpcChannels,
   projectListResponseSchema,
   projectViewResponseSchema,
   repositoryPreviewResponseSchema,
+  transportOperationResponseSchema,
+  transportStatusResponseSchema,
+  workflowIpcChannels,
+  workflowListResponseSchema,
+  workflowViewResponseSchema,
   type ChooseRootResponse,
   type ProjectListResponse,
   type ProjectViewResponse,
   type RepositoryInput,
   type RepositoryPreviewResponse,
-} from './project-ipc';
-import {
-  workflowIpcChannels,
-  workflowListResponseSchema,
-  workflowViewResponseSchema,
+  type TransportOperationResponse,
+  type TransportStatusResponse,
   type WorkflowListResponse,
   type WorkflowViewResponse,
-} from './workflow-ipc';
+} from './preload-contracts';
 
 export interface ContextBridgeDesktopApi {
   getTransportStatus(): Promise<TransportStatusResponse>;

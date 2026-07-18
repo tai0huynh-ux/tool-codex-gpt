@@ -5,6 +5,8 @@ import {
 } from '@codex-context-bridge/contracts';
 import { detectProject, scoreProjectCandidate } from '@codex-context-bridge/project-detector';
 import type { Project, ProjectRegistry } from '@codex-context-bridge/project-registry';
+import { lstatSync, realpathSync } from 'node:fs';
+import path from 'node:path';
 import { z } from 'zod';
 import type { IpcInvokeEventLike, IpcMainLike } from './ipc';
 
@@ -90,6 +92,7 @@ const projectIpcErrorCodeSchema = z.enum([
   'IPC_SCHEMA_INVALID',
   'IPC_TIMEOUT',
   'PROJECT_NOT_FOUND',
+  'REPOSITORY_ROOT_INVALID',
   'REPOSITORY_ALREADY_REGISTERED',
   'INTERNAL_ERROR',
 ]);
@@ -142,6 +145,23 @@ export interface ProjectDesktopService {
     repository: RepositoryInput;
     confirmed: true;
   }): ProjectView | Promise<ProjectView>;
+}
+
+export function validateGitRepositoryInput(input: RepositoryInput): RepositoryInput {
+  try {
+    const canonicalRoot = realpathSync(input.repoRoot);
+    const root = lstatSync(canonicalRoot);
+    const gitMarker = lstatSync(path.join(canonicalRoot, '.git'));
+    if (!root.isDirectory() || root.isSymbolicLink() || gitMarker.isSymbolicLink()) {
+      throw new Error('REPOSITORY_ROOT_INVALID');
+    }
+    if (!gitMarker.isDirectory() && !gitMarker.isFile()) {
+      throw new Error('REPOSITORY_ROOT_INVALID');
+    }
+    return { ...input, repoRoot: canonicalRoot };
+  } catch {
+    throw new Error('REPOSITORY_ROOT_INVALID');
+  }
 }
 
 function view(registry: ProjectRegistry, project: Project): ProjectView {
@@ -209,6 +229,7 @@ function bestProjectScore(
 export function createProjectDesktopService(
   registry: ProjectRegistry,
   chooseRepositoryRoot: () => string | null | Promise<string | null>,
+  validateRepository: (input: RepositoryInput) => RepositoryInput = (input) => input,
 ): ProjectDesktopService {
   return {
     list: () => registry.list().map((project) => view(registry, project)),
@@ -225,16 +246,23 @@ export function createProjectDesktopService(
       return view(registry, project);
     },
     chooseRepositoryRoot,
-    previewRepository: (input) => ({
-      detection: detectProject(fingerprintInput(input), candidates(registry)),
-      candidateProjects: registry.list().map(({ id, name }) => ({ id, name })),
-    }),
+    previewRepository: (input) => {
+      const repository = validateRepository(input);
+      return {
+        detection: detectProject(fingerprintInput(repository), candidates(registry)),
+        candidateProjects: registry.list().map(({ id, name }) => ({ id, name })),
+      };
+    },
     confirmRepository: ({ projectId, repository, confirmed }) => {
       void confirmed;
+      const validatedRepository = validateRepository(repository);
       const project = registry.get(projectId);
       if (!project || project.archivedAt) throw new Error('PROJECT_NOT_FOUND');
-      const score = bestProjectScore(registry, projectId, repository);
-      const registered = registry.registerRepository(projectId, registrationInput(repository));
+      const score = bestProjectScore(registry, projectId, validatedRepository);
+      const registered = registry.registerRepository(
+        projectId,
+        registrationInput(validatedRepository),
+      );
       registry.recordMapping({
         projectId,
         repositoryId: registered.id,
@@ -280,6 +308,12 @@ function mapError(error: unknown) {
   if (error instanceof Error && error.message === 'PROJECT_NOT_FOUND') {
     return failure('PROJECT_NOT_FOUND', 'Project was not found.');
   }
+  if (error instanceof Error && error.message === 'REPOSITORY_ROOT_INVALID') {
+    return failure(
+      'REPOSITORY_ROOT_INVALID',
+      'Repository root must be an existing Git repository.',
+    );
+  }
   if (error instanceof Error && error.message.includes('UNIQUE constraint failed: repositories.')) {
     return failure('REPOSITORY_ALREADY_REGISTERED', 'Repository is already registered.');
   }
@@ -298,6 +332,7 @@ export function registerProjectIpc(
     inputSchema: z.ZodType,
     outputSchema: z.ZodType,
     operation: (input: unknown) => unknown,
+    useTimeout = true,
   ): void => {
     ipcMain.handle(channel, async (event, input) => {
       if (!options.validateSender(event)) {
@@ -310,7 +345,8 @@ export function registerProjectIpc(
         return failure('IPC_SCHEMA_INVALID', 'Project request is invalid.');
       }
       try {
-        const value = await withTimeout(Promise.resolve(operation(parsed.data)), timeoutMs);
+        const work = Promise.resolve(operation(parsed.data));
+        const value = useTimeout ? await withTimeout(work, timeoutMs) : await work;
         options.audit?.({ action, outcome: 'allowed' });
         return outputSchema.parse({ ok: true, value });
       } catch (error) {
@@ -353,6 +389,7 @@ export function registerProjectIpc(
     z.undefined(),
     chooseRootResponseSchema,
     () => service.chooseRepositoryRoot(),
+    false,
   );
   register(
     projectIpcChannels.previewRepository,

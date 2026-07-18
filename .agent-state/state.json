@@ -5,12 +5,12 @@
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
   "currentPhase": "Internal Beta Ready",
-  "currentTaskId": "P17-BETA-001",
+  "currentTaskId": "P17-BETA-002",
   "status": "complete",
   "lastCheckpoint": {
-    "id": "P17-BETA-001",
+    "id": "P17-BETA-002",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T18:00:00.000Z"
+    "completedAt": "2026-07-19T02:01:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -54,7 +54,12 @@
     "pnpm.cmd run package:win restored the Node SQLite ABI after Electron packaging",
     "pnpm.cmd run smoke:packaged:win passed packaged desktop and native-host readiness",
     "Installed native-host relay passed three non-destructive runs",
-    "artifacts/internal-beta manifest and SHA-256 list generated; live Edge and clean install intentionally not rerun"
+    "artifacts/internal-beta manifest and SHA-256 list generated; live Edge and clean install intentionally not rerun",
+    "Packaged Computer Use observed rendered UI instead of white screen",
+    "Packaged live UI acceptance recorded 12 controls and 7 of 7 checks passed",
+    "pnpm.cmd run verify passed with 169 Vitest tests, two workflow E2E, two Chromium E2E, and 15 workspace builds",
+    "pnpm.cmd run test:internal-beta-uat passed 43 targeted tests and two Chromium flows",
+    "pnpm.cmd run package:win and pnpm.cmd run smoke:packaged:win passed after preload.cjs parity fix"
   ],
   "knownFailures": [],
   "activeBlockers": [],
@@ -65,5 +70,5 @@
     "Decide separately whether to publish the extension or expand approval modes."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T18:00:00.000Z"
+  "updatedAt": "2026-07-19T02:01:00.000Z"
 }

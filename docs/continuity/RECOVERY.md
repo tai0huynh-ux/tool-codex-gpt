@@ -60,7 +60,7 @@ Expected known-good baseline: formatting, lint, strict type-check, 165 or more V
 
 ## Exact next task
 
-No implementation task is active. Distribute only to a small internal group, collect feedback, and make code-signing, store publication, or approval-mode expansion separate explicit decisions.
+No implementation task is active. Distribute only to a small internal group, collect feedback, and make code-signing, store publication, or approval-mode expansion separate explicit decisions. The completed desktop UI acceptance evidence is under `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`.
 
 ## Expected files to modify
 
