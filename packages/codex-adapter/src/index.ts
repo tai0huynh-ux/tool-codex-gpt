@@ -177,3 +177,10 @@ export class MockCodexAdapter implements CodexAdapter {
     return run.error ? { ...copy, error: { ...run.error } } : copy;
   }
 }
+
+export {
+  SdkCodexAdapter,
+  createIsolatedCodexRuntime,
+  findBundledCodexBinary,
+  type SdkCodexAdapterOptions,
+} from './sdk';

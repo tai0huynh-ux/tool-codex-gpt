@@ -1029,3 +1029,53 @@ Pushed `main` to `origin`; `HEAD` and `origin/main` matched `19ccc32dc4fc2d7da8a
 ### Next action
 
 Request explicit authorization for P6-IPC-004 before adding `nativeMessaging`; independently keep `CODEX-SDK-001` external.
+
+## 2026-07-18 21:00 +07:00 - P3-CODEX-001
+
+### Goal
+
+Replace the blocked live Codex path with a production, read-only, structured runtime that preserves external configuration and has deterministic cancellation and cleanup ownership.
+
+### Changes
+
+Pinned the official Codex SDK for protocol types and bundled binary discovery; added `SdkCodexAdapter`, per-process bundled catalog isolation, structured JSONL lifecycle mapping, persisted-thread resume, bounded failure mapping, exact child cancellation, and runtime disposal. Expanded the live spike to prove start, progress/completion ordering, read-only write blocking, same-thread resume, cancellation, working-directory failure mapping, and cleanup.
+
+### Files
+
+`packages/codex-adapter` production adapter and tests, live spike, lockfile, architecture/security/feasibility records, continuity files, and machine-readable state.
+
+### Decisions
+
+Keep `@openai/codex-sdk` pinned at `0.144.5` for official types and bundled runtime discovery, but own `codex exec --experimental-json` directly because SDK generator cancellation did not provide reliable Windows child ownership. Export only the bundled model catalog to a temporary restricted path and select it with a per-process override. Never edit external Codex configuration or credentials. Keep `MockCodexAdapter` fixture-only.
+
+### Verification
+
+Targeted adapter lint, strict type-check, and 12 lifecycle tests passed. `pnpm.cmd run verify` passed migration parity, formatting, lint, strict type-check, 159 Vitest tests, two workflow E2E tests, two Chromium E2E tests, and all 15 workspace builds. `pnpm.cmd run test:codex-spike` passed live start/lifecycle/read-only/resume/cancellation/failure acceptance.
+
+### Failures encountered
+
+The original SDK path failed before `thread.started` with `supports_reasoning_summaries` missing from an inherited external model catalog. Diagnostic cancellation also left generated temporary catalog directories after manually terminated runs; the environment policy rejected both recursive and exact non-recursive cleanup commands. The first full gate found a continuity test that still hard-coded `CODEX-SDK-001` as active. The first post-hardening live rerun produced correct lifecycle evidence but exited with code 13 because disposal awaited a cancelled task whose readline loop remained open.
+
+### Root causes
+
+The external catalog schema was incompatible with the bundled runtime, and SDK-level streamed cancellation did not provide sufficiently deterministic Windows process ownership for this adapter boundary.
+
+### Fixes
+
+Use the SDK-bundled catalog through an isolated process override, own child stdio and termination directly, close the JSONL readline interface during abort, await cancelled child work before deleting runtime state, redact failures, and update the continuity assertion to require the sole remaining blocker `EXT-PERM-001`. The stale directories were validated to contain only generated `models.json` files but remain in `%TEMP%` because deletion was policy-blocked; normal successful adapter disposal cleans its own runtime directory.
+
+### Security
+
+Every production turn forces read-only sandboxing, approval policy `never`, disabled network/web search, an exact working directory, bounded stderr, redacted stable errors, and mode-restricted temporary catalog storage. No external configuration, authentication, or repository file was modified by the live acceptance run.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(codex): isolate production runtime lifecycle"`.
+
+### Push
+
+Publish `main` to `origin`, fetch, and require `HEAD` to equal `origin/main`.
+
+### Next action
+
+Stop at `EXT-PERM-001` and request explicit authorization before adding `nativeMessaging` for P6-IPC-004.

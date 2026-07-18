@@ -32,11 +32,11 @@ Use `.agents/skills/context-bridge-checkpoint/SKILL.md` to publish checkpoints a
 
 ## Current architecture
 
-TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/assisted-composer extension, SQLite persistence, contracts, project identity, file safety, secret scanning, a persistent workflow/effect engine, assisted ChatGPT orchestration, and a mock-only Codex adapter.
+TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/assisted-composer extension, SQLite persistence, contracts, project identity, file safety, secret scanning, a persistent workflow/effect engine, assisted ChatGPT orchestration, a production read-only Codex runner, and a fixture-only mock adapter.
 
 ## Current phase
 
-Phase 6 production transport completion. P6-IPC-003 packages and installs the authenticated native host and desktop relay; P6-IPC-004 remains authorization-gated because it adds the `nativeMessaging` extension permission. Live Codex remains independently blocked.
+Phase 6 installed Native Messaging acceptance. P3-CODEX-001 is live-verified; P6-IPC-004 remains authorization-gated because it adds the `nativeMessaging` extension permission.
 
 ## Last known-good commit
 
@@ -56,7 +56,7 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 153 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass. Windows acceptance additionally requires package, packaged smoke, and installed native-host smoke.
+Expected known-good baseline: formatting, lint, strict type-check, 159 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass. The separate live Codex gate must pass without modifying external configuration. Windows transport acceptance additionally requires package, packaged smoke, and installed native-host smoke.
 
 ## Exact next task
 
@@ -77,6 +77,7 @@ pnpm.cmd run typecheck
 pnpm.cmd run test
 pnpm.cmd run test:e2e
 pnpm.cmd run build
+pnpm.cmd run test:codex-spike
 pnpm.cmd run package:win
 pnpm.cmd run smoke:packaged:win
 pnpm.cmd run smoke:installed-native-host:win
@@ -97,8 +98,8 @@ pnpm.cmd run smoke:installed-native-host:win
 - Workflow send effects must be recoverable around acknowledgement boundaries and must never be repeated from projection state alone.
 - A `dispatching` effect is ambiguous after interruption; require confirmation or downstream idempotency evidence and never auto-resend it.
 - Composer insertion is not a send acknowledgement. Keep `sent: false` until rendered capture proves the approved user payload was submitted and streaming completed.
-- Do not let P12 mock adapter success satisfy the live Codex blocker or alter external Codex configuration.
+- Keep mock evidence labeled fixture-only; rerun the separate live Codex spike before claiming production acceptance in a new environment.
 
 ## Blockers and safe alternatives
 
-`CODEX-SDK-001` blocks the live SDK path because an external model catalog is incompatible. Do not modify external Codex configuration. `P6-IPC-004` separately requires explicit authorization before changing extension permissions; no remaining live transport work is safe to claim without it.
+`CODEX-SDK-001` is resolved through a per-process bundled catalog and no external configuration edits. `P6-IPC-004` requires explicit authorization before changing extension permissions; no remaining live transport work is safe to claim without it.

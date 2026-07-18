@@ -8,17 +8,19 @@
 
 ## Codex SDK spike
 
-`tests/spikes/codex-sdk-spike.ts` uses `@openai/codex-sdk` server-side in read-only sandbox mode. It starts a
-thread, runs a turn that reads only `package.json`, checks the final response, resumes by structured thread ID,
-and runs a second turn. The result section below must be updated only from an executed command.
+`tests/spikes/codex-sdk-spike.ts` exercises the production adapter in read-only sandbox mode. It starts a
+thread in the repository working directory, checks ordered structured lifecycle events and the final response,
+proves a write is blocked, resumes the same structured thread ID, cancels a separate live turn, and verifies a
+startup failure maps to `CODEX_START_FAILED` without exposing the external path.
 
-Executed result: `BLOCKED_BY_LOCAL_CODEX_CONFIG`.
+Executed result on 2026-07-18: `PASSED`.
 
-The SDK process exited before `thread.started` because the configured catalog at
-`C:\Users\a\.codex\9router-models.json` is incompatible with the bundled Codex runtime and lacks the required
-`supports_reasoning_summaries` field. No file outside the repository was modified. The production integration
-is therefore not claimed as working. `packages/codex-adapter` contains an explicitly named mock for domain and
-consumer development until the local catalog is upgraded and this spike is rerun.
+The original SDK call failed before `thread.started` because an inherited external model catalog was missing
+`supports_reasoning_summaries`. The adapter now resolves the SDK-bundled Codex binary, exports its bundled model
+catalog into a mode-restricted temporary directory, and passes that catalog as a per-process config override.
+It does not modify external Codex configuration, credentials, or authentication. The runtime owns structured
+JSONL stdio, exact child cancellation, bounded redacted errors, and temporary cleanup while forcing read-only
+sandboxing, approval policy `never`, and disabled network/web search. `MockCodexAdapter` remains fixture-only.
 
 ## ChatGPT extension spike
 

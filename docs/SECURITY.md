@@ -41,6 +41,16 @@ Workflow IPC additionally caps identifiers and diagnostic fields, rejects unknow
 approval scope/expiry metadata, and projects audit type/outcome/time without `details_json`. Approval token
 hashes, capability tokens, file content, and audit detail payloads remain main-process-only.
 
+## Codex runtime
+
+The production Codex adapter launches only the SDK-bundled binary with structured JSONL stdio. Every turn is
+forced to the requested repository working directory with read-only sandboxing, approval policy `never`, and
+network/web search disabled. A bundled model catalog is copied to a mode-restricted temporary directory and
+selected through a per-process override, so external Codex configuration and credentials are not edited.
+The adapter owns stdin/stdout/stderr, aborts the exact child process on cancellation, waits for child work
+before runtime cleanup, bounds captured stderr, maps failures to stable redacted codes, and removes temporary
+runtime files on disposal.
+
 ## Threat model highlights
 
 - Cross-project disclosure: mitigated by multi-signal identity and confirmation thresholds.

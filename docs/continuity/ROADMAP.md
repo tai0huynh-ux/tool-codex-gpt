@@ -33,10 +33,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 3 - Production Codex integration
 
-- [ ] P3-CODEX-001 Prove isolated read-only SDK integration
+- [x] P3-CODEX-001 Prove isolated read-only SDK integration
   - Depends on: P2-CODEX-001
   - Done when: structured start, run, final response, lifecycle, resume, failure mapping, cancellation, working directory, and sandbox are evidenced live
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(codex): isolate production runtime lifecycle"`
 
 ## Phase 4 - Conversation capture
 

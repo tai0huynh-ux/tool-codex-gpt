@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 6 production transport completion. Phase 3 live Codex acceptance remains externally blocked.
+Phase 6 installed Native Messaging acceptance. Phase 3 production Codex integration is complete.
 
 ## Current objective
 
-Preserve the completed authenticated native-host relay while keeping permission activation and live user-opened ChatGPT acceptance explicitly authorization-gated.
+Keep the verified production Codex runtime isolated and read-only while awaiting explicit authorization for the installed browser permission gate.
 
 ## Last completed checkpoint
 
-P6-IPC-003 - Package an authenticated desktop-to-native-host relay with exact-origin per-user Windows registration and install/restart/uninstall evidence. Resolve with `git log -1 --grep "feat(transport): install authenticated native host relay"`.
+P3-CODEX-001 - Isolate the production Codex runtime and prove live start, lifecycle, read-only sandbox, resume, cancellation, failure mapping, and cleanup. Resolve with `git log -1 --grep "feat(codex): isolate production runtime lifecycle"`.
 
 ## Current verified capabilities
 
@@ -23,7 +23,8 @@ P6-IPC-003 - Package an authenticated desktop-to-native-host relay with exact-or
 - Electron uses context isolation, sandboxing, and no renderer Node integration.
 - GitHub Actions runs frozen installation, Chromium fixture E2E, and the full verification gate on Linux with Node.js 24.
 - Database runtime SQL is generated from the distributable migration and direct package type-check/build commands reject stale output.
-- Mock Codex runs expose replayable ordered start, progress, completion, failure, and cancellation events without allowing terminal-state overwrite.
+- Codex runs expose replayable ordered start, progress, completion, failure, and cancellation events without allowing terminal-state overwrite.
+- The production Codex adapter uses the SDK-bundled binary and a temporary bundled catalog, preserves external configuration, forces read-only/approval-never/network-disabled execution, owns structured JSONL lifecycle and exact cancellation, and cleans temporary runtime state.
 - Long conversation capture accumulates virtualized windows, preserves duplicate messages with stable IDs, updates streaming text, and supports abort.
 - Composer insertion uses native editing behavior for controlled textareas and contenteditable fields, honors cancellation and read-only state, and never submits automatically.
 - Structured ChatGPT responses use strict paired markers, a 100,000-character default bound, schema validation, handoff/correlation/project checks, and duplicate rejection.
@@ -67,7 +68,7 @@ P6-IPC-003 - Package an authenticated desktop-to-native-host relay with exact-or
 - Response routing revalidates schema, handoff, correlation, project, workflow state, prompt hash, receipt hash, destination repository, and thread identity before dispatch.
 - Existing Codex threads resume only through persisted project/fingerprint mappings; new threads persist their mapping; new-worktree routes require an explicit provider.
 - Codex prompt approval and preparation use P10 single-use capabilities and iteration limits; ambiguous adapter failures remain `dispatching` and are never retried automatically.
-- Mock lifecycle events advance `codex_running` to completed/failed/cancelled states, but do not satisfy the active live SDK blocker.
+- Fixture mock lifecycle events advance `codex_running` deterministically; separate live acceptance proves the production adapter.
 - Desktop workflow data is reconstructed in the main process from persisted runs, ordered events, recovery effects, approval metadata, and redacted audit outcomes.
 - Renderer actions create, refresh, and cancel workflows only through validated typed preload IPC; approval tokens, database handles, and audit details never cross the boundary.
 - The responsive workflow deck exposes textual state badges, keyboard-native controls, event timelines, iteration/retry limits, and explicit recovery status without claiming that review-only states were sent.
@@ -87,22 +88,21 @@ P6-IPC-003 - Package an authenticated desktop-to-native-host relay with exact-or
 
 ## Current known failures
 
-- Live Codex SDK spike exits before `thread.started` because the configured external model catalog is incompatible with SDK `0.144.5`.
 - The `nativeMessaging` extension permission remains intentionally inactive; no live transport is claimed.
 
 ## Active blockers
 
-- `CODEX-SDK-001` blocks live Codex acceptance but does not block the remaining Native Messaging implementation.
+- `EXT-PERM-001` blocks installed browser acceptance until the user explicitly authorizes `nativeMessaging`.
 
 ## Next three actions
 
 1. Request explicit authorization before adding the `nativeMessaging` permission for P6-IPC-004.
-2. After authorization, run the installed user-opened ChatGPT health/capture/assisted-insert smoke with redacted evidence.
-3. Independently resolve `CODEX-SDK-001` externally without editing the user's Codex configuration.
+2. After authorization, add only the permission and its boundary tests.
+3. Run the installed user-opened ChatGPT health/capture/assisted-insert smoke with redacted evidence.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed locally on 2026-07-18 for P6-IPC-003: migration parity, formatting, lint, strict type-check, 153 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. `package:win`, unpacked/package native smoke, and installed native-host smoke passed; the installed host relayed twice, all six per-user registry registrations matched, and uninstall removed registrations and payload. GitHub Actions Verify run `29645472474` passed in 1m47s for commit `19ccc32`.
+`pnpm.cmd run verify` passed locally on 2026-07-18 for P3-CODEX-001: migration parity, formatting, lint, strict type-check, 159 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. `pnpm.cmd run test:codex-spike` separately passed live start/lifecycle/read-only/resume/cancellation/failure acceptance without modifying external Codex configuration.
 
 ## Latest commit
 
@@ -114,4 +114,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 19:59 +07:00.
+2026-07-18 21:00 +07:00.

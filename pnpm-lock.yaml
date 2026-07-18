@@ -140,7 +140,11 @@ importers:
         specifier: workspace:*
         version: link:../workflow-engine
 
-  packages/codex-adapter: {}
+  packages/codex-adapter:
+    dependencies:
+      '@openai/codex-sdk':
+        specifier: 0.144.5
+        version: 0.144.5
 
   packages/context-builder:
     dependencies:
