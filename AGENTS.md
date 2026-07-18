@@ -27,3 +27,12 @@ pnpm.cmd run build
 - Never ingest a file until path, symlink, exclusion, size, and secret checks pass.
 - Every automatic or assisted data transfer requires an audit event.
 - Low-confidence project matches must not be sent automatically.
+
+## Repository publication
+
+- The canonical GitHub repository is `https://github.com/tai0huynh-ux/tool-codex-gpt.git`.
+- `main` is the publication branch and must track `origin/main`.
+- After every completed task that changes repository files, run the relevant verification checks, commit the intended changes with a descriptive message, and push them to `origin/main`.
+- Before pushing, fetch the remote and stop if local `main` is behind or has diverged from `origin/main`.
+- Never use force push, destructive reset, or history rewriting unless the user explicitly authorizes it.
+- Report the commit hash, verification result, and push result at task completion.
