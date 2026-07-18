@@ -905,3 +905,25 @@ Pending commit, push, remote hash verification, and clean-checkout GitHub Action
 ### Next action
 
 Publish this checkpoint and finalize the release checklist after CI passes.
+
+## 2026-07-18 18:50 +07:00 - MVP-RELEASE-GATE
+
+### Goal
+
+Finalize the independently deliverable MVP after P16 clean-checkout CI and preserve the remaining live-integration boundary honestly.
+
+### Changes
+
+Marked Phase 16 and the release checklist complete, moved machine-readable state to blocked live acceptance, and recorded exact next actions for `CODEX-SDK-001` and authenticated ChatGPT smoke.
+
+### Verification
+
+GitHub Actions run `29643141058` passed in 1m52s for `77a495b`. Local full verification, installer/extension packaging, checksums, redacted diagnostics, database backup tests, unpacked smoke, silent install, clean-profile launch, and silent uninstall all passed.
+
+### Current limitation
+
+Live Codex SDK acceptance remains blocked before `thread.started` by the external model catalog missing `supports_reasoning_summaries`. Mock and fixture evidence remains labeled non-live. Native Messaging registration/permission activation remains deferred to an explicitly authorized installed integration smoke.
+
+### Next action
+
+Resolve `CODEX-SDK-001` externally, rerun the live spike, then perform the user-opened authenticated ChatGPT smoke. No independent repository phase remains before that external condition changes.

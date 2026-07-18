@@ -132,7 +132,7 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 16 - Packaging and release readiness
 
-- [ ] P16-REL-001 Add reproducible Windows packaging
+- [x] P16-REL-001 Add reproducible Windows packaging
   - Depends on: P15-SEC-001
   - Done when: installer, migration backup, extension artifact, redacted diagnostics, checksums, clean-profile smoke, and release gate pass
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "build(release): add reproducible Windows packaging"`

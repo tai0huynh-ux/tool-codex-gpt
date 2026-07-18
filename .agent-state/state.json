@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "Phase 16 - Packaging and release readiness",
-  "currentTaskId": "P16-REL-001",
-  "status": "in_progress",
+  "currentPhase": "MVP functionally complete with live integration blocked",
+  "currentTaskId": "P3-CODEX-001",
+  "status": "blocked",
   "lastCheckpoint": {
-    "id": "P15-SEC-001",
+    "id": "P16-REL-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T11:30:00.000Z"
+    "completedAt": "2026-07-18T11:50:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -26,6 +26,8 @@
     "pnpm.cmd run test:workflow-e2e: 2 recoverable fixture tests passed",
     "GitHub Actions Verify run 29642485845 passed for P14 checkpoint 184b84f",
     "Workflow IPC security and recoverable fixture targeted tests: 5 passed",
+    "GitHub Actions Verify run 29643141058 passed for P16 checkpoint 77a495b",
+    "Windows NSIS install, clean-profile launch, and silent uninstall smoke passed",
     "Project renderer visual smoke at 1440x1000 and 390x844"
   ],
   "knownFailures": [
@@ -33,10 +35,10 @@
   ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P16-REL-001 reproducible packaging after security hardening.",
-    "Run the final release gate and document live integration blockers after packaging.",
-    "Prove P3-CODEX-001 live integration when CODEX-SDK-001 is safely resolved."
+    "Resolve CODEX-SDK-001 in the external model catalog without repository-side configuration changes.",
+    "Rerun test:codex-spike and record redacted live Codex evidence.",
+    "Run a user-opened authenticated ChatGPT smoke after live Codex acceptance."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T11:30:00.000Z"
+  "updatedAt": "2026-07-18T11:50:00.000Z"
 }

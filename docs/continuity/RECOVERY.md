@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Phase 16 - Packaging and release readiness. Phase 3 live Codex integration remains independently blocked.
+MVP functionally complete with live integration blocked. All independent phases through packaging are published and green.
 
 ## Last known-good commit
 
@@ -60,13 +60,13 @@ Expected known-good baseline: formatting, lint, strict type-check, 130 or more V
 
 ## Exact next task
 
-Publish the implemented `P16-REL-001` checkpoint, watch GitHub Actions to completion, then mark the roadmap/release checklist complete if CI remains green. Do not publish a GitHub Release or claim signing; the local manifest correctly reports `NotSigned`.
+Resolve `CODEX-SDK-001` externally, then rerun `pnpm.cmd run test:codex-spike`. If that passes, perform the documented user-opened authenticated ChatGPT smoke and record redacted evidence. Do not modify external Codex configuration from this repository, publish a GitHub Release, or claim signing without authorization.
 
 ## Expected files to modify
 
-- continuity finalization after P16 CI
-- release checklist and machine-readable state
-- no production code unless CI reveals a reproducible defect
+- blocker evidence and live-smoke documentation only, unless a repository defect is reproduced
+- no external catalog or credential changes
+- no public release or signing without explicit authorization
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run

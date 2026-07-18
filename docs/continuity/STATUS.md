@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 16 - Packaging and release readiness.
+MVP functionally complete with live integration blocked.
 
 ## Current objective
 
-Publish the verified Windows packaging checkpoint, wait for clean-checkout CI, then finalize the release-readiness record without creating a public release.
+Resolve `CODEX-SDK-001` in the external model catalog, then run the documented live Codex and user-opened authenticated ChatGPT smoke without weakening safety boundaries.
 
 ## Last completed checkpoint
 
-P15-SEC-001 - Bounded strict workflow IPC identifiers, unknown-property rejection, approval/audit redaction tests, and consolidated threat-model verification across file, transport, workflow, response-routing, extension, and Electron boundaries. Resolve with `git log -1 --grep "security: harden workflow IPC boundary"`.
+P16-REL-001 - Reproducible unsigned NSIS installer, extension ZIP, SHA-256 manifest, versioned database backup, redacted diagnostics, and successful unpacked plus install/launch/uninstall smoke. Resolve with `git log -1 --grep "build(release): add reproducible Windows packaging"`.
 
 ## Current verified capabilities
 
@@ -90,13 +90,13 @@ P15-SEC-001 - Bounded strict workflow IPC identifiers, unknown-property rejectio
 
 ## Next three actions
 
-1. Commit and push `P16-REL-001` packaging and release scripts.
-2. Watch the clean-checkout GitHub Actions release gate to completion.
-3. Finalize release readiness while keeping public release/signing disabled and `CODEX-SDK-001` explicit.
+1. Resolve the external model catalog incompatibility tracked by `CODEX-SDK-001` without modifying it from this repository.
+2. Run `test:codex-spike` and a user-opened authenticated ChatGPT smoke, recording redacted evidence.
+3. Add signing and create a public GitHub Release only after explicit authorization and real credentials.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18 for P16 locally: migration parity, 138 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. `package:win`, unpacked smoke, silent install/clean-profile launch, and silent uninstall passed; P16 CI is pending publication.
+`pnpm.cmd run verify` passed on 2026-07-18 for P16 locally: migration parity, 138 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. `package:win`, unpacked smoke, silent install/clean-profile launch, and silent uninstall passed. GitHub Actions run `29643141058` passed in 1m52s for published commit `77a495b`.
 
 ## Latest commit
 
@@ -108,4 +108,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 18:45 +07:00.
+2026-07-18 18:50 +07:00.
