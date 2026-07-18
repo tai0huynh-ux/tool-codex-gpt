@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Phase 14 - End-to-end workflow. Phase 3 live Codex integration remains independently blocked.
+Phase 15 - Security hardening. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -60,13 +60,13 @@ Expected known-good baseline: formatting, lint, strict type-check, 130 or more V
 
 ## Exact next task
 
-Implement `P14-E2E-001`: exercise the complete recoverable fixture loop from a registered project through mock Codex completion, context review, assisted ChatGPT acknowledgement, structured response routing, resumed Codex execution, restart recovery, and no-duplicate assertions. Keep live Codex and authenticated ChatGPT smoke separate.
+Implement `P15-SEC-001`: audit and harden cross-project routing, renderer IPC, malicious external text, path/symlink handling, secret and log redaction, replay, duplicate effects, capability expiry, malformed JSON, oversized payloads, and local transport spoofing. Add regression tests for demonstrated gaps only.
 
 ## Expected files to modify
 
-- fixture orchestration across the existing project, workflow, assisted ChatGPT, and response-router packages
-- restart and duplicate-prevention test harnesses
-- golden-path and negative-path E2E coverage
+- affected trust-boundary modules and their focused tests
+- security threat model/checklist and evidence
+- continuity records for proven findings and remaining risks
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run

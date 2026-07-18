@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 14 - End-to-end workflow.
+Phase 15 - Security hardening.
 
 ## Current objective
 
-Prove the complete recoverable fixture loop across project identity, context review, assisted transfer, response routing, Codex lifecycle, restart, and duplicate prevention.
+Harden trust boundaries using the now-complete recoverable fixture loop as the regression baseline.
 
 ## Last completed checkpoint
 
-P13-UI-001 - Typed workflow IPC plus a responsive guided timeline, persisted event history, approval scope summaries, recovery effects, redacted diagnostics, start/cancel controls, and renderer accessibility coverage. Resolve with `git log -1 --grep "feat(desktop): add guided workflow timeline"`.
+P14-E2E-001 - Dedicated recoverable fixture E2E covering reviewed ChatGPT composer transfer, manual rendered-message acknowledgement, structured response routing, reviewed mock Codex dispatch, restart persistence, duplicate blocking, and ambiguous dispatch recovery. Resolve with `git log -1 --grep "test(e2e): cover recoverable handoff loop"`.
 
 ## Current verified capabilities
 
@@ -69,6 +69,9 @@ P13-UI-001 - Typed workflow IPC plus a responsive guided timeline, persisted eve
 - Desktop workflow data is reconstructed in the main process from persisted runs, ordered events, recovery effects, approval metadata, and redacted audit outcomes.
 - Renderer actions create, refresh, and cancel workflows only through validated typed preload IPC; approval tokens, database handles, and audit details never cross the boundary.
 - The responsive workflow deck exposes textual state badges, keyboard-native controls, event timelines, iteration/retry limits, and explicit recovery status without claiming that review-only states were sent.
+- `test:workflow-e2e` composes the real SQLite, project registry, workflow engine, assisted ChatGPT service, response router, and mock Codex adapter across a close/reopen boundary.
+- The golden fixture proves both sends are acknowledged once, the response receipt and thread mapping persist, and repeated ChatGPT or Codex dispatch attempts are rejected.
+- The recovery fixture proves a transport-loss effect remains `dispatching` after restart, is surfaced as `confirmation_required`, and is not inserted again.
 
 ## Current known failures
 
@@ -81,13 +84,13 @@ P13-UI-001 - Typed workflow IPC plus a responsive guided timeline, persisted eve
 
 ## Next three actions
 
-1. Implement `P14-E2E-001` golden-path fixture across the persisted workflow loop.
-2. Add restart, duplicate handoff, cancellation, invalid response, wrong-project, and ambiguous-effect negative paths.
-3. Run live smoke only after fixture E2E is green and keep `CODEX-SDK-001` explicit.
+1. Implement `P15-SEC-001` adversarial trust-boundary tests and mitigations.
+2. Review renderer IPC, path handling, secret/log redaction, replay, capability expiry, and oversized/malformed payload behavior.
+3. Keep live Codex and authenticated ChatGPT smoke separate from fixture evidence.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18 for P13: migration parity, 133 Vitest tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. P12 CI fix run `29641802598` passed on Ubuntu with Node.js 24.
+`pnpm.cmd run verify` passed on 2026-07-18 for P14: migration parity, 135 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. P13 GitHub Actions run `29642191174` passed in 1m49s.
 
 ## Latest commit
 
@@ -99,4 +102,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 18:12 +07:00.
+2026-07-18 18:22 +07:00.

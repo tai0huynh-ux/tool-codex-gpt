@@ -18,7 +18,8 @@
     "status": "node scripts/project-status.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm -r --if-present typecheck",
     "test": "vitest run",
-    "test:e2e": "playwright test",
+    "test:workflow-e2e": "vitest run tests/integration/recoverable-workflow.test.ts",
+    "test:e2e": "pnpm run test:workflow-e2e && playwright test",
     "test:watch": "vitest",
     "test:codex-spike": "tsx tests/spikes/codex-sdk-spike.ts",
     "verify": "pnpm run migrations:check && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run test:e2e && pnpm run build"

@@ -118,10 +118,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 14 - End-to-end workflow
 
-- [ ] P14-E2E-001 Cover the complete recoverable handoff loop
+- [x] P14-E2E-001 Cover the complete recoverable handoff loop
   - Depends on: P13-UI-001
   - Done when: golden path, negative paths, restart, and no-duplicate fixture E2E pass before live smoke
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "test(e2e): cover recoverable handoff loop"`
 
 ## Phase 15 - Security hardening
 

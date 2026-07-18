@@ -767,3 +767,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Implement `P14-E2E-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 18:22 +07:00 - P14-E2E-001
+
+### Goal
+
+Prove the complete recoverable fixture loop across persisted project identity, reviewed assisted ChatGPT transfer, structured response routing, mock Codex lifecycle, restart, and duplicate prevention.
+
+### Changes
+
+Added a dedicated `test:workflow-e2e` command and a file-backed SQLite integration fixture. The golden path creates a project/repository and workflow, advances the initial mock Codex phase, reviews and approves a ChatGPT handoff, proves composer insertion occurs once, acknowledges only from rendered user content, validates and routes the structured response, runs a reviewed mock Codex prompt, then reopens SQLite and verifies state, events, effects, receipt, and thread mapping. A second fixture crashes at the ambiguous composer boundary and proves restart exposes confirmation-required recovery without reinsertion.
+
+### Files
+
+Root E2E scripts; recoverable workflow integration fixture; roadmap, status, recovery, matrix, worklog, and machine-readable state.
+
+### Decisions
+
+Use real domain packages and file persistence while keeping ChatGPT and Codex adapters explicit fixtures. Do not count this as live integration. Assert both application-level duplicate response protection and effect-level no-repeat behavior across acknowledgement and ambiguous dispatch boundaries.
+
+### Verification
+
+`pnpm.cmd run test:workflow-e2e` passed 2/2. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict type-check, 135 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects.
+
+### Failures encountered
+
+No production defect was found while composing the loop. The fixture clarified that mock adapter state itself is in-memory, so restart acceptance must be based on persisted application projections, effects, receipts, and mappings rather than pretending a new mock adapter is a live resumed Codex service.
+
+### Root causes
+
+Not applicable to production behavior; the distinction is an integration-evidence boundary.
+
+### Fixes
+
+Reopened the real SQLite database and asserted only durable application state. Kept live SDK acceptance under `CODEX-SDK-001`.
+
+### Commit
+
+Resolve with `git log -1 --grep "test(e2e): cover recoverable handoff loop"`.
+
+### Push
+
+Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/main`; the hashes must match. Watch GitHub Actions to completion.
+
+### Next action
+
+Implement `P15-SEC-001` exactly as described in `RECOVERY.md`.
