@@ -24,8 +24,11 @@ test('captures a rendered conversation fixture in Chromium', async ({ page }) =>
     title: 'Bridge browser fixture',
     projectName: 'Context tools',
     messages: [
-      { role: 'user', text: 'Capture this rendered message.' },
-      { role: 'assistant', text: 'Captured with no session access.' },
+      { role: 'user', text: 'First virtualized message.' },
+      { role: 'assistant', text: 'Second virtualized message.' },
+      { role: 'user', text: 'Duplicate text.' },
+      { role: 'user', text: 'Duplicate text.' },
+      { role: 'assistant', text: 'Streaming response complete.' },
     ],
   });
   expect(snapshot?.contentHash).toMatch(/^[a-f0-9]{64}$/);

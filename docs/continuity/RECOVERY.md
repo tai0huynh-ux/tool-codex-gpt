@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture ext
 
 ## Current phase
 
-Phase 4 - Conversation capture. Phase 3 live Codex integration remains independently blocked.
+Phase 5 - Composer and response parsing. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -60,14 +60,13 @@ Expected known-good baseline: formatting, lint, strict type-check, 16 or more Vi
 
 ## Exact next task
 
-Implement `P4-EXT-001`: reproduce virtualized conversation loss with a fixture that removes off-screen messages, then accumulate rendered messages across scroll passes with stable identity, deduplication, ordering, streaming updates, abort handling, and selector-health evidence. Do not read cookies, tokens, history, private APIs, or broaden extension permissions.
+Implement `P5-EXT-001`: reproduce controlled composer insertion failure, update the user-opened ChatGPT composer through native input/editing behavior without automatic submit, and parse only bounded paired structured-response markers with schema validation and clear failure codes.
 
 ## Expected files to modify
 
-- `apps/chatgpt-extension/src/capture.ts`
-- `apps/chatgpt-extension/src/capture.test.ts`
-- `apps/chatgpt-extension/fixture/*`
-- `tests/e2e/extension-fixture.spec.ts`
+- `apps/chatgpt-extension/src/page-actions.ts`
+- extension unit and fixture tests
+- handoff contracts/parser modules if needed
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run

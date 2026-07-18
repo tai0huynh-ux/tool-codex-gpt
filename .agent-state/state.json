@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "Phase 4 - Conversation capture",
-  "currentTaskId": "P4-EXT-001",
+  "currentPhase": "Phase 5 - Composer and response parsing",
+  "currentTaskId": "P5-EXT-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P2-CODEX-001",
+    "id": "P4-EXT-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T08:08:56.463Z"
+    "completedAt": "2026-07-18T08:16:56.943Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -20,13 +20,15 @@
     "skill-creator quick_validate.py for both project skills",
     "GitHub Actions Verify run 29636579711"
   ],
-  "knownFailures": ["Virtualized conversation capture is not yet proven."],
+  "knownFailures": [
+    "Controlled composer insertion and bounded structured response parsing are not yet proven."
+  ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P4-EXT-001 virtualized conversation capture.",
     "Implement P5-EXT-001 controlled composer insertion and bounded response parsing.",
+    "Implement P6-IPC-001 authenticated local transport and typed IPC.",
     "Prove P3-CODEX-001 live integration when CODEX-SDK-001 is safely resolved."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T08:08:56.463Z"
+  "updatedAt": "2026-07-18T08:16:56.943Z"
 }

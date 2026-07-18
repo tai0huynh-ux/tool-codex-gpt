@@ -40,10 +40,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 4 - Conversation capture
 
-- [ ] P4-EXT-001 Preserve virtualized conversations
+- [x] P4-EXT-001 Preserve virtualized conversations
   - Depends on: P1-CI-001
   - Done when: accumulated capture passes long, virtualized, duplicate-text, streaming, abort, ordering, and selector-health fixtures
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "fix(extension): preserve virtualized conversation capture"`
 
 ## Phase 5 - Composer and response parsing
 

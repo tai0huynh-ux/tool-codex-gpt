@@ -5,8 +5,8 @@
 | Formatting        | automated                    | `pnpm.cmd run format:check`     | local Windows                 | pass                    | `87bd00f` baseline |
 | Lint              | automated                    | `pnpm.cmd run lint`             | local Windows                 | pass                    | `87bd00f` baseline |
 | TypeScript        | automated                    | `pnpm.cmd run typecheck`        | local Windows                 | pass                    | `87bd00f` baseline |
-| Domain packages   | unit                         | `pnpm.cmd run test`             | local Windows                 | 31 pass                 | checkpoint         |
-| Extension capture | fixture E2E                  | `pnpm.cmd run test:e2e`         | Chromium                      | 1 pass                  | `87bd00f` baseline |
+| Domain packages   | unit                         | `pnpm.cmd run test`             | local Windows                 | 34 pass                 | checkpoint         |
+| Extension capture | virtualized fixture E2E      | `pnpm.cmd run test:e2e`         | Chromium                      | 1 pass                  | checkpoint         |
 | Workspace build   | automated                    | `pnpm.cmd run build`            | local Windows                 | pass                    | `87bd00f` baseline |
 | State recovery    | unit                         | `pnpm.cmd run test`             | local/CI                      | 3 continuity tests pass | checkpoint         |
 | Status helper     | integration                  | `pnpm.cmd status -- --json`     | local/CI                      | pass                    | checkpoint         |

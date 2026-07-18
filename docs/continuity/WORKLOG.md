@@ -231,3 +231,33 @@ Verify HEAD and `origin/main` equality after publication.
 ### Next action
 
 Implement `P4-EXT-001` exactly as described in `RECOVERY.md` while `CODEX-SDK-001` keeps Phase 3 live acceptance blocked.
+
+## 2026-07-18 15:16 +07:00 - P4-EXT-001
+
+### Goal
+
+Capture long virtualized conversations without losing messages that are removed from the DOM.
+
+### Changes
+
+Added multi-pass scrolling accumulation with stable message IDs, explicit ordering, content fallback deduplication, streaming text replacement, abort support, bounded passes, and selector failure reporting. Replaced the Chromium fixture with a virtualized window containing duplicate text.
+
+### Verification
+
+Unit fixtures cover visible capture, virtualized replacement, abort, selector failure, and streaming updates. Full verification passed with 34 Vitest tests, one virtualized Chromium E2E, formatting, lint, strict type-check, migration parity, and all builds.
+
+### Failures and fixes
+
+Strict lint rejected unsafe DOM assertions, numeric template interpolation, redundant conversions, and an overly verbose optional guard. Replaced them with explicit fixture checks, string conversion at markup boundaries, and the repository's strict narrowing style.
+
+### Commit
+
+Resolve with `git log -1 --grep "fix(extension): preserve virtualized conversation capture"`.
+
+### Push
+
+Verify HEAD and `origin/main` equality after publication.
+
+### Next action
+
+Implement `P5-EXT-001` exactly as described in `RECOVERY.md`.
