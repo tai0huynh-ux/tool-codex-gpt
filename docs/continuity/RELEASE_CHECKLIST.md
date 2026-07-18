@@ -10,7 +10,10 @@
 - [x] Windows installer and extension artifacts are reproducible.
 - [x] Diagnostic export is redacted.
 - [x] Checksums are generated.
-- [x] Continuity docs and state match Git.
-- [x] Final checkpoint is pushed and remote hash verified.
+- [ ] Selected Native Messaging host is packaged and registered with an exact extension origin.
+- [ ] Installed host survives restart and unregisters cleanly on uninstall.
+- [ ] Explicit permission authorization and live user-opened ChatGPT smoke are recorded.
+- [ ] Continuity docs and state match the final accepted Git checkpoint.
+- [ ] Final checkpoint is pushed and remote hash verified.
 
 Do not create a public GitHub Release without explicit user authorization.

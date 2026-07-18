@@ -33,7 +33,7 @@ durable response receipts, and idempotent effect keys before either destination 
 
 ## Local transport and Electron IPC
 
-ADR-0001 selects Native Messaging without activating new extension permissions in the current manifest. The native boundary uses an exact extension origin plus an ephemeral capability, versioned operation schemas, request IDs, nonces, short expiry, replay protection, a 256 KiB application limit, rate limiting, timeout, reconnect, and redacted audit events. Capabilities and payload content must never be logged.
+ADR-0001 selects Native Messaging without activating new extension permissions in the current manifest. The native host must use an exact extension origin and authenticate the desktop side with an ephemeral capability, then strip that capability before forwarding commands into the browser. The dormant extension service worker independently validates version, operation, request ID, nonce, short expiry, replay, and the 256 KiB application limit before DOM execution. Capabilities and payload content must never enter extension messages or logs.
 
 Electron keeps context isolation and sandboxing enabled. Preload exposes one typed method per allowlisted IPC channel and validates responses before returning them. The renderer never receives raw `ipcRenderer`, filesystem, shell, child-process, database, or native-port access. Main-process handlers validate the exact renderer identity, request schema, timeout, and transport failure code.
 

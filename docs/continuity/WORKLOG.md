@@ -927,3 +927,29 @@ Live Codex SDK acceptance remains blocked before `thread.started` by the externa
 ### Next action
 
 Resolve `CODEX-SDK-001` externally, rerun the live spike, then perform the user-opened authenticated ChatGPT smoke. No independent repository phase remains before that external condition changes.
+
+## 2026-07-18 19:03 +07:00 - P6-IPC-002
+
+### Goal
+
+Audit the claimed MVP boundary and correct the production Native Messaging command direction without activating new extension permissions.
+
+### Changes
+
+Replaced the extension-side request client with a dormant MV3 service-worker bridge that receives capability-free host commands, validates schema, expiry, replay, size, and result shape, and routes operations to the exact user-opened ChatGPT tab. Added deterministic existing/new destination selection and a two-entry extension build.
+
+### Root cause
+
+The prior fixture modeled the extension as sending `conversation.capture` and composer commands to a native host, but a host cannot access the ChatGPT DOM. No background service worker consumed host-forwarded commands, so the selected production architecture could not execute the documented workflow.
+
+### Security
+
+The desktop capability is stripped before the browser boundary. Replay, expired, oversized, malformed, and execution-failure inputs fail closed with bounded redacted errors. The manifest still excludes `nativeMessaging` and `<all_urls>`; the service worker remains dormant until explicit permission authorization.
+
+### Verification
+
+`pnpm.cmd run verify` passed: migration parity, formatting, lint, strict type-check, 145 Vitest tests, two recoverable workflow E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. The extension emitted independent `content-script.js` and `service-worker.js` bundles.
+
+### Next action
+
+Implement P6-IPC-003: a separate authenticated native-host relay, desktop local IPC client, exact-origin Windows registration, and packaged restart/uninstall smoke without activating the extension permission.

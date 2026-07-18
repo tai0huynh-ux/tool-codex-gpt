@@ -217,6 +217,29 @@ export const localTransportRequestSchema = z
     }
   });
 
+// The native host authenticates desktop requests before forwarding an operation to the
+// exact extension origin. Capabilities must never cross into the browser process.
+export const extensionTransportRequestSchema = z
+  .object({
+    protocolVersion: z.literal('1.0'),
+    requestId: z.string().min(16).max(128),
+    nonce: z.string().min(16).max(128),
+    sentAt: z.iso.datetime(),
+    expiresAt: z.iso.datetime(),
+    operation: localTransportOperationSchema,
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const sentAt = Date.parse(value.sentAt);
+    const expiresAt = Date.parse(value.expiresAt);
+    if (expiresAt <= sentAt || expiresAt - sentAt > 60_000) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Transport request expiry must be within 60 seconds after sentAt.',
+      });
+    }
+  });
+
 const structuredResponseResultSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(true), response: contextBridgeResponseSchema }).strict(),
   z
@@ -316,6 +339,7 @@ export type ChatGptPageIdentity = z.infer<typeof chatGptPageIdentitySchema>;
 export type ChatGptPageInspection = z.infer<typeof chatGptPageInspectionSchema>;
 export type LocalTransportOperation = z.infer<typeof localTransportOperationSchema>;
 export type LocalTransportRequest = z.infer<typeof localTransportRequestSchema>;
+export type ExtensionTransportRequest = z.infer<typeof extensionTransportRequestSchema>;
 export type LocalTransportResult = z.infer<typeof localTransportResultSchema>;
 export type LocalTransportResponse = z.infer<typeof localTransportResponseSchema>;
 

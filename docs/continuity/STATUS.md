@@ -2,15 +2,15 @@
 
 ## Current phase
 
-MVP functionally complete with live integration blocked.
+Phase 6 production transport completion. Phase 3 live Codex acceptance remains externally blocked.
 
 ## Current objective
 
-Resolve `CODEX-SDK-001` in the external model catalog, then run the documented live Codex and user-opened authenticated ChatGPT smoke without weakening safety boundaries.
+Implement the authenticated desktop-to-native-host relay and Windows registration required by ADR-0001 without silently activating new extension permissions.
 
 ## Last completed checkpoint
 
-P16-REL-001 - Reproducible unsigned NSIS installer, extension ZIP, SHA-256 manifest, versioned database backup, redacted diagnostics, and successful unpacked plus install/launch/uninstall smoke. Resolve with `git log -1 --grep "build(release): add reproducible Windows packaging"`.
+P6-IPC-002 - Correctly route host-forwarded operations through a dormant MV3 service worker to the exact user-opened ChatGPT tab, with browser-side expiry, replay, size, schema, and redaction guards. Resolve with `git log -1 --grep "fix(transport): route native operations through extension"`.
 
 ## Current verified capabilities
 
@@ -28,6 +28,8 @@ P16-REL-001 - Reproducible unsigned NSIS installer, extension ZIP, SHA-256 manif
 - Composer insertion uses native editing behavior for controlled textareas and contenteditable fields, honors cancellation and read-only state, and never submits automatically.
 - Structured ChatGPT responses use strict paired markers, a 100,000-character default bound, schema validation, handoff/correlation/project checks, and duplicate rejection.
 - ADR-0001 selects Native Messaging without opening a LAN listener or silently activating extension permissions.
+- The extension build includes a dormant service worker that activates only when `nativeMessaging` is explicitly present in the manifest.
+- Host-forwarded operations are validated without a desktop capability, replay/expiry/oversize are rejected before DOM execution, and existing-conversation inserts require an exact URL identity.
 - Local transport validates versioned operations, capability, expiry, replay, payload size, rate, timeout, correlation, and reconnect behavior.
 - Electron preload exposes only allowlisted typed status and operation methods with exact renderer validation and redacted transfer audit events.
 - SQLite upgrades existing v1 databases transactionally to mapping schema v2 without losing project data.
@@ -82,21 +84,22 @@ P16-REL-001 - Reproducible unsigned NSIS installer, extension ZIP, SHA-256 manif
 ## Current known failures
 
 - Live Codex SDK spike exits before `thread.started` because the configured external model catalog is incompatible with SDK `0.144.5`.
-- Native Messaging host registration and manifest permission activation are intentionally deferred to the packaging/security gate; no live transport is claimed yet.
+- The desktop-to-native-host relay, packaged native executable, exact-origin host manifest, and Windows registry installation are not implemented yet.
+- The `nativeMessaging` extension permission remains intentionally inactive; no live transport is claimed.
 
 ## Active blockers
 
-- `CODEX-SDK-001` blocks live Codex acceptance but does not block independent MVP work.
+- `CODEX-SDK-001` blocks live Codex acceptance but does not block the remaining Native Messaging implementation.
 
 ## Next three actions
 
-1. Resolve the external model catalog incompatibility tracked by `CODEX-SDK-001` without modifying it from this repository.
-2. Run `test:codex-spike` and a user-opened authenticated ChatGPT smoke, recording redacted evidence.
-3. Add signing and create a public GitHub Release only after explicit authorization and real credentials.
+1. Implement a separate authenticated native-host relay and desktop client over a local per-user IPC boundary.
+2. Add exact-origin Chrome/Edge per-user registration to the installer and verify install/restart/uninstall cleanup.
+3. Request explicit authorization before adding `nativeMessaging`, then run the installed user-opened ChatGPT smoke; independently resolve `CODEX-SDK-001` externally.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18 for P16 locally: migration parity, 138 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. `package:win`, unpacked smoke, silent install/clean-profile launch, and silent uninstall passed. GitHub Actions run `29643141058` passed in 1m52s for published commit `77a495b`.
+`pnpm.cmd run verify` passed on 2026-07-18 for P6-IPC-002: migration parity, 145 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. The extension build emitted both `content-script.js` and dormant `service-worker.js` while the manifest permission guard remained inactive.
 
 ## Latest commit
 
@@ -108,4 +111,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 18:50 +07:00.
+2026-07-18 19:03 +07:00.

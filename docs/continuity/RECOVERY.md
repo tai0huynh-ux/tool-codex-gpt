@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-MVP functionally complete with live integration blocked. All independent phases through packaging are published and green.
+Phase 6 production transport completion. P6-IPC-002 corrects the extension-side command direction; P6-IPC-003 must add the separate native host, desktop relay, and Windows registration. Live Codex remains independently blocked.
 
 ## Last known-good commit
 
@@ -60,14 +60,14 @@ Expected known-good baseline: formatting, lint, strict type-check, 130 or more V
 
 ## Exact next task
 
-Resolve `CODEX-SDK-001` externally, then rerun `pnpm.cmd run test:codex-spike`. If that passes, perform the documented user-opened authenticated ChatGPT smoke and record redacted evidence. Do not modify external Codex configuration from this repository, publish a GitHub Release, or claim signing without authorization.
+Implement `P6-IPC-003`: add a separate authenticated native-host relay, a desktop client over a per-user local IPC boundary, and exact-origin Chrome/Edge registration in the Windows installer. Keep `nativeMessaging` absent until explicit permission authorization.
 
 ## Expected files to modify
 
-- blocker evidence and live-smoke documentation only, unless a repository defect is reproduced
-- no external catalog or credential changes
-- no public release or signing without explicit authorization
-- continuity status, roadmap, matrix, worklog, recovery, and state
+- native-host runtime and tests
+- desktop transport client/service and tests
+- Windows installer host manifest/registry integration and smoke tests
+- architecture, security, release, test matrix, worklog, recovery, and state
 
 ## Tests to run
 
@@ -85,7 +85,8 @@ pnpm.cmd run build
 - PowerShell blocks `pnpm.ps1`; use `pnpm.cmd` at the interactive Windows shell only.
 - Electron and Playwright downloads need explicit pnpm build-script permission.
 - Live Codex tests are separate from CI and must never be represented by mock or fixture results.
-- Native Messaging protocol fixtures are not live registration evidence; the manifest permission and host installer remain deferred to the packaging/security gate.
+- The extension service worker is dormant while `nativeMessaging` is absent. Do not add that permission without explicit authorization.
+- Native Messaging protocol and service-worker fixtures are not live host registration evidence.
 - Add database changes as ordered `NNNN_name.sql` files, then run `pnpm.cmd migrations:generate`; never rewrite an accepted migration to simulate an upgrade.
 - Renderer code must not read repositories directly; context collection and secret decisions belong in validated main/domain boundaries.
 - Only approved memories may enter retrieval or bootstrap output; candidate content must never be auto-approved.
@@ -96,4 +97,4 @@ pnpm.cmd run build
 
 ## Blockers and safe alternatives
 
-`CODEX-SDK-001` blocks the live SDK path because an external model catalog is incompatible. Do not modify external Codex configuration. Continue CI, contract, extension, persistence, UI, and mock workflow work independently.
+`CODEX-SDK-001` blocks the live SDK path because an external model catalog is incompatible. Do not modify external Codex configuration. Continue the native-host relay, installer registration, and permission-inactive smoke independently.

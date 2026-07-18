@@ -46,5 +46,7 @@
 | Response routing      | receipt/destination/lifecycle   | `pnpm.cmd run test`               | SQLite and mock Codex adapter            | 6 tests pass                              | checkpoint         |
 | Codex SDK             | live authenticated read-only    | `pnpm.cmd run test:codex-spike`   | local Codex config                       | blocked                                   | `CODEX-SDK-001`    |
 | ChatGPT selectors     | live manual                     | documented manual smoke           | user-opened authenticated tab            | not run                                   | not implemented    |
+| Extension worker      | host-to-DOM operation routing   | `pnpm.cmd run test`               | Vitest native-port and tab fixtures      | 10 tests pass                             | checkpoint         |
+| Native host install   | relay, registry, restart        | packaged Windows smoke            | clean per-user Chrome/Edge registration  | not run                                   | not implemented    |
 
 Fixture and mock results never count as live integration evidence.

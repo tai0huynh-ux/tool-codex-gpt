@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "MVP functionally complete with live integration blocked",
-  "currentTaskId": "P3-CODEX-001",
-  "status": "blocked",
+  "currentPhase": "Phase 6 - Production Native Messaging completion",
+  "currentTaskId": "P6-IPC-003",
+  "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P16-REL-001",
+    "id": "P6-IPC-002",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T11:50:00.000Z"
+    "completedAt": "2026-07-18T12:03:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -28,17 +28,19 @@
     "Workflow IPC security and recoverable fixture targeted tests: 5 passed",
     "GitHub Actions Verify run 29643141058 passed for P16 checkpoint 77a495b",
     "Windows NSIS install, clean-profile launch, and silent uninstall smoke passed",
+    "P6-IPC-002 full verification passed with 145 Vitest tests and a two-entry extension build",
     "Project renderer visual smoke at 1440x1000 and 390x844"
   ],
   "knownFailures": [
-    "Native Messaging host registration and manifest permission activation are deferred; no live transport is claimed."
+    "Desktop-to-native-host relay, packaged host executable, and Windows host registration are not implemented.",
+    "The nativeMessaging extension permission is intentionally inactive pending explicit authorization."
   ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Resolve CODEX-SDK-001 in the external model catalog without repository-side configuration changes.",
-    "Rerun test:codex-spike and record redacted live Codex evidence.",
-    "Run a user-opened authenticated ChatGPT smoke after live Codex acceptance."
+    "Implement P6-IPC-003 authenticated desktop-to-host relay and native host process.",
+    "Add exact-origin Chrome and Edge per-user registration plus install/restart/uninstall smoke.",
+    "Request explicit permission activation before the live user-opened ChatGPT smoke."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T11:50:00.000Z"
+  "updatedAt": "2026-07-18T12:03:00.000Z"
 }

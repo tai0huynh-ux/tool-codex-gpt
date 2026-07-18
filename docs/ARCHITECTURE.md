@@ -26,9 +26,9 @@ orchestration. It does not implement automatic sending or a production ChatGPT/C
 
 ## Local transport boundary
 
-ADR-0001 selects Native Messaging for the production extension boundary. The browser-owned native port is protected by exact `allowed_origins` plus an ephemeral application capability. Requests are versioned, operation-specific, short-lived, replay-protected, size-bounded, rate-limited, and audited without payload or capability logging.
+ADR-0001 selects Native Messaging for the production extension boundary. The browser-owned native port is protected by exact `allowed_origins`; a separate native host must authenticate desktop-originated operations with an ephemeral application capability before forwarding a capability-free request into the extension. Requests are versioned, operation-specific, short-lived, replay-protected, size-bounded, rate-limited, and audited without payload or capability logging.
 
-The extension client reconnects only through a fixed native-host name and validates correlated responses. Electron preload exposes allowlisted status and operation methods; the renderer never receives raw `ipcRenderer` or a native port. Native-host registration and the `nativeMessaging` manifest permission remain intentionally inactive until the packaging/security gate.
+The extension service worker reconnects only through a fixed native-host name, receives host-forwarded commands, revalidates expiry/replay/size, and routes DOM work to an exact user-opened ChatGPT tab. It never receives the desktop capability. Electron preload exposes allowlisted status and operation methods; the renderer never receives raw `ipcRenderer` or a native port. The service worker is dormant while native-host registration and the `nativeMessaging` manifest permission remain inactive.
 
 Production adapters and end-to-end assisted sending remain deferred. Their domain boundaries stay separate
 from renderer and extension trust boundaries.
