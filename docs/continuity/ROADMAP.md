@@ -104,10 +104,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 12 - ChatGPT response routing
 
-- [ ] P12-HANDOFF-001 Route validated prompts to Codex
+- [x] P12-HANDOFF-001 Route validated prompts to Codex
   - Depends on: P3-CODEX-001, P11-CHAT-001
   - Done when: schema, handoff, correlation, project, duplicate, approval, and iteration checks guard all destinations
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(routing): route validated prompts to codex"`
 
 ## Phase 13 - Desktop workflow UI
 

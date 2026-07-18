@@ -34,6 +34,10 @@ export default defineConfig({
         root,
         'packages/assisted-chatgpt/src/index.ts',
       ),
+      '@codex-context-bridge/response-router': path.join(
+        root,
+        'packages/response-router/src/index.ts',
+      ),
       '@codex-context-bridge/secret-scanner': path.join(
         root,
         'packages/secret-scanner/src/index.ts',

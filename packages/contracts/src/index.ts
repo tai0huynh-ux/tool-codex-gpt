@@ -468,6 +468,37 @@ export const assistedChatGptPreviewSchema = z
 
 export type AssistedChatGptPreview = z.infer<typeof assistedChatGptPreviewSchema>;
 
+export const codexDestinationSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('existing-thread'), threadMappingId: z.string().min(1) }).strict(),
+  z.object({ mode: z.literal('new-thread'), repositoryId: z.string().min(1) }).strict(),
+  z
+    .object({
+      mode: z.literal('new-worktree'),
+      repositoryId: z.string().min(1),
+      worktreeName: z.string().min(1).max(128),
+    })
+    .strict(),
+]);
+
+export const codexRoutePreviewSchema = z
+  .object({
+    protocolVersion: z.literal('1.0'),
+    receiptId: z.string().min(1),
+    workflowRunId: z.string().min(1),
+    handoffId: z.string().min(1),
+    correlationId: z.string().min(1),
+    projectId: z.string().min(1),
+    codexPrompt: z.string().min(1).max(100_000),
+    promptHash: z.string().regex(/^[a-f0-9]{64}$/),
+    responseHash: z.string().regex(/^[a-f0-9]{64}$/),
+    destination: codexDestinationSchema,
+    createdAt: z.iso.datetime(),
+  })
+  .strict();
+
+export type CodexDestination = z.infer<typeof codexDestinationSchema>;
+export type CodexRoutePreview = z.infer<typeof codexRoutePreviewSchema>;
+
 export const memoryScopeSchema = z.enum(['global', 'team', 'project', 'conversation', 'workflow']);
 export const memoryStatusSchema = z.enum(['candidate', 'approved', 'superseded', 'deleted']);
 export const memoryCategorySchema = z.enum([

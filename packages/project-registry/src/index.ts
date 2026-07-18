@@ -47,6 +47,15 @@ export interface MappingConfirmation {
   supersededAt?: string;
 }
 
+export interface CodexThreadMapping {
+  id: string;
+  projectId: string;
+  repositoryFingerprint: string;
+  externalThreadId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface ProjectRow {
   id: string;
   name: string;
@@ -82,6 +91,15 @@ interface MappingRow {
   status: MappingConfirmation['status'];
   created_at: string;
   superseded_at: string | null;
+}
+
+interface CodexThreadRow {
+  id: string;
+  project_id: string;
+  repository_fingerprint: string;
+  external_thread_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 function mapProject(row: ProjectRow): Project {
@@ -124,6 +142,17 @@ function mapConfirmation(row: MappingRow): MappingConfirmation {
     createdAt: row.created_at,
     ...(row.repository_id ? { repositoryId: row.repository_id } : {}),
     ...(row.superseded_at ? { supersededAt: row.superseded_at } : {}),
+  };
+}
+
+function mapCodexThread(row: CodexThreadRow): CodexThreadMapping {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    repositoryFingerprint: row.repository_fingerprint,
+    externalThreadId: row.external_thread_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -424,5 +453,19 @@ export class ProjectRegistry {
         now,
       );
     return id;
+  }
+
+  public getCodexThread(id: string): CodexThreadMapping | undefined {
+    const row = this.database.prepare('SELECT * FROM codex_threads WHERE id = ?').get(id) as
+      CodexThreadRow | undefined;
+    return row ? mapCodexThread(row) : undefined;
+  }
+
+  public listCodexThreads(projectId: string): CodexThreadMapping[] {
+    return (
+      this.database
+        .prepare('SELECT * FROM codex_threads WHERE project_id = ? ORDER BY created_at, id')
+        .all(projectId) as CodexThreadRow[]
+    ).map(mapCodexThread);
   }
 }

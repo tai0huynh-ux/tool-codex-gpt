@@ -5,7 +5,7 @@
 | Formatting         | automated                     | `pnpm.cmd run format:check`     | local Windows                 | pass                    | `87bd00f` baseline |
 | Lint               | automated                     | `pnpm.cmd run lint`             | local Windows                 | pass                    | `87bd00f` baseline |
 | TypeScript         | automated                     | `pnpm.cmd run typecheck`        | local Windows                 | pass                    | `87bd00f` baseline |
-| Domain packages    | unit                          | `pnpm.cmd run test`             | local Windows                 | 124 pass                | checkpoint         |
+| Domain packages    | unit                          | `pnpm.cmd run test`             | local Windows                 | 130 pass                | checkpoint         |
 | Extension capture  | virtualized fixture E2E       | `pnpm.cmd run test:e2e`         | Chromium                      | 1 pass                  | checkpoint         |
 | Assisted composer  | no-submit/clear fixture E2E   | `pnpm.cmd run test:e2e`         | Chromium                      | 1 pass                  | checkpoint         |
 | Workspace build    | automated                     | `pnpm.cmd run build`            | local Windows                 | pass                    | `87bd00f` baseline |
@@ -35,6 +35,7 @@
 | Workflow engine    | transition/approval/recovery  | `pnpm.cmd run test`             | SQLite memory and file        | 19 tests pass           | checkpoint         |
 | Assisted contract  | preview/page operation schema | `pnpm.cmd run test`             | local/CI                      | 4 tests pass            | checkpoint         |
 | Assisted handoff   | destination/send/confirmation | `pnpm.cmd run test`             | SQLite and browser adapters   | 10 tests pass           | checkpoint         |
+| Response routing   | receipt/destination/lifecycle | `pnpm.cmd run test`             | SQLite and mock Codex adapter | 6 tests pass            | checkpoint         |
 | Codex SDK          | live authenticated read-only  | `pnpm.cmd run test:codex-spike` | local Codex config            | blocked                 | `CODEX-SDK-001`    |
 | ChatGPT selectors  | live manual                   | documented manual smoke         | user-opened authenticated tab | not run                 | not implemented    |
 

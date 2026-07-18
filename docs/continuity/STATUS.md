@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 12 - ChatGPT response routing.
+Phase 13 - Desktop workflow UI.
 
 ## Current objective
 
-Route validated structured ChatGPT responses back to the correct Codex project/thread boundary without duplicate or cross-project execution.
+Expose the verified project, context, memory, workflow, assisted-send, and response-routing capabilities through one guided desktop workflow.
 
 ## Last completed checkpoint
 
-P11-CHAT-001 - Versioned assisted preview, deterministic handoff rendering, existing/new destination checks, P10 approval/effect integration, exact composer insertion, explicit clipboard fallback, manual-send capture acknowledgement, cancellation, and no automatic submit. Resolve with `git log -1 --grep "feat(chatgpt): add reviewed assisted handoffs"`.
+P12-HANDOFF-001 - Migration v5 response receipts, strict structured-response identity and replay guards, reviewed Codex prompt preview, existing/new/worktree destination validation, P10 approval/effect integration, persisted thread mapping, and mock-only lifecycle routing. Resolve with `git log -1 --grep "feat(routing): route validated prompts to codex"`.
 
 ## Current verified capabilities
 
@@ -61,6 +61,11 @@ P11-CHAT-001 - Versioned assisted preview, deterministic handoff rendering, exis
 - Clipboard delivery is an explicit user-selected fallback; ambiguous adapter failures remain `confirmation_required` rather than being retried.
 - Streaming responses defer acknowledgement; capture advances the workflow only after streaming stops and the latest rendered user message matches the approved payload.
 - Polling cancellation preserves recovery state, while explicit transfer cancellation clears composer text only when its hash still matches before marking the effect failed.
+- SQLite migration v5 persists one response receipt per handoff and workflow/hash, so duplicate ChatGPT responses remain blocked after restart.
+- Response routing revalidates schema, handoff, correlation, project, workflow state, prompt hash, receipt hash, destination repository, and thread identity before dispatch.
+- Existing Codex threads resume only through persisted project/fingerprint mappings; new threads persist their mapping; new-worktree routes require an explicit provider.
+- Codex prompt approval and preparation use P10 single-use capabilities and iteration limits; ambiguous adapter failures remain `dispatching` and are never retried automatically.
+- Mock lifecycle events advance `codex_running` to completed/failed/cancelled states, but do not satisfy the active live SDK blocker.
 
 ## Current known failures
 
@@ -73,13 +78,13 @@ P11-CHAT-001 - Versioned assisted preview, deterministic handoff rendering, exis
 
 ## Next three actions
 
-1. Implement `P12-HANDOFF-001` response routing with schema, handoff, correlation, project, and duplicate guards.
-2. Add reviewed existing/new/worktree Codex destination selection through the mock-safe adapter boundary.
-3. Prove approval and iteration enforcement without representing fixture/mock evidence as live SDK integration.
+1. Implement `P13-UI-001` guided workflow timeline, review, approval, diagnostics, and recovery surfaces.
+2. Wire renderer actions only through typed Electron IPC into the verified domain packages.
+3. Add keyboard/accessibility tests and responsive desktop/mobile visual smoke.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 124 Vitest tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 14 buildable workspace projects. GitHub Actions run `29640734008` passed for published checkpoint `8f98ad3`; P11 CI is pending publication.
+`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 130 Vitest tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. GitHub Actions run `29641246549` passed for published checkpoint `737ac81`; P12 CI is pending publication.
 
 ## Latest commit
 
@@ -91,4 +96,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 17:36 +07:00.
+2026-07-18 17:52 +07:00.

@@ -193,6 +193,24 @@ importers:
         specifier: workspace:*
         version: link:../project-detector
 
+  packages/response-router:
+    dependencies:
+      '@codex-context-bridge/codex-adapter':
+        specifier: workspace:*
+        version: link:../codex-adapter
+      '@codex-context-bridge/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@codex-context-bridge/database':
+        specifier: workspace:*
+        version: link:../database
+      '@codex-context-bridge/project-registry':
+        specifier: workspace:*
+        version: link:../project-registry
+      '@codex-context-bridge/workflow-engine':
+        specifier: workspace:*
+        version: link:../workflow-engine
+
   packages/secret-scanner: {}
 
   packages/workflow-engine:

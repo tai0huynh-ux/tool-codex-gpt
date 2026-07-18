@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "Phase 12 - ChatGPT response routing",
-  "currentTaskId": "P12-HANDOFF-001",
+  "currentPhase": "Phase 13 - Desktop workflow UI",
+  "currentTaskId": "P13-UI-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P11-CHAT-001",
+    "id": "P12-HANDOFF-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T10:36:53.000Z"
+    "completedAt": "2026-07-18T10:52:16.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -18,7 +18,7 @@
     "pnpm.cmd exec vitest run tests/continuity/state-schema.test.ts",
     "pnpm.cmd status -- --json",
     "skill-creator quick_validate.py for both project skills",
-    "GitHub Actions Verify run 29640734008 for preceding checkpoint 8f98ad3",
+    "GitHub Actions Verify run 29641246549 for preceding checkpoint 737ac81",
     "Project renderer visual smoke at 1440x1000 and 390x844"
   ],
   "knownFailures": [
@@ -26,10 +26,10 @@
   ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P12-HANDOFF-001 validated ChatGPT response routing through persistent approvals and effects.",
-    "Implement P13-UI-001 guided workflow UI after response routing.",
+    "Implement P13-UI-001 guided workflow UI over the verified domain boundaries.",
+    "Implement P14-E2E-001 complete recoverable fixture workflow after the UI.",
     "Prove P3-CODEX-001 live integration when CODEX-SDK-001 is safely resolved."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T10:36:53.000Z"
+  "updatedAt": "2026-07-18T10:52:16.000Z"
 }

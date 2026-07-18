@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Phase 12 - ChatGPT response routing. Phase 3 live Codex integration remains independently blocked.
+Phase 13 - Desktop workflow UI. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -56,17 +56,17 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 124 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass.
+Expected known-good baseline: formatting, lint, strict type-check, 130 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass.
 
 ## Exact next task
 
-Implement `P12-HANDOFF-001`: consume the already strict structured ChatGPT response only after handoff/correlation/project/duplicate validation, preview `codexPrompt`, select existing/new/worktree Codex destination, and route through P10 approval/effect/iteration guards. Keep production SDK execution explicitly blocked behind `CODEX-SDK-001` and use the mock adapter only for domain tests.
+Implement `P13-UI-001`: add a guided desktop workflow timeline for context review, assisted ChatGPT transfer, response validation, Codex prompt review, destination selection, approvals, diagnostics, cancellation, and recovery. Keep database, repository, clipboard, transport, and adapter access in validated main-process/domain boundaries.
 
 ## Expected files to modify
 
-- response-routing contracts/domain package and tests
-- Codex destination selection and project/thread mapping validation
-- P10 approval/effect integration plus mock lifecycle acknowledgement tests
+- desktop workflow IPC/preload contracts and main-process orchestration
+- responsive accessible renderer timeline, previews, approval and recovery controls
+- unit, Electron boundary, keyboard, and visual smoke tests
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run

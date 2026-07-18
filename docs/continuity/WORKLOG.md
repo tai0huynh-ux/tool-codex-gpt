@@ -629,3 +629,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Implement `P12-HANDOFF-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 17:52 +07:00 - P12-HANDOFF-001
+
+### Goal
+
+Persist and route one validated structured ChatGPT response to the correct Codex destination without cross-project execution, replay, unreviewed prompts, or duplicate transfer.
+
+### Changes
+
+Added migration v5 response receipts, Codex destination/route preview contracts, persisted Codex thread lookup, and `packages/response-router`. The router validates response identity and workflow state, persists a unique receipt, builds a tamper-checked prompt preview, resolves existing/new/worktree destinations, consumes P10 approval/effects, registers new threads, and projects structured mock lifecycle events.
+
+### Files
+
+Database migration/runtime/tests; response and destination contracts; project-registry thread lookup; new response-router package/tests; workspace aliases/lockfile; architecture, security, and continuity records.
+
+### Decisions
+
+Use a durable receipt rather than an in-memory accepted-ID set. Require an explicit worktree provider instead of mutating Git directly. Treat mock adapter lifecycle as domain evidence only. Persist `dispatching` before adapter calls and make thread mapping, acknowledgement, workflow projection, and receipt routing one local transaction after external acceptance.
+
+### Verification
+
+Targeted database, registry, and router tests passed 15/15. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict type-check, 130 Vitest tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects.
+
+### Failures encountered
+
+The first test setup used stale registry constructor/method names, destination inference narrowed to new-thread only, and strict lint required optional-chain normalization.
+
+### Root causes
+
+The implementation was written against inferred registry ergonomics rather than its exact public API, while test helper defaults over-specialized a destination union. Strict lint exposed redundant null checks after control-flow narrowing.
+
+### Fixes
+
+Aligned setup with `ProjectRegistry.create` and its clock callback, typed destination helpers against the full union, normalized strict conditions, and reran targeted plus full gates.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(routing): route validated prompts to codex"`.
+
+### Push
+
+Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/main`; the hashes must match.
+
+### Next action
+
+Implement `P13-UI-001` exactly as described in `RECOVERY.md`.

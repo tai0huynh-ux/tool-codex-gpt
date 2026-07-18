@@ -54,7 +54,7 @@ describe('database migrations and audit log', () => {
 
     migrate(database);
 
-    expect(database.pragma('user_version', { simple: true })).toBe(4);
+    expect(database.pragma('user_version', { simple: true })).toBe(5);
     expect(database.prepare('SELECT name FROM projects WHERE id = ?').get('project-1')).toEqual({
       name: 'Bridge',
     });
@@ -111,7 +111,7 @@ describe('database migrations and audit log', () => {
 
     migrate(database);
 
-    expect(database.pragma('user_version', { simple: true })).toBe(4);
+    expect(database.pragma('user_version', { simple: true })).toBe(5);
     expect(database.prepare('SELECT id, content_hash FROM memories').get()).toEqual({
       id: 'memory-legacy',
       content_hash: null,
@@ -193,7 +193,7 @@ describe('database migrations and audit log', () => {
 
     migrate(database);
 
-    expect(database.pragma('user_version', { simple: true })).toBe(4);
+    expect(database.pragma('user_version', { simple: true })).toBe(5);
     expect(
       database.prepare('SELECT id, max_iterations, recovery_status FROM workflow_runs').get(),
     ).toEqual({
