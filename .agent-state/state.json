@@ -29,6 +29,8 @@
     "GitHub Actions Verify run 29643141058 passed for P16 checkpoint 77a495b",
     "Windows NSIS install, clean-profile launch, and silent uninstall smoke passed",
     "P6-IPC-002 full verification passed with 145 Vitest tests and a two-entry extension build",
+    "GitHub Actions Verify run 29643866680 reproduced a missing Vite fixture source alias",
+    "Extension type-check, two workflow E2E, two Chromium E2E, and two-entry build passed after restoring the dev-server alias",
     "Project renderer visual smoke at 1440x1000 and 390x844"
   ],
   "knownFailures": [
@@ -42,5 +44,5 @@
     "Request explicit permission activation before the live user-opened ChatGPT smoke."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T12:03:00.000Z"
+  "updatedAt": "2026-07-18T12:14:00.000Z"
 }

@@ -953,3 +953,29 @@ The desktop capability is stripped before the browser boundary. Replay, expired,
 ### Next action
 
 Implement P6-IPC-003: a separate authenticated native-host relay, desktop local IPC client, exact-origin Windows registration, and packaged restart/uninstall smoke without activating the extension permission.
+
+## 2026-07-18 19:14 +07:00 - P6-IPC-002-CI
+
+### Goal
+
+Restore clean-checkout Chromium fixture execution after the P6-IPC-002 extension build refactor.
+
+### Failure
+
+GitHub Actions run `29643866680` passed formatting, lint, type-check, and all 145 Vitest tests, then both Chromium fixtures timed out because Vite could not resolve `@codex-context-bridge/contracts`.
+
+### Root cause
+
+The production build moved to `build.mjs`, but deleting `vite.config.ts` also removed the source alias used by the Playwright development server. Windows had stale built workspace output available, masking the clean-checkout failure.
+
+### Fix
+
+Restored a development-only Vite config containing the contracts source alias while keeping production's independent two-entry build script.
+
+### Verification
+
+Extension strict type-check passed, both recoverable workflow E2E tests passed, both Chromium fixture E2E tests passed, and the content-script plus service-worker build passed.
+
+### Next action
+
+Publish the CI fix, wait for clean-checkout verification, then continue P6-IPC-003.

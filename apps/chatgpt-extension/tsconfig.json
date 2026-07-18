@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["chrome"]
   },
-  "include": ["src", "fixture"]
+  "include": ["src", "fixture", "vite.config.ts"]
 }

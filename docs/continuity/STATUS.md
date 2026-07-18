@@ -99,7 +99,7 @@ P6-IPC-002 - Correctly route host-forwarded operations through a dormant MV3 ser
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18 for P6-IPC-002: migration parity, 145 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. The extension build emitted both `content-script.js` and dormant `service-worker.js` while the manifest permission guard remained inactive.
+`pnpm.cmd run verify` passed locally on 2026-07-18 for P6-IPC-002: migration parity, 145 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 15 buildable workspace projects. GitHub Actions run `29643866680` then exposed a clean-checkout Vite fixture alias regression; the source-only alias was restored and the extension type-check, workflow E2E, Chromium E2E, and two-entry build passed locally. Replacement clean-checkout CI is pending publication.
 
 ## Latest commit
 
@@ -111,4 +111,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 19:03 +07:00.
+2026-07-18 19:14 +07:00.
