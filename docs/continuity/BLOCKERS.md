@@ -1,5 +1,11 @@
 # Blockers
 
+## Internal beta summary
+
+- Active P0/P1 blockers: none.
+- Accepted limitations: unsigned Windows artifacts, unpacked internal extension distribution, no automatic ChatGPT submission, no public GitHub Release, and no store publication.
+- Environment-limited reruns: destructive clean-install and live Edge smoke were not rerun because the installed app, native host, and user browser session are active; prior acceptance remains recorded separately.
+
 ## CODEX-SDK-001
 
 - Status: resolved

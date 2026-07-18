@@ -1179,3 +1179,33 @@ Publish `main` to `origin`, fetch, and require `HEAD` to equal `origin/main`.
 ### Next action
 
 Confirm the published GitHub Actions Verify run is green, then begin only explicitly scoped post-MVP maintenance or release work.
+
+## 2026-07-19 01:00 +07:00 - P17-BETA-001
+
+### Goal
+
+Move the published technical MVP to Internal Beta Ready with a repeatable UAT gate, safe Windows artifact staging, complete team guidance, and accurate continuity without disrupting the active Edge/native-host installation.
+
+### Changes
+
+Added a composite internal-beta UAT command, nine user guides, and an ignored staging-manifest generator with SHA-256 output. Fixed the release toolchain so electron-builder restores the Node-compatible `better-sqlite3` binary after rebuilding it for Electron. Added a regression check that loads SQLite under the active Node runtime after release tooling.
+
+### Verification
+
+`pnpm.cmd run verify` passed migration parity, formatting, lint, strict type-check, 165 Vitest tests, two workflow E2E tests, two Chromium E2E tests, and all 15 buildable workspace projects. `pnpm.cmd run test:internal-beta-uat` passed 43 targeted workflow/context/approval/routing/recovery cases and two Chromium fixture flows. `pnpm.cmd run package:win`, packaged desktop/native-host smoke, post-package Node ABI tests, and three non-destructive installed native-host relay runs passed. The staging manifest reports the unsigned installer, unpacked app, native host, extension ZIP, release manifest, sizes, and SHA-256 values.
+
+### Failure and root cause
+
+The first full verification after a frozen install failed 61 SQLite-dependent tests because a prior electron-builder run had replaced the shared Node ABI 137 native binary with Electron ABI 146. A plain pnpm rebuild did not restore it; the successful recovery required running `prebuild-install` from the actual `better-sqlite3` package directory. The first wrapper fix also exposed cwd-dependent paths when invoked from `apps/desktop`.
+
+### Fix
+
+Resolve electron-builder and dependency paths from `import.meta.dirname` and pnpm package resolution, always run the Node native-runtime restorer after builder completion, verify the binding by opening an in-memory database, and fail packaging if restoration cannot be proven.
+
+### Security and limitations
+
+No permission, submission behavior, browser profile, credential, or public distribution path changed. The active Edge session, installed app, native-host registration, and user data were not modified. Live Edge smoke remains previously accepted and was not rerun this session; destructive clean-install smoke was not rerun because the app is installed and active. Artifacts remain unsigned and ignored by Git; no public GitHub Release or store publication was created.
+
+### Next action
+
+Publish the Internal Beta Ready checkpoint, require final GitHub Actions Verify success, then distribute the checksum-verified build only to a small internal group.

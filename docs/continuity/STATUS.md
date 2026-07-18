@@ -2,15 +2,15 @@
 
 ## Current phase
 
-MVP acceptance complete. Phase 6 installed Native Messaging browser proof passed; final publication and CI confirmation remain.
+Internal Beta Ready. The accepted MVP is published, the internal-beta UAT and Windows artifact set pass, and team installation guidance is complete.
 
 ## Current objective
 
-Publish the accepted P6-IPC-005 browser path, confirm the remote verification workflow, and leave a restartable maintenance state.
+Distribute the verified unsigned build to a small internal group, collect feedback, and keep all sends explicitly reviewed and approved.
 
 ## Last completed checkpoint
 
-P6-IPC-005 - Prove the installed Edge-to-native-host-to-ChatGPT path with redacted capture evidence, no-submit insertion, and exact cleanup. Resolve with `git log -1 --grep "fix(release): complete installed browser acceptance"`.
+P17-BETA-001 - Prepare the Internal Beta UAT gate, team documentation, reproducible staging manifest, and post-package Node native-runtime recovery. Resolve with `git log -1 --grep "internal beta"`.
 
 ## Current verified capabilities
 
@@ -90,6 +90,10 @@ P6-IPC-005 - Prove the installed Edge-to-native-host-to-ChatGPT path with redact
 - MV3 recovery no longer depends on manually opening the extension page: an allowlisted ChatGPT content script sends a data-free readiness event that wakes the service worker and reconnects Native Messaging.
 - Browser routing recognizes both root conversations and ChatGPT Project URLs containing `/g/.../c/<conversationId>`, while insertions still require an exact conversation identity.
 - Windows packaging now proves the Electron main process initialized the bridge, rebuilds a compatible native SQLite binary, packages required runtime bindings, and fails with captured startup diagnostics instead of accepting a surviving shell process.
+- Windows packaging restores the Node-compatible SQLite prebuild after electron-builder finishes, so release packaging no longer poisons subsequent Node/Vitest runs.
+- `test:internal-beta-uat` composes 43 workflow, context, approval, routing, recovery, and negative-path cases plus two Chromium extension fixture flows.
+- The ignored `artifacts/internal-beta` staging set contains a machine-readable manifest, SHA-256 list, installer, unpacked app, native host, extension archive, and exact installation entry point.
+- Nine team guides cover Windows/Edge installation, first project setup, capture, Codex handoff, recovery, troubleshooting, updates, and safe uninstall.
 
 ## Current known failures
 
@@ -101,13 +105,13 @@ P6-IPC-005 - Prove the installed Edge-to-native-host-to-ChatGPT path with redact
 
 ## Next three actions
 
-1. Publish the P6-IPC-005 checkpoint to `origin/main` without force.
-2. Confirm GitHub Actions Verify passes from the published commit.
-3. Start only explicitly scoped post-MVP maintenance or release work; do not create a public GitHub Release without authorization.
+1. Distribute the checksum-verified unsigned build to a small internal group.
+2. Collect usability, recovery, and compatibility feedback without enabling automatic submission.
+3. Decide separately whether to code-sign, publish the extension, or expand approval modes.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed locally on 2026-07-19: migration parity, formatting, lint, strict type-check, 164 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. The live installed Edge smoke passed with health ready, redacted capture count/hash, `sent: false`, and exact cleanup. Windows package, packaged smoke, and installed native-host smoke are the remaining publication reruns.
+`pnpm.cmd run verify` passed locally on 2026-07-19 with migration parity, formatting, lint, strict type-check, 165 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. `test:internal-beta-uat` passed 43 targeted tests plus two Chromium flows. Windows package, packaged smoke, and three non-destructive native-host relay runs passed. The previously accepted live Edge smoke was not rerun to avoid disrupting the active user session; clean-install smoke was also not rerun because the app is installed and active.
 
 ## Latest commit
 
@@ -119,4 +123,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-19 00:17 +07:00.
+2026-07-19 01:00 +07:00.

@@ -17,4 +17,13 @@
 - [x] Continuity docs and state match the final accepted Git checkpoint.
 - [x] Final checkpoint is pushed and remote hash verified.
 
+## Internal beta gates
+
+- [x] Internal-beta fixture UAT passes.
+- [x] Team installation, capture, handoff, recovery, update, and uninstall guides exist.
+- [x] Internal-beta staging manifest and SHA-256 list are generated.
+- [x] Windows package restores the Node native runtime after Electron rebuilding.
+- [x] Unsigned status and deferred public/store publication are explicit.
+- [x] Active Edge, desktop, native-host registration, and user data are not disrupted.
+
 Do not create a public GitHub Release without explicit user authorization.

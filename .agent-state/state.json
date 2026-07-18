@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "MVP complete - Published acceptance",
-  "currentTaskId": "P6-IPC-005",
+  "currentPhase": "Internal Beta Ready",
+  "currentTaskId": "P17-BETA-001",
   "status": "complete",
   "lastCheckpoint": {
-    "id": "P6-IPC-005",
+    "id": "P17-BETA-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T17:35:00.000Z"
+    "completedAt": "2026-07-18T18:00:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -48,14 +48,22 @@
     "pnpm.cmd run verify passed with 164 Vitest tests, two workflow E2E tests, two Chromium E2E tests, and 15 workspace builds",
     "pnpm.cmd run smoke:installed-chatgpt:win passed live Edge health, zero-message new-chat capture hash, no-submit insertion, and exact cleanup",
     "GitHub Actions Verify run 29653888516 passed for P6-IPC-005",
-    "GitHub Actions Verify run 29653971791 passed for published continuity checkpoint"
+    "GitHub Actions Verify run 29653971791 passed for published continuity checkpoint",
+    "pnpm.cmd run verify passed with 165 Vitest tests, two workflow E2E tests, two Chromium E2E tests, and 15 workspace builds",
+    "pnpm.cmd run test:internal-beta-uat passed 43 targeted tests and two Chromium fixture flows",
+    "pnpm.cmd run package:win restored the Node SQLite ABI after Electron packaging",
+    "pnpm.cmd run smoke:packaged:win passed packaged desktop and native-host readiness",
+    "Installed native-host relay passed three non-destructive runs",
+    "artifacts/internal-beta manifest and SHA-256 list generated; live Edge and clean install intentionally not rerun"
   ],
   "knownFailures": [],
   "activeBlockers": [],
   "nextActions": [
-    "Begin only an explicitly scoped post-MVP maintenance or release task; do not create a public release without authorization.",
-    "Keep the accepted MVP in maintenance mode; do not create a public release without authorization."
+    "Distribute the checksum-verified unsigned build to a small internal group.",
+    "Collect user feedback on installation, mapping, capture, recovery, and handoff usability.",
+    "Decide separately whether to code-sign the Windows build.",
+    "Decide separately whether to publish the extension or expand approval modes."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-18T17:35:00.000Z"
+  "updatedAt": "2026-07-18T18:00:00.000Z"
 }

@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-MVP acceptance complete. P6-IPC-005 passed the installed Edge Native Messaging health/capture/no-submit insert/exact-clear smoke.
+Internal Beta Ready. The accepted MVP, internal-beta fixture UAT, Windows package, packaged smoke, and non-destructive installed relay verification pass.
 
 ## Last known-good commit
 
@@ -56,17 +56,17 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 164 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass. The separate live Codex gate must pass without modifying external configuration. Windows release acceptance additionally requires package, packaged smoke, installed native-host smoke, and the redacted installed ChatGPT smoke.
+Expected known-good baseline: formatting, lint, strict type-check, 165 or more Vitest tests, two Chromium fixture E2E tests, the 43-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires package, packaged smoke, native relay, unsigned status, and generated staging checksums.
 
 ## Exact next task
 
-No implementation task is active. Verify `HEAD == origin/main`, confirm GitHub Actions Verify is green, and begin only an explicitly scoped post-MVP maintenance or release task. Do not create a public GitHub Release without explicit authorization.
+No implementation task is active. Distribute only to a small internal group, collect feedback, and make code-signing, store publication, or approval-mode expansion separate explicit decisions.
 
 ## Expected files to modify
 
-- browser loading/installation only after action-time confirmation
-- redacted live smoke evidence and continuity completion
-- continuity and state updates reflecting the live result or blocker
+- feedback-driven fixes with reproducible evidence
+- team documentation corrections
+- separately authorized signing or distribution work
 
 ## Tests to run
 
@@ -76,17 +76,20 @@ pnpm.cmd run lint
 pnpm.cmd run typecheck
 pnpm.cmd run test
 pnpm.cmd run test:e2e
+pnpm.cmd run test:internal-beta-uat
 pnpm.cmd run build
 pnpm.cmd run test:codex-spike
 pnpm.cmd run package:win
 pnpm.cmd run smoke:packaged:win
 pnpm.cmd run smoke:installed-native-host:win
+pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=pass --native-relay=pass
 ```
 
 ## Known traps
 
 - PowerShell blocks `pnpm.ps1`; use `pnpm.cmd` at the interactive Windows shell only.
 - Electron and Playwright downloads need explicit pnpm build-script permission.
+- electron-builder rebuilds native modules for Electron; `run-electron-builder.mjs` must restore the Node-compatible SQLite prebuild before later Node/Vitest commands.
 - Live Codex tests are separate from CI and must never be represented by mock or fixture results.
 - Browser extension installation through UI requires action-time confirmation even though the manifest permission was authorized.
 - Native Messaging protocol and service-worker fixtures are not live host registration evidence.
@@ -102,4 +105,4 @@ pnpm.cmd run smoke:installed-native-host:win
 
 ## Blockers and safe alternatives
 
-`CODEX-SDK-001`, `EXT-PERM-001`, and `BROWSER-LIVE-001` are resolved. The final live path used the explicitly loaded Edge extension, a data-free content-ready wake event, exact-origin Native Messaging, and a redacted no-submit smoke without reading browser profile storage.
+`CODEX-SDK-001`, `EXT-PERM-001`, and `BROWSER-LIVE-001` are resolved. There is no active P0/P1 blocker in the accepted internal-beta scope. The current Windows build is unsigned, store publication is deferred, and destructive clean-install/live-browser reruns remain intentionally excluded while the user installation is active.

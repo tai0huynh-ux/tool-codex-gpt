@@ -156,3 +156,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
   - Depends on: P6-IPC-003
   - Done when: installer registration, exact-origin manifest, packaged host smoke, upgrade, and uninstall cleanup pass
   - Commit: resolve with `git log -1 --grep "feat(transport): install authenticated native host relay"`
+
+## Phase 17 - Internal beta
+
+- [x] P17-BETA-001 Prepare the internal beta distribution set
+  - Depends on: P16-REL-001, P16-REL-002, P6-IPC-005
+  - Done when: full verify, targeted internal-beta UAT, Windows packaging, packaged smoke, non-destructive native relay, Node ABI recovery, team documentation, checksums, staging manifest, continuity, push, and final CI pass
+  - Commit: resolve with `git log -1 --grep "internal beta"`
