@@ -13,6 +13,8 @@ The extension has only `storage`, `activeTab`, and `scripting`, with host access
 cookies, tokens, authorization headers, browser history, passwords, or unpublished endpoints. DOM selectors
 are isolated because they are inherently unstable.
 
+Assisted composer actions require an effect ID and approved payload hash. They fill but never submit, validate the active conversation destination, and clear text only when the current composer hash still matches. Clipboard fallback is explicit rather than automatic. A manual send is acknowledged only from rendered conversation capture after streaming stops.
+
 ## Files
 
 Ingestion resolves both repository roots and candidate files to canonical paths, verifies the allowlist after

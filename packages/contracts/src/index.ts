@@ -138,6 +138,33 @@ export const structuredResponseErrorCodeSchema = z.enum([
   'DUPLICATE_RESPONSE',
 ]);
 
+export const chatGptDestinationSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('existing'), conversationId: z.string().min(1) }).strict(),
+  z.object({ mode: z.literal('new') }).strict(),
+]);
+
+export const chatGptPageIdentitySchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('existing'), conversationId: z.string().min(1) }).strict(),
+  z.object({ mode: z.literal('new') }).strict(),
+  z.object({ mode: z.literal('unsupported') }).strict(),
+]);
+
+export const chatGptPageInspectionSchema = z
+  .object({
+    page: chatGptPageIdentitySchema,
+    composer: z
+      .object({
+        available: z.boolean(),
+        readOnly: z.boolean(),
+        textHash: z
+          .string()
+          .regex(/^[a-f0-9]{64}$/)
+          .optional(),
+      })
+      .strict(),
+  })
+  .strict();
+
 export const localTransportOperationSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('bridge.health') }).strict(),
   z.object({ type: z.literal('conversation.capture') }).strict(),
@@ -145,7 +172,17 @@ export const localTransportOperationSchema = z.discriminatedUnion('type', [
     .object({
       type: z.literal('composer.insert'),
       text: z.string().min(1).max(100_000),
-      approvalId: z.string().min(1),
+      effectId: z.string().min(1),
+      payloadHash: z.string().regex(/^[a-f0-9]{64}$/),
+      destination: chatGptDestinationSchema,
+    })
+    .strict(),
+  z.object({ type: z.literal('page.inspect') }).strict(),
+  z
+    .object({
+      type: z.literal('composer.clear'),
+      effectId: z.string().min(1),
+      expectedTextHash: z.string().regex(/^[a-f0-9]{64}$/),
     })
     .strict(),
   z
@@ -210,6 +247,22 @@ export const localTransportResultSchema = z.discriminatedUnion('type', [
       type: z.literal('composer.insert.result'),
       inserted: z.boolean(),
       sent: z.literal(false),
+      textHash: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal('page.inspect.result'),
+      inspection: chatGptPageInspectionSchema,
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal('composer.clear.result'),
+      cleared: z.boolean(),
     })
     .strict(),
   z
@@ -258,6 +311,9 @@ export const localTransportResponseSchema = z.discriminatedUnion('ok', [
 ]);
 
 export type ConversationSnapshot = z.infer<typeof conversationSnapshotSchema>;
+export type ChatGptDestination = z.infer<typeof chatGptDestinationSchema>;
+export type ChatGptPageIdentity = z.infer<typeof chatGptPageIdentitySchema>;
+export type ChatGptPageInspection = z.infer<typeof chatGptPageInspectionSchema>;
 export type LocalTransportOperation = z.infer<typeof localTransportOperationSchema>;
 export type LocalTransportRequest = z.infer<typeof localTransportRequestSchema>;
 export type LocalTransportResult = z.infer<typeof localTransportResultSchema>;
@@ -388,6 +444,29 @@ export type ContextPack = z.infer<typeof contextPackSchema>;
 export function validateContextPack(input: unknown): ContextPack {
   return contextPackSchema.parse(input);
 }
+
+export const assistedChatGptPreviewSchema = z
+  .object({
+    protocolVersion: z.literal('1.0'),
+    workflowRunId: z.string().min(1),
+    projectId: z.string().min(1),
+    handoffId: z.string().min(1),
+    correlationId: z.string().min(1),
+    destination: chatGptDestinationSchema,
+    text: z.string().min(1).max(100_000),
+    textHash: z.string().regex(/^[a-f0-9]{64}$/),
+    handoffHash: z.string().regex(/^[a-f0-9]{64}$/),
+    characterCount: z.number().int().positive().max(100_000),
+    createdAt: z.iso.datetime(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.characterCount !== value.text.length) {
+      context.addIssue({ code: 'custom', message: 'Preview character count must match text.' });
+    }
+  });
+
+export type AssistedChatGptPreview = z.infer<typeof assistedChatGptPreviewSchema>;
 
 export const memoryScopeSchema = z.enum(['global', 'team', 'project', 'conversation', 'workflow']);
 export const memoryStatusSchema = z.enum(['candidate', 'approved', 'superseded', 'deleted']);

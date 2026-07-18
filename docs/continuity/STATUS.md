@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 11 - Assisted ChatGPT sending.
+Phase 12 - ChatGPT response routing.
 
 ## Current objective
 
-Connect reviewed context-pack previews to the existing ChatGPT composer boundary through the persistent workflow engine.
+Route validated structured ChatGPT responses back to the correct Codex project/thread boundary without duplicate or cross-project execution.
 
 ## Last completed checkpoint
 
-P10-WF-001 - Migration v4, versioned workflow contracts, transactional event/projection transitions, bounded retries and iterations, scoped single-use approval capabilities, idempotent effect journaling, acknowledgement state, and restart recovery without duplicate transfer. Resolve with `git log -1 --grep "feat(workflow): persist recoverable handoff workflows"`.
+P11-CHAT-001 - Versioned assisted preview, deterministic handoff rendering, existing/new destination checks, P10 approval/effect integration, exact composer insertion, explicit clipboard fallback, manual-send capture acknowledgement, cancellation, and no automatic submit. Resolve with `git log -1 --grep "feat(chatgpt): add reviewed assisted handoffs"`.
 
 ## Current verified capabilities
 
@@ -55,6 +55,12 @@ P10-WF-001 - Migration v4, versioned workflow contracts, transactional event/pro
 - Prepared effects are safe to dispatch once; dispatching effects require confirmation after restart and are never automatically resent; acknowledged and failed effects cannot dispatch again.
 - ChatGPT and Codex sends advance workflow state only after acknowledgement, with bounded retry and acknowledged-Codex iteration counters.
 - Workflow recovery, approval consumption, effect state, and duplicate prevention persist after reopening SQLite.
+- Assisted ChatGPT previews bind workflow/project/handoff/correlation/destination and exact rendered text hashes; mutation after review is rejected before approval or transfer.
+- Existing conversations require an exact URL conversation ID; new-chat sends may acknowledge only after the page transitions to a captured conversation containing the matching user message.
+- Composer insertion validates the P10 effect/payload hash, reports `sent: false`, never submits the form, and cannot repeat while an effect is `dispatching`.
+- Clipboard delivery is an explicit user-selected fallback; ambiguous adapter failures remain `confirmation_required` rather than being retried.
+- Streaming responses defer acknowledgement; capture advances the workflow only after streaming stops and the latest rendered user message matches the approved payload.
+- Polling cancellation preserves recovery state, while explicit transfer cancellation clears composer text only when its hash still matches before marking the effect failed.
 
 ## Current known failures
 
@@ -67,13 +73,13 @@ P10-WF-001 - Migration v4, versioned workflow contracts, transactional event/pro
 
 ## Next three actions
 
-1. Implement `P11-CHAT-001` reviewed existing/new ChatGPT conversation handoff through the composer boundary.
-2. Add streaming/cancellation state and explicit clipboard fallback without automatic submit.
-3. Bind every attempted send to the P10 approval/effect journal and fixture-test acknowledgement recovery.
+1. Implement `P12-HANDOFF-001` response routing with schema, handoff, correlation, project, and duplicate guards.
+2. Add reviewed existing/new/worktree Codex destination selection through the mock-safe adapter boundary.
+3. Prove approval and iteration enforcement without representing fixture/mock evidence as live SDK integration.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 109 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all 13 buildable workspace projects. GitHub Actions run `29640228145` passed for the preceding published checkpoint `0b5d8b0`; P10 CI is pending publication.
+`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 124 Vitest tests, two Chromium fixture E2E tests, formatting, lint, strict type-check, and all 14 buildable workspace projects. GitHub Actions run `29640734008` passed for published checkpoint `8f98ad3`; P11 CI is pending publication.
 
 ## Latest commit
 
@@ -85,4 +91,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 17:19 +07:00.
+2026-07-18 17:36 +07:00.

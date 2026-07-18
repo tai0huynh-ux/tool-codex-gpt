@@ -32,11 +32,11 @@ Use `.agents/skills/context-bridge-checkpoint/SKILL.md` to publish checkpoints a
 
 ## Current architecture
 
-TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture extension, SQLite persistence, contracts, project identity, file safety, secret scanning, a persistent workflow/effect engine, and a mock-only Codex adapter.
+TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/assisted-composer extension, SQLite persistence, contracts, project identity, file safety, secret scanning, a persistent workflow/effect engine, assisted ChatGPT orchestration, and a mock-only Codex adapter.
 
 ## Current phase
 
-Phase 11 - Assisted ChatGPT sending. Phase 3 live Codex integration remains independently blocked.
+Phase 12 - ChatGPT response routing. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -56,17 +56,17 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 109 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
+Expected known-good baseline: formatting, lint, strict type-check, 124 or more Vitest tests, two Chromium fixture E2E tests, and all workspace builds pass.
 
 ## Exact next task
 
-Implement `P11-CHAT-001`: connect reviewed context packs to existing or new ChatGPT destinations through the existing no-submit composer boundary, persistent single-use approvals/effects, streaming/cancellation state, acknowledgement, and explicit clipboard fallback.
+Implement `P12-HANDOFF-001`: consume the already strict structured ChatGPT response only after handoff/correlation/project/duplicate validation, preview `codexPrompt`, select existing/new/worktree Codex destination, and route through P10 approval/effect/iteration guards. Keep production SDK execution explicitly blocked behind `CODEX-SDK-001` and use the mock adapter only for domain tests.
 
 ## Expected files to modify
 
-- ChatGPT extension and local-transport contracts for reviewed send preparation and acknowledgement
-- assisted-send orchestration that consumes P10 approval/effect capabilities
-- fixture tests for existing/new destinations, streaming, cancellation, clipboard fallback, and crash recovery
+- response-routing contracts/domain package and tests
+- Codex destination selection and project/thread mapping validation
+- P10 approval/effect integration plus mock lifecycle acknowledgement tests
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run
@@ -91,6 +91,8 @@ pnpm.cmd run build
 - Only approved memories may enter retrieval or bootstrap output; candidate content must never be auto-approved.
 - Workflow send effects must be recoverable around acknowledgement boundaries and must never be repeated from projection state alone.
 - A `dispatching` effect is ambiguous after interruption; require confirmation or downstream idempotency evidence and never auto-resend it.
+- Composer insertion is not a send acknowledgement. Keep `sent: false` until rendered capture proves the approved user payload was submitted and streaming completed.
+- Do not let P12 mock adapter success satisfy the live Codex blocker or alter external Codex configuration.
 
 ## Blockers and safe alternatives
 

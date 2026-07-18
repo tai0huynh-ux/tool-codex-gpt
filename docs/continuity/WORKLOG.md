@@ -583,3 +583,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Implement `P11-CHAT-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 17:36 +07:00 - P11-CHAT-001
+
+### Goal
+
+Prepare a reviewed context handoff for an existing or new ChatGPT conversation, require the persisted single-use workflow approval, avoid automatic submission, and acknowledge only a manually sent payload proven through rendered capture.
+
+### Changes
+
+Added versioned assisted-preview and page-operation contracts, effect-bound composer insert/clear operations, page identity/composer inspection, exact text hashing, and a second Chromium fixture flow. Added `packages/assisted-chatgpt` for deterministic handoff rendering, confidence/project/destination guards, P10 approval/effect preparation, composer or explicit clipboard dispatch, no-repeat confirmation state, streaming-aware capture acknowledgement, abortable polling, and exact-hash cancellation.
+
+### Files
+
+Assisted contracts and JSON Schema; new assisted ChatGPT package and tests; extension page actions, content request handling, fixture, and E2E; workspace aliases/lockfile; architecture, security, protocol, and continuity records.
+
+### Decisions
+
+Do not treat composer insertion as a completed send. Persist `dispatching` before insertion/copy, return `sent: false`, and acknowledge only after streaming stops and the latest rendered user message matches the approved payload hash. Require exact conversation identity for existing destinations, allow a new-chat page to transition to its created conversation, make clipboard use explicit, and never clear composer content after user edits change its hash.
+
+### Verification
+
+Targeted assisted-contract, orchestration, page-action, transport, and Chromium fixture tests passed. Full `pnpm.cmd run verify` passed with migration parity, formatting, lint, strict type-check, 124 Vitest tests, two Chromium fixture E2E tests, and all 14 buildable workspace projects.
+
+### Failures encountered
+
+Strict TypeScript rejected `Array.findLast` under the ES2022 target and an overly narrow test adapter inference. Strict lint found an unnecessary async test and a type-only runtime import. The first E2E run resolved a stale built contracts package that lacked the new page schema. Security review also found that a caller-mutated preview could retain an old payload hash before clipboard dispatch.
+
+### Root causes
+
+The initial implementation assumed a newer array library, inferred one destination variant from the fake adapter initializer, and relied on workspace `dist` resolution during source-level Vite tests. Preview schema checked shape and character count but could not itself recompute cryptographic hashes.
+
+### Fixes
+
+Used an ES2022-compatible reverse scan, explicitly typed the adapter union, corrected strict imports/tests, aliased the extension Vite build to the contracts source, and recomputed both payload and lineage hashes inside every approval/prepare/dispatch trust boundary. Added regression tests for mutation, legacy approval-only operations, wrong destinations, ambiguous clipboard failures, exact clear, and new-chat URL transition.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(chatgpt): add reviewed assisted handoffs"`.
+
+### Push
+
+Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/main`; the hashes must match.
+
+### Next action
+
+Implement `P12-HANDOFF-001` exactly as described in `RECOVERY.md`.

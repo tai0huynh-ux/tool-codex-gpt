@@ -27,3 +27,7 @@ Version 1.0 requests `analysis-and-codex-prompt`. ChatGPT responses use the pair
 `contextBridgeResponseSchema`; the interoperable schema is `schemas/context-bridge-response.v1.json`.
 Consumers select the latest opening marker and require its matching closing marker, enforce a payload bound,
 validate identity and duplicate state, and require review before forwarding `codexPrompt` to Codex.
+
+## Assisted ChatGPT delivery
+
+The reviewed request preview uses `schemas/assisted-chatgpt-preview.v1.json` and wraps the validated handoff plus context pack between `<CONTEXT_BRIDGE_HANDOFF>` markers. Its workflow, project, handoff, correlation, destination, text hash, and lineage hash are fixed before a single-use approval is issued. Composer insertion reports `sent: false`; only a later rendered capture of the matching user message after streaming stops acknowledges the workflow send effect.

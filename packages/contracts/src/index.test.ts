@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  assistedChatGptPreviewSchema,
+  localTransportOperationSchema,
   validateContextBridgeResponse,
   validateContextPack,
   validateHandoff,
@@ -224,6 +226,85 @@ describe('workflow contracts', () => {
         recoveryStatus: 'none',
         createdAt: '2026-07-18T10:00:00.000Z',
         updatedAt: '2026-07-18T10:00:00.000Z',
+      }),
+    ).toThrow();
+  });
+});
+
+describe('assisted ChatGPT preview contract', () => {
+  it('validates reviewed destination and payload metadata through Zod and JSON Schema', () => {
+    const preview = {
+      protocolVersion: '1.0',
+      workflowRunId: 'workflow-1',
+      projectId: 'project-1',
+      handoffId: 'handoff-1',
+      correlationId: 'correlation-1',
+      destination: { mode: 'existing', conversationId: 'conversation-1' },
+      text: 'Reviewed handoff',
+      textHash: 'a'.repeat(64),
+      handoffHash: 'b'.repeat(64),
+      characterCount: 16,
+      createdAt: '2026-07-18T11:00:00.000Z',
+    };
+    expect(assistedChatGptPreviewSchema.parse(preview).handoffId).toBe('handoff-1');
+    const schemaPath = path.resolve(
+      import.meta.dirname,
+      '../../../schemas/assisted-chatgpt-preview.v1.json',
+    );
+    const schema = JSON.parse(readFileSync(schemaPath, 'utf8')) as object;
+    const ajv = new Ajv2020({ strict: true });
+    addFormats(ajv);
+    expect(ajv.compile(schema)(preview)).toBe(true);
+  });
+
+  it('rejects stale character counts and unbound destinations', () => {
+    expect(() =>
+      assistedChatGptPreviewSchema.parse({
+        protocolVersion: '1.0',
+        workflowRunId: 'workflow-1',
+        projectId: 'project-1',
+        handoffId: 'handoff-1',
+        correlationId: 'correlation-1',
+        destination: { mode: 'existing' },
+        text: 'Reviewed handoff',
+        textHash: 'a'.repeat(64),
+        handoffHash: 'b'.repeat(64),
+        characterCount: 1,
+        createdAt: '2026-07-18T11:00:00.000Z',
+      }),
+    ).toThrow();
+  });
+});
+
+describe('assisted page operations', () => {
+  it('binds composer insertion and clearing to persisted effects and hashes', () => {
+    expect(
+      localTransportOperationSchema.parse({
+        type: 'composer.insert',
+        text: 'Reviewed handoff',
+        effectId: 'effect-1',
+        payloadHash: 'a'.repeat(64),
+        destination: { mode: 'existing', conversationId: 'conversation-1' },
+      }),
+    ).toMatchObject({ type: 'composer.insert', effectId: 'effect-1' });
+    expect(
+      localTransportOperationSchema.parse({
+        type: 'composer.clear',
+        effectId: 'effect-1',
+        expectedTextHash: 'a'.repeat(64),
+      }),
+    ).toMatchObject({ type: 'composer.clear' });
+    expect(localTransportOperationSchema.parse({ type: 'page.inspect' })).toEqual({
+      type: 'page.inspect',
+    });
+  });
+
+  it('rejects legacy approval-only insertion without effect identity', () => {
+    expect(() =>
+      localTransportOperationSchema.parse({
+        type: 'composer.insert',
+        text: 'Unbound handoff',
+        approvalId: 'approval-1',
       }),
     ).toThrow();
   });

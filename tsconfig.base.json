@@ -25,7 +25,8 @@
       "@codex-context-bridge/secret-scanner": ["packages/secret-scanner/src/index.ts"],
       "@codex-context-bridge/context-builder": ["packages/context-builder/src/index.ts"],
       "@codex-context-bridge/memory-engine": ["packages/memory-engine/src/index.ts"],
-      "@codex-context-bridge/workflow-engine": ["packages/workflow-engine/src/index.ts"]
+      "@codex-context-bridge/workflow-engine": ["packages/workflow-engine/src/index.ts"],
+      "@codex-context-bridge/assisted-chatgpt": ["packages/assisted-chatgpt/src/index.ts"]
     }
   }
 }

@@ -33,3 +33,43 @@ test('captures a rendered conversation fixture in Chromium', async ({ page }) =>
   });
   expect(snapshot?.contentHash).toMatch(/^[a-f0-9]{64}$/);
 });
+
+test('prepares an assisted handoff without submitting and clears only exact content', async ({
+  page,
+}) => {
+  await page.goto('/fixture/index.html');
+  await page.waitForFunction(() => 'assistedFixture' in window);
+
+  const result = await page.evaluate(
+    () =>
+      (
+        window as Window & {
+          assistedFixture?: {
+            inserted: boolean;
+            submitted: boolean;
+            streaming: boolean;
+            inspection: unknown;
+            refusedWrongClear: boolean;
+            cleared: boolean;
+            finalComposerText: string;
+          };
+        }
+      ).assistedFixture,
+  );
+
+  expect(result).toMatchObject({
+    inserted: true,
+    submitted: false,
+    streaming: true,
+    inspection: {
+      page: { mode: 'new' },
+      composer: { available: true, readOnly: false },
+    },
+    refusedWrongClear: true,
+    cleared: true,
+    finalComposerText: '',
+  });
+  expect((result?.inspection as { composer?: { textHash?: string } }).composer?.textHash).toMatch(
+    /^[a-f0-9]{64}$/,
+  );
+});

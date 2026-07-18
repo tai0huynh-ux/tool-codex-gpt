@@ -119,6 +119,18 @@ importers:
         specifier: ^19.0.0
         version: 19.2.3(@types/react@19.2.17)
 
+  packages/assisted-chatgpt:
+    dependencies:
+      '@codex-context-bridge/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@codex-context-bridge/database':
+        specifier: workspace:*
+        version: link:../database
+      '@codex-context-bridge/workflow-engine':
+        specifier: workspace:*
+        version: link:../workflow-engine
+
   packages/codex-adapter: {}
 
   packages/context-builder:

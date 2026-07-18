@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex-context-bridge.local/schemas/assisted-chatgpt-preview.v1.json",
+  "title": "Codex Context Bridge Assisted ChatGPT Preview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolVersion",
+    "workflowRunId",
+    "projectId",
+    "handoffId",
+    "correlationId",
+    "destination",
+    "text",
+    "textHash",
+    "handoffHash",
+    "characterCount",
+    "createdAt"
+  ],
+  "properties": {
+    "protocolVersion": { "const": "1.0" },
+    "workflowRunId": { "type": "string", "minLength": 1 },
+    "projectId": { "type": "string", "minLength": 1 },
+    "handoffId": { "type": "string", "minLength": 1 },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "destination": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "conversationId"],
+          "properties": {
+            "mode": { "const": "existing" },
+            "conversationId": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": { "mode": { "const": "new" } }
+        }
+      ]
+    },
+    "text": { "type": "string", "minLength": 1, "maxLength": 100000 },
+    "textHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "handoffHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "characterCount": { "type": "integer", "minimum": 1, "maximum": 100000 },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

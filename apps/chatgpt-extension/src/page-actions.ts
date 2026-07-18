@@ -1,5 +1,8 @@
 import {
+  chatGptPageInspectionSchema,
   contextBridgeResponseSchema,
+  type ChatGptPageIdentity,
+  type ChatGptPageInspection,
   type ContextBridgeResponse,
 } from '@codex-context-bridge/contracts';
 import { selectors } from './selectors';
@@ -7,11 +10,18 @@ import { selectors } from './selectors';
 export const RESPONSE_OPEN_MARKER = '<CONTEXT_BRIDGE_RESPONSE>';
 export const RESPONSE_CLOSE_MARKER = '</CONTEXT_BRIDGE_RESPONSE>';
 
-export function insertComposerText(document: Document, text: string): boolean {
-  const composer = selectors.composer
+function findComposer(document: Document): HTMLElement | undefined {
+  return selectors.composer
     .map((selector) => document.querySelector<HTMLElement>(selector))
     .find((candidate) => candidate !== null);
-  if (!composer || isReadOnlyComposer(composer)) return false;
+}
+
+function composerText(composer: HTMLElement): string {
+  return composer instanceof HTMLTextAreaElement ? composer.value : composer.textContent;
+}
+
+function setComposerText(composer: HTMLElement, text: string): boolean {
+  if (isReadOnlyComposer(composer)) return false;
 
   composer.focus();
   const beforeInput = new InputEvent('beforeinput', {
@@ -37,6 +47,11 @@ export function insertComposerText(document: Document, text: string): boolean {
   return true;
 }
 
+export function insertComposerText(document: Document, text: string): boolean {
+  const composer = findComposer(document);
+  return Boolean(composer && text.length > 0 && setComposerText(composer, text));
+}
+
 function isReadOnlyComposer(composer: HTMLElement): boolean {
   return (
     (composer instanceof HTMLTextAreaElement && (composer.readOnly || composer.disabled)) ||
@@ -47,6 +62,53 @@ function isReadOnlyComposer(composer: HTMLElement): boolean {
 
 export function isStreaming(document: Document): boolean {
   return selectors.streaming.some((selector) => document.querySelector(selector) !== null);
+}
+
+export function normalizeComposerText(text: string): string {
+  return text.replaceAll('\r\n', '\n').trim();
+}
+
+export async function hashComposerText(text: string): Promise<string> {
+  const bytes = new TextEncoder().encode(normalizeComposerText(text));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function identifyPage(location: Location, composerAvailable: boolean): ChatGptPageIdentity {
+  if (location.origin !== 'https://chatgpt.com') return { mode: 'unsupported' };
+  const segments = location.pathname.split('/').filter(Boolean);
+  const conversationMarker = segments.lastIndexOf('c');
+  const conversationId = segments[conversationMarker + 1];
+  if (conversationMarker >= 0 && conversationId) return { mode: 'existing', conversationId };
+  return composerAvailable ? { mode: 'new' } : { mode: 'unsupported' };
+}
+
+export async function inspectChatGptPage(
+  document: Document,
+  location: Location,
+): Promise<ChatGptPageInspection> {
+  const composer = findComposer(document);
+  const available = composer !== undefined;
+  const currentText = composer ? normalizeComposerText(composerText(composer)) : '';
+  return chatGptPageInspectionSchema.parse({
+    page: identifyPage(location, available),
+    composer: {
+      available,
+      readOnly: composer ? isReadOnlyComposer(composer) : false,
+      ...(currentText ? { textHash: await hashComposerText(currentText) } : {}),
+    },
+  });
+}
+
+export async function clearComposerText(
+  document: Document,
+  expectedTextHash: string,
+): Promise<boolean> {
+  const composer = findComposer(document);
+  if (!composer || isReadOnlyComposer(composer)) return false;
+  const currentText = normalizeComposerText(composerText(composer));
+  if (!currentText || (await hashComposerText(currentText)) !== expectedTextHash) return false;
+  return setComposerText(composer, '');
 }
 
 export type StructuredResponseErrorCode =

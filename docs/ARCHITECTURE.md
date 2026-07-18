@@ -17,6 +17,7 @@ orchestration. It does not implement automatic sending or a production ChatGPT/C
 - `packages/context-builder`: deterministic, budgeted, secret-safe context pack selection and preview contracts.
 - `packages/memory-engine`: approved-only scoped memory lifecycle, deterministic retrieval, provenance, and budgeted chat bootstrap.
 - `packages/workflow-engine`: transactional workflow transitions, scoped single-use approvals, idempotent send-effect journaling, acknowledgement, limits, audit, and restart recovery.
+- `packages/assisted-chatgpt`: deterministic reviewed previews, destination binding, composer/clipboard dispatch, manual-send confirmation, streaming, cancellation, and workflow-effect integration.
 - `packages/file-store`: allowlisted, content-addressed file ingestion.
 - `packages/secret-scanner`: deterministic pre-ingestion secret checks.
 - `packages/codex-adapter`: typed ordered run lifecycle boundary plus an explicitly mock-only fallback for the blocked SDK spike; replay and terminal guards are contract-tested.
@@ -39,6 +40,8 @@ File store depends on secret scanning. Apps may consume packages later but no pa
 Database migrations are an ordered, generated version list sourced from `packages/database/migrations/*.sql`. Each version runs in its own transaction and advances SQLite `user_version` only after success. Migration v2 adds non-destructive project/repository archive state, worktree metadata, and append-only mapping confirmation history.
 
 Migration v4 adds bounded workflow limits, recovery state, structured event metadata, scoped approval bindings, and a durable effect journal. An effect is persisted as `prepared` before dispatch, changes to `dispatching` before the external boundary, and advances the workflow only after `acknowledged`. Restart recovery may dispatch a prepared effect once, but a dispatching effect always requires confirmation and is never automatically resent.
+
+Assisted ChatGPT delivery renders the validated handoff and context pack into an exact preview with payload and lineage hashes. It checks the active page against an existing conversation ID or a new-chat destination before crossing the effect boundary. Composer insertion never submits. The effect remains `dispatching` until streaming stops and rendered capture proves the latest user message matches the approved payload; ambiguous insertion or clipboard failures require confirmation instead of retry.
 
 ## Project identity
 

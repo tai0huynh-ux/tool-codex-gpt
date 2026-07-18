@@ -1,8 +1,24 @@
 import { captureLongConversation, type ConversationSnapshot } from '../src/capture';
+import {
+  clearComposerText,
+  hashComposerText,
+  inspectChatGptPage,
+  insertComposerText,
+  isStreaming,
+} from '../src/page-actions';
 
 declare global {
   interface Window {
     capturedFixture?: ConversationSnapshot;
+    assistedFixture?: {
+      inserted: boolean;
+      submitted: boolean;
+      streaming: boolean;
+      inspection: Awaited<ReturnType<typeof inspectChatGptPage>>;
+      refusedWrongClear: boolean;
+      cleared: boolean;
+      finalComposerText: string;
+    };
   }
 }
 
@@ -37,3 +53,26 @@ viewport.scrollTo = (options?: ScrollToOptions | number, y?: number) => {
 };
 render();
 window.capturedFixture = await captureLongConversation(document, viewport, { settleMs: 0 });
+
+let submitted = false;
+document.querySelector('#composer-form')?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submitted = true;
+});
+const assistedText = 'Reviewed assisted handoff.';
+const inserted = insertComposerText(document, assistedText);
+const inspection = await inspectChatGptPage(
+  document,
+  new URL('https://chatgpt.com/') as unknown as Location,
+);
+const refusedWrongClear = !(await clearComposerText(document, 'f'.repeat(64)));
+const cleared = await clearComposerText(document, await hashComposerText(assistedText));
+window.assistedFixture = {
+  inserted,
+  submitted,
+  streaming: isStreaming(document),
+  inspection,
+  refusedWrongClear,
+  cleared,
+  finalComposerText: document.querySelector<HTMLTextAreaElement>('#prompt-textarea')?.value ?? '',
+};

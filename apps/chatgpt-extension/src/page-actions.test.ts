@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   RESPONSE_CLOSE_MARKER,
   RESPONSE_OPEN_MARKER,
+  clearComposerText,
+  hashComposerText,
+  inspectChatGptPage,
   insertComposerText,
   parseStructuredResponse,
 } from './page-actions';
@@ -67,6 +70,31 @@ describe('composer insertion', () => {
       event.preventDefault();
     });
     expect(insertComposerText(document, 'blocked by host')).toBe(false);
+  });
+
+  it('inspects existing/new destinations and clears only matching inserted text', async () => {
+    document.body.innerHTML = '<textarea id="prompt-textarea"></textarea>';
+    const existingLocation = new URL(
+      'https://chatgpt.com/g/project-1/c/conversation-1',
+    ) as unknown as Location;
+    expect(await inspectChatGptPage(document, existingLocation)).toEqual({
+      page: { mode: 'existing', conversationId: 'conversation-1' },
+      composer: { available: true, readOnly: false },
+    });
+
+    const text = 'Reviewed handoff';
+    expect(insertComposerText(document, text)).toBe(true);
+    const textHash = await hashComposerText(text);
+    expect(
+      await inspectChatGptPage(document, new URL('https://chatgpt.com/') as unknown as Location),
+    ).toEqual({
+      page: { mode: 'new' },
+      composer: { available: true, readOnly: false, textHash },
+    });
+    expect(await clearComposerText(document, 'f'.repeat(64))).toBe(false);
+    expect(document.querySelector<HTMLTextAreaElement>('textarea')?.value).toBe(text);
+    expect(await clearComposerText(document, textHash)).toBe(true);
+    expect(document.querySelector<HTMLTextAreaElement>('textarea')?.value).toBe('');
   });
 });
 

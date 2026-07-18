@@ -97,10 +97,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 11 - Assisted ChatGPT sending
 
-- [ ] P11-CHAT-001 Add reviewed conversation handoff
+- [x] P11-CHAT-001 Add reviewed conversation handoff
   - Depends on: P5-EXT-001, P10-WF-001
   - Done when: existing/new destinations, preview, single-use approval, streaming, capture, cancellation, and clipboard fallback pass
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(chatgpt): add reviewed assisted handoffs"`
 
 ## Phase 12 - ChatGPT response routing
 

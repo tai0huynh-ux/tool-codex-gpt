@@ -30,6 +30,10 @@ export default defineConfig({
         root,
         'packages/workflow-engine/src/index.ts',
       ),
+      '@codex-context-bridge/assisted-chatgpt': path.join(
+        root,
+        'packages/assisted-chatgpt/src/index.ts',
+      ),
       '@codex-context-bridge/secret-scanner': path.join(
         root,
         'packages/secret-scanner/src/index.ts',
