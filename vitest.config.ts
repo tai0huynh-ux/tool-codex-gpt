@@ -25,6 +25,6 @@ export default defineConfig({
   },
   test: {
     coverage: { provider: 'v8', reporter: ['text', 'html'] },
-    include: ['packages/**/*.test.ts', 'apps/**/*.test.ts'],
+    include: ['packages/**/*.test.ts', 'apps/**/*.test.ts', 'tests/**/*.test.ts'],
   },
 });

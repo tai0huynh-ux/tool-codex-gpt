@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Context Bridge Checkpoint'
+  short_description: 'Safely verify, document, commit, and push checkpoints'
+  default_prompt: 'Use $context-bridge-checkpoint to complete and publish a verified project checkpoint.'

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex-context-bridge.local/schemas/agent-state.v1.json",
+  "title": "Codex Context Bridge Agent State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "repository",
+    "branch",
+    "headCommit",
+    "lastPushedCommit",
+    "currentPhase",
+    "currentTaskId",
+    "status",
+    "lastCheckpoint",
+    "verifiedCommands",
+    "knownFailures",
+    "activeBlockers",
+    "nextActions",
+    "workingTreeExpectedClean",
+    "updatedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "repository": { "const": "tai0huynh-ux/tool-codex-gpt" },
+    "branch": { "type": "string", "minLength": 1 },
+    "headCommit": { "const": "HEAD", "description": "Symbolic ref resolved by the status helper." },
+    "lastPushedCommit": {
+      "const": "origin/main",
+      "description": "Symbolic ref resolved after fetch."
+    },
+    "currentPhase": { "type": "string", "minLength": 1 },
+    "currentTaskId": { "type": "string", "pattern": "^P[0-9]+-[A-Z]+-[0-9]{3}$" },
+    "status": { "enum": ["in_progress", "blocked", "complete"] },
+    "lastCheckpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "commit", "completedAt"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^P[0-9]+-[A-Z]+-[0-9]{3}$" },
+        "commit": {
+          "const": "STATE_FILE_COMMIT",
+          "description": "Resolve with git log -1 -- .agent-state/state.json to avoid impossible self-referential hashes."
+        },
+        "completedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "verifiedCommands": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "knownFailures": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "activeBlockers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "nextActions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "workingTreeExpectedClean": { "type": "boolean" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

@@ -3,8 +3,9 @@
 ## Scope
 
 - Preserve the product safety constraints in `docs/SECURITY.md`.
-- Keep Phase 0-1 work separate from later workflow and automation features.
 - Do not claim a live integration passed unless the command ran successfully in the current environment.
+- At session start, read `docs/continuity/RECOVERY.md`, `docs/continuity/STATUS.md`, `.agent-state/state.json`, and verify them against Git.
+- Follow `docs/continuity/ROADMAP.md`; do not rely on chat history as project state.
 
 ## Required checks
 
@@ -36,3 +37,8 @@ pnpm.cmd run build
 - Before pushing, fetch the remote and stop if local `main` is behind or has diverged from `origin/main`.
 - Never use force push, destructive reset, or history rewriting unless the user explicitly authorizes it.
 - Report the commit hash, verification result, and push result at task completion.
+
+## Project skills
+
+- Use `.agents/skills/context-bridge-checkpoint/SKILL.md` when closing and publishing a checkpoint.
+- Use `.agents/skills/context-bridge-debugging/SKILL.md` when reproducing or fixing a defect.

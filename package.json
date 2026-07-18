@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0",
+    "status": "node scripts/project-status.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm.cmd -r --if-present typecheck",
     "test": "vitest run",
     "test:e2e": "playwright test",

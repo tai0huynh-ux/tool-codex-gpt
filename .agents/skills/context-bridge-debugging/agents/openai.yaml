@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Context Bridge Debugging'
+  short_description: 'Reproduce and fix Context Bridge defects safely'
+  default_prompt: 'Use $context-bridge-debugging to reproduce, isolate, fix, and verify this defect.'
