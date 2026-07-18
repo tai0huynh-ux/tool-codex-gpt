@@ -9,7 +9,7 @@
   "status": "complete",
   "lastCheckpoint": {
     "id": "P6-IPC-005",
-    "commit": "fd2ceb620d4c89407523e621f7cf67ca33c4ec0d",
+    "commit": "STATE_FILE_COMMIT",
     "completedAt": "2026-07-18T17:35:00.000Z"
   },
   "verifiedCommands": [
