@@ -121,6 +121,15 @@ importers:
 
   packages/codex-adapter: {}
 
+  packages/context-builder:
+    dependencies:
+      '@codex-context-bridge/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@codex-context-bridge/file-store':
+        specifier: workspace:*
+        version: link:../file-store
+
   packages/contracts:
     dependencies:
       zod:

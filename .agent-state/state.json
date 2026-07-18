@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "Phase 8 - Context packs",
-  "currentTaskId": "P8-CTX-001",
+  "currentPhase": "Phase 9 - Long-term memory",
+  "currentTaskId": "P9-MEM-001",
   "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P7-UI-001",
+    "id": "P8-CTX-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-18T09:31:00.000Z"
+    "completedAt": "2026-07-18T09:44:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -26,8 +26,8 @@
   ],
   "activeBlockers": ["CODEX-SDK-001"],
   "nextActions": [
-    "Implement P8-CTX-001 deterministic reviewed context packs.",
     "Implement P9-MEM-001 approved scoped memories after context packs.",
+    "Implement P10-WF-001 persistent workflows after memory.",
     "Prove P3-CODEX-001 live integration when CODEX-SDK-001 is safely resolved."
   ],
   "workingTreeExpectedClean": true,

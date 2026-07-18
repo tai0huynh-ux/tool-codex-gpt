@@ -288,3 +288,103 @@ export interface RepositoryFingerprintInput {
   repositoryMarker?: string;
   agentsHash?: string;
 }
+
+export const contextPackBudgetProfileSchema = z
+  .object({
+    maxFiles: z.number().int().positive(),
+    maxTotalBytes: z.number().int().positive(),
+    maxSingleFileBytes: z.number().int().positive(),
+    maxEstimatedTokens: z.number().int().positive(),
+    preferFullFilesBelow: z.number().int().nonnegative(),
+    excerptLineWindow: z.number().int().positive(),
+  })
+  .strict();
+
+export const contextPackAttachmentSchema = z
+  .object({
+    path: z.string().min(1),
+    sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    sourceSize: z.number().int().nonnegative(),
+    attachedBytes: z.number().int().nonnegative(),
+    estimatedTokens: z.number().int().nonnegative(),
+    mode: z.enum(['full', 'excerpt', 'diff']),
+    content: z.string(),
+    inclusionReason: z.string().min(1),
+    startLine: z.number().int().positive().optional(),
+    endLine: z.number().int().positive().optional(),
+  })
+  .strict();
+
+export const contextPackManifestEntrySchema = z
+  .object({
+    path: z.string().min(1),
+    previousPath: z.string().min(1).optional(),
+    change: z.enum(['added', 'modified', 'renamed', 'deleted', 'unchanged']),
+    status: z.enum(['attached', 'manifest-only', 'blocked', 'deleted', 'deduplicated']),
+    score: z.number(),
+    reason: z.string().min(1),
+    sha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
+    size: z.number().int().nonnegative().optional(),
+  })
+  .strict();
+
+export const contextPackSchema = z
+  .object({
+    protocolVersion: z.literal('1.0'),
+    id: z.string().min(1),
+    createdAt: z.iso.datetime(),
+    objective: z.string().min(1),
+    project: z
+      .object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        repositoryRoot: z.string().min(1),
+        confidence: z.number().min(0).max(1),
+      })
+      .strict(),
+    repositoryEvidence: z.array(projectEvidenceSchema),
+    codexThreadId: z.string().min(1).optional(),
+    codexFinalResponse: z.string(),
+    completedWork: z.array(z.string()),
+    changedFiles: z.array(z.string().min(1)),
+    gitDiffSummary: z.string(),
+    verificationResults: z.array(
+      z
+        .object({
+          command: z.string().min(1),
+          status: z.enum(['passed', 'failed', 'blocked', 'not-run']),
+          summary: z.string(),
+        })
+        .strict(),
+    ),
+    knownFailures: z.array(z.string()),
+    openQuestions: z.array(z.string()),
+    relevantMemories: z.array(z.string()),
+    attachments: z.array(contextPackAttachmentSchema),
+    attachmentManifest: z.array(contextPackManifestEntrySchema),
+    budget: z
+      .object({
+        profile: contextPackBudgetProfileSchema,
+        usedFiles: z.number().int().nonnegative(),
+        totalBytes: z.number().int().nonnegative(),
+        estimatedTokens: z.number().int().nonnegative(),
+      })
+      .strict(),
+    expectedChatGptResponse: z
+      .object({
+        type: z.literal('analysis-and-codex-prompt'),
+        schemaVersion: z.string().min(1),
+      })
+      .strict(),
+  })
+  .strict();
+
+export type ContextPackBudgetProfile = z.infer<typeof contextPackBudgetProfileSchema>;
+export type ContextPack = z.infer<typeof contextPackSchema>;
+
+export function validateContextPack(input: unknown): ContextPack {
+  return contextPackSchema.parse(input);
+}

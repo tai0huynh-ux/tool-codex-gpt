@@ -445,3 +445,49 @@ Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/
 ### Next action
 
 Implement `P8-CTX-001` exactly as described in `RECOVERY.md`.
+
+## 2026-07-18 16:44 +07:00 - P8-CTX-001
+
+### Goal
+
+Build a deterministic context-pack preview that selects relevant repository evidence without attaching unsafe or over-budget files.
+
+### Changes
+
+Added a versioned context-pack Zod contract and matching JSON Schema covering objective, project evidence, Codex output, work summary, changed files, diff summary, verification, failures, questions, memories, attachment preview, complete manifest, budget use, and expected ChatGPT response. Added a context-builder package with stable scoring, full/excerpt/diff rendering, hashing, deduplication, and configurable file/byte/token budgets. Extracted reusable safe file inspection from the file store so both storage and context selection share canonical allowlist, realpath, exclusion, size, and secret checks.
+
+### Files
+
+Context contracts and schema; new `packages/context-builder`; reusable file-store inspection; workspace aliases and lockfile; architecture and continuity records.
+
+### Decisions
+
+Use deterministic local scoring before any semantic retrieval. Keep blocked, deleted, duplicate, and over-budget entries in the manifest, but never attach their content. Sanitize outside-repository paths in preview metadata, preserve rename provenance across deduplication, estimate tokens conservatively from UTF-8 bytes, and select excerpts only on whole line boundaries.
+
+### Verification
+
+Targeted contracts, file-store, and context-builder tests pass 15/15. Coverage includes stable repeated ordering, changed/test/pinned ranking, byte/file budgets, Unicode-safe excerpts, supplied diffs, secrets, binaries, traversal, escaping symlinks, duplicates, deleted/renamed files, and empty diffs. Full repository verification is recorded before publication.
+
+### Failures encountered
+
+The first builder test exposed lost `previousPath` metadata when renamed content was deduplicated. Strict TypeScript also rejected optional exclusion properties passed explicitly as `undefined`.
+
+### Root causes
+
+The deduplication branch constructed a reduced manifest entry without the rename provenance used by attached and blocked branches. Zod-compatible optional values were forwarded directly into exact optional TypeScript contracts.
+
+### Fixes
+
+Normalized optional objects through conditional spreads, preserved sanitized rename metadata in every manifest state, and added regression assertions for deterministic and provenance-preserving output.
+
+### Commit
+
+Resolve with `git log -1 --grep "feat(context-builder): build safe deterministic context packs"`.
+
+### Push
+
+Verify with `git fetch origin`, `git rev-parse HEAD`, and `git rev-parse origin/main`; the hashes must match.
+
+### Next action
+
+Implement `P9-MEM-001` exactly as described in `RECOVERY.md`.

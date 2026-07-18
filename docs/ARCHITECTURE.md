@@ -14,6 +14,7 @@ workflow loop, automatic sending, or a production ChatGPT/Codex adapter.
 - `packages/database`: SQLite migration runner and append-only audit primitive; distributable SQL is the canonical migration source and the bundled TypeScript module is generated and parity-checked.
 - `packages/project-registry`: project CRUD over normalized relational tables.
 - `packages/project-detector`: fingerprint creation and evidence-based confidence scoring.
+- `packages/context-builder`: deterministic, budgeted, secret-safe context pack selection and preview contracts.
 - `packages/file-store`: allowlisted, content-addressed file ingestion.
 - `packages/secret-scanner`: deterministic pre-ingestion secret checks.
 - `packages/codex-adapter`: typed ordered run lifecycle boundary plus an explicitly mock-only fallback for the blocked SDK spike; replay and terminal guards are contract-tested.
@@ -44,3 +45,5 @@ A fingerprint hashes normalized Git remote, canonical root, project name, reposi
 Branch is operational metadata, not repository identity. Distinct worktree roots remain distinct repository registrations while normalized remote and other evidence can associate them with the same project. Equal-confidence candidates return an explicit ambiguity and never select the first database row implicitly. Confirmations retain evidence and supersede older active mappings without deleting history.
 
 The desktop main process owns the persistent SQLite connection and recomputes repository detection evidence. The renderer can list, create, alias, archive, preview, and explicitly confirm mappings only through validated IPC; it cannot supply trusted confidence or evidence and never receives database or filesystem access.
+
+Context packs use a versioned Zod and JSON Schema contract. The builder ranks changed, test, type, config, pinned, and dependency-neighbor files deterministically; canonicalizes and resolves every path; blocks traversal, escaping symlinks, exclusions, secrets, binaries, and oversized files; hashes and deduplicates content; and applies separate file, byte, single-file, token, full-file, and excerpt budgets. Omitted and blocked files remain visible in a manifest without exposing outside-repository absolute paths.

@@ -5,7 +5,7 @@
 | Formatting        | automated                     | `pnpm.cmd run format:check`     | local Windows                 | pass                    | `87bd00f` baseline |
 | Lint              | automated                     | `pnpm.cmd run lint`             | local Windows                 | pass                    | `87bd00f` baseline |
 | TypeScript        | automated                     | `pnpm.cmd run typecheck`        | local Windows                 | pass                    | `87bd00f` baseline |
-| Domain packages   | unit                          | `pnpm.cmd run test`             | local Windows                 | 69 pass                 | checkpoint         |
+| Domain packages   | unit                          | `pnpm.cmd run test`             | local Windows                 | 76 pass                 | checkpoint         |
 | Extension capture | virtualized fixture E2E       | `pnpm.cmd run test:e2e`         | Chromium                      | 1 pass                  | checkpoint         |
 | Workspace build   | automated                     | `pnpm.cmd run build`            | local Windows                 | pass                    | `87bd00f` baseline |
 | State recovery    | unit                          | `pnpm.cmd run test`             | local/CI                      | 3 continuity tests pass | checkpoint         |
@@ -24,6 +24,8 @@
 | Project IPC       | sender/schema/persistence     | `pnpm.cmd run test`             | SQLite memory and file        | 4 tests pass            | checkpoint         |
 | Project renderer  | ambiguity and exact inputs    | `pnpm.cmd run test`             | jsdom                         | 2 tests pass            | checkpoint         |
 | Desktop layout    | responsive visual smoke       | local Playwright screenshot     | Chromium 1440px and 390px     | inspected               | checkpoint         |
+| Context contract  | Zod and JSON Schema parity    | `pnpm.cmd run test`             | local/CI                      | 1 contract test pass    | checkpoint         |
+| Context builder   | safety/ranking/budget preview | `pnpm.cmd run test`             | local/CI and temporary files  | 6 tests pass            | checkpoint         |
 | Codex SDK         | live authenticated read-only  | `pnpm.cmd run test:codex-spike` | local Codex config            | blocked                 | `CODEX-SDK-001`    |
 | ChatGPT selectors | live manual                   | documented manual smoke         | user-opened authenticated tab | not run                 | not implemented    |
 

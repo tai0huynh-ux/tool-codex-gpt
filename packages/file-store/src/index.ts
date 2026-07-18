@@ -40,12 +40,26 @@ export interface FileStoreOptions {
   audit?: (event: FileAuditEvent) => void | Promise<void>;
 }
 
+export interface SafeFileInspection {
+  canonicalPath: string;
+  relativePath: string;
+  content: Buffer;
+  sha256: string;
+  size: number;
+}
+
+export interface SafeFileInspectionOptions {
+  repositoryRoots: string[];
+  maxBytes?: number;
+  exclusions?: string[];
+}
+
 function normalizeForComparison(value: string): string {
   const normalized = path.resolve(value);
   return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
 }
 
-function isInside(root: string, candidate: string): boolean {
+export function isPathInside(root: string, candidate: string): boolean {
   const relative = path.relative(normalizeForComparison(root), normalizeForComparison(candidate));
   return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }
@@ -57,43 +71,59 @@ function wildcardMatch(value: string, pattern: string): boolean {
   return value.toLowerCase() === pattern.toLowerCase();
 }
 
-function isExcluded(relativePath: string, rules: string[]): boolean {
+export function isExcludedPath(relativePath: string, rules: string[]): boolean {
   return relativePath
     .split(/[\\/]/)
     .some((segment) => rules.some((rule) => wildcardMatch(segment, rule)));
 }
 
+export async function inspectAllowedFile(
+  sourcePath: string,
+  options: SafeFileInspectionOptions,
+): Promise<SafeFileInspection> {
+  const absoluteInput = path.resolve(sourcePath);
+  const allowedRoot = options.repositoryRoots.find((root) => isPathInside(root, absoluteInput));
+  if (!allowedRoot) throw new Error('PATH_OUTSIDE_ALLOWLIST');
+
+  const canonicalRoot = await realpath(allowedRoot);
+  const canonicalSource = await realpath(absoluteInput);
+  if (!isPathInside(canonicalRoot, canonicalSource)) throw new Error('SYMLINK_OUTSIDE_ALLOWLIST');
+
+  const relativePath = path.relative(canonicalRoot, canonicalSource);
+  const exclusions = [...defaultExclusions, ...(options.exclusions ?? [])];
+  if (isExcludedPath(relativePath, exclusions)) throw new Error('FILE_EXCLUDED');
+
+  const metadata = await stat(canonicalSource);
+  if (!metadata.isFile()) throw new Error('NOT_A_FILE');
+  if (metadata.size > (options.maxBytes ?? 10 * 1024 * 1024)) throw new Error('FILE_TOO_LARGE');
+
+  const content = await readFile(canonicalSource);
+  assertNoSecrets(content.toString('utf8'));
+  return {
+    canonicalPath: canonicalSource,
+    relativePath,
+    content,
+    sha256: createHash('sha256').update(content).digest('hex'),
+    size: metadata.size,
+  };
+}
+
 export class ContentAddressedFileStore {
   private readonly maxBytes: number;
-  private readonly exclusions: string[];
 
   public constructor(private readonly options: FileStoreOptions) {
     this.maxBytes = options.maxBytes ?? 10 * 1024 * 1024;
-    this.exclusions = [...defaultExclusions, ...(options.exclusions ?? [])];
   }
 
   public async ingest(sourcePath: string): Promise<StoredFile> {
     const absoluteInput = path.resolve(sourcePath);
     try {
-      const allowedRoot = this.options.repositoryRoots.find((root) =>
-        isInside(root, absoluteInput),
-      );
-      if (!allowedRoot) throw new Error('PATH_OUTSIDE_ALLOWLIST');
-
-      const canonicalRoot = await realpath(allowedRoot);
-      const canonicalSource = await realpath(absoluteInput);
-      if (!isInside(canonicalRoot, canonicalSource)) throw new Error('SYMLINK_OUTSIDE_ALLOWLIST');
-
-      const relativePath = path.relative(canonicalRoot, canonicalSource);
-      if (isExcluded(relativePath, this.exclusions)) throw new Error('FILE_EXCLUDED');
-
-      const metadata = await stat(canonicalSource);
-      if (!metadata.isFile()) throw new Error('NOT_A_FILE');
-      if (metadata.size > this.maxBytes) throw new Error('FILE_TOO_LARGE');
-
-      const content = await readFile(canonicalSource);
-      assertNoSecrets(content.toString('utf8'));
-      const sha256 = createHash('sha256').update(content).digest('hex');
+      const inspected = await inspectAllowedFile(sourcePath, {
+        repositoryRoots: this.options.repositoryRoots,
+        maxBytes: this.maxBytes,
+        ...(this.options.exclusions ? { exclusions: this.options.exclusions } : {}),
+      });
+      const { canonicalPath, sha256, size } = inspected;
       const storagePath = path.join(this.options.storageRoot, sha256.slice(0, 2), sha256);
 
       let deduplicated = false;
@@ -102,17 +132,17 @@ export class ContentAddressedFileStore {
         deduplicated = existing.isFile();
       } catch {
         await mkdir(path.dirname(storagePath), { recursive: true });
-        await copyFile(canonicalSource, storagePath);
+        await copyFile(canonicalPath, storagePath);
       }
 
       await this.options.audit?.({
         id: randomUUID(),
         eventType: deduplicated ? 'file.deduplicated' : 'file.accepted',
         outcome: 'allowed',
-        sourcePath: canonicalSource,
+        sourcePath: canonicalPath,
         sha256,
       });
-      return { sha256, size: metadata.size, storagePath, deduplicated };
+      return { sha256, size, storagePath, deduplicated };
     } catch (error) {
       const reason = error instanceof Error ? error.message : 'UNKNOWN_FILE_ERROR';
       await this.options.audit?.({

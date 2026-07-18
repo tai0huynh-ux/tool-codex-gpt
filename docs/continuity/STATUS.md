@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Phase 8 - Context packs.
+Phase 9 - Long-term memory.
 
 ## Current objective
 
-Build deterministic, reviewed context packs with secret-safe file selection, evidence, hashes, and budgets.
+Add approved-only, scoped long-term memory with deterministic retrieval and bootstrap budgets.
 
 ## Last completed checkpoint
 
-P7-UI-001 / P7-PROJ-001 - Persistent typed project IPC and Vietnamese-first desktop registration, evidence, ambiguity confirmation, alias, archive, and reload workflow. Resolve with `git log -1 --grep "feat(projects): add registration and mapping UI"`.
+P8-CTX-001 - Versioned context-pack contract and safe deterministic builder with ranking, path containment, secret/binary blocking, hashes, deduplication, excerpts/diffs, budgets, and complete manifest. Resolve with `git log -1 --grep "feat(context-builder): build safe deterministic context packs"`.
 
 ## Current verified capabilities
 
@@ -38,6 +38,11 @@ P7-UI-001 / P7-PROJ-001 - Persistent typed project IPC and Vietnamese-first desk
 - The typed preload exposes project list/create/archive/alias/root-picker/preview/confirm operations without raw IPC.
 - Repository confidence and evidence are recomputed in the main process; renderer payloads cannot assert trusted evidence.
 - The responsive project workspace supports registration, evidence preview, explicit ambiguous-project selection, confirmation, aliases, archive, and persisted reload.
+- Context packs validate through matching Zod and published JSON Schema contracts.
+- File ranking is stable across repeated builds and prioritizes changes, tests, types, configs, pins, and dependency neighbors while penalizing generated and lock files.
+- Context file inspection reuses canonical allowlist, symlink, exclusion, size, and secret safety before hashing content.
+- Binary, secret, traversal, escaping-symlink, oversized, duplicate, deleted, and budget-omitted files receive explicit manifest status without unsafe attachment.
+- Large text files use line-safe excerpts or supplied diffs; full, excerpt, and token budgets are reported in the pack preview.
 
 ## Current known failures
 
@@ -50,13 +55,13 @@ P7-UI-001 / P7-PROJ-001 - Persistent typed project IPC and Vietnamese-first desk
 
 ## Next three actions
 
-1. Implement `P8-CTX-001` deterministic context selection and pack contracts.
-2. Add secret-safe file collection, hashing, budgets, and diff/test result summaries.
-3. Expose a reviewed context-pack preview through a narrow desktop boundary.
+1. Implement `P9-MEM-001` memory candidate, approval, rejection, and supersession persistence.
+2. Add approved-only deterministic retrieval with scope/project isolation and provenance.
+3. Build a budgeted new-chat bootstrap from approved memory and current project state.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 69 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all builds. Desktop and mobile renderer screenshots were also inspected locally with a mocked preload boundary.
+`pnpm.cmd run verify` passed on 2026-07-18: migration parity, 76 Vitest tests, one virtualized Chromium fixture E2E, formatting, lint, strict type-check, and all 11 buildable workspace projects. GitHub Actions run `29639367655` passed for checkpoint `cd45345` with no failure artifact.
 
 ## Latest commit
 
@@ -68,4 +73,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-18 16:31 +07:00.
+2026-07-18 16:44 +07:00.

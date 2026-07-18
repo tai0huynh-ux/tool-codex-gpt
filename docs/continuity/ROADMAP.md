@@ -76,10 +76,10 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 
 ## Phase 8 - Context packs
 
-- [ ] P8-CTX-001 Build deterministic reviewed context packs
+- [x] P8-CTX-001 Build deterministic reviewed context packs
   - Depends on: P7-PROJ-001
   - Done when: diff, results, relevant files, secret safety, budgets, hashes, preview, and deterministic selection pass tests
-  - Commit: pending
+  - Commit: resolve with `git log -1 --grep "feat(context-builder): build safe deterministic context packs"`
 
 ## Phase 9 - Long-term memory
 

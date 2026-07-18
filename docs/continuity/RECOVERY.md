@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture ext
 
 ## Current phase
 
-Phase 8 - Context packs. Phase 3 live Codex integration remains independently blocked.
+Phase 9 - Long-term memory. Phase 3 live Codex integration remains independently blocked.
 
 ## Last known-good commit
 
@@ -56,18 +56,18 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 69 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
+Expected known-good baseline: formatting, lint, strict type-check, 76 or more Vitest tests, one Chromium fixture E2E, and all workspace builds pass.
 
 ## Exact next task
 
-Implement `P8-CTX-001`: define deterministic context-pack contracts and build secret-safe file selection, hashes, diff/test summaries, budgets, and a reviewed preview without sending data.
+Implement `P9-MEM-001`: add candidate/approved/rejected/superseded memory persistence, approved-only deterministic retrieval, source provenance, cross-project isolation, duplicate handling, and a budgeted new-chat bootstrap.
 
 ## Expected files to modify
 
-- context-pack contracts and JSON Schema
-- context builder package and deterministic tests
-- file-store and secret-scanner integration where needed
-- reviewed desktop preview boundary after the domain builder is verified
+- database migration and memory repository
+- memory engine package and deterministic retrieval tests
+- memory contracts and bootstrap budget model
+- continuity status, roadmap, matrix, worklog, recovery, and state
 - continuity status, roadmap, matrix, worklog, recovery, and state
 
 ## Tests to run
@@ -89,6 +89,7 @@ pnpm.cmd run build
 - Native Messaging protocol fixtures are not live registration evidence; the manifest permission and host installer remain deferred to the packaging/security gate.
 - Add database changes as ordered `NNNN_name.sql` files, then run `pnpm.cmd migrations:generate`; never rewrite an accepted migration to simulate an upgrade.
 - Renderer code must not read repositories directly; context collection and secret decisions belong in validated main/domain boundaries.
+- Only approved memories may enter retrieval or bootstrap output; candidate content must never be auto-approved.
 
 ## Blockers and safe alternatives
 

@@ -3,7 +3,7 @@ import addFormats from 'ajv-formats';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { validateContextBridgeResponse, validateHandoff } from './index';
+import { validateContextBridgeResponse, validateContextPack, validateHandoff } from './index';
 
 const validEnvelope = {
   protocolVersion: '1.0',
@@ -81,5 +81,56 @@ describe('context bridge response', () => {
         requiresUserDecision: false,
       }),
     ).toThrow();
+  });
+});
+
+describe('context pack', () => {
+  it('validates a reviewed pack through both Zod and the published JSON Schema', () => {
+    const pack = {
+      protocolVersion: '1.0',
+      id: 'pack-1',
+      createdAt: '2026-07-18T10:00:00.000Z',
+      objective: 'Review the change.',
+      project: {
+        id: 'project-1',
+        name: 'Bridge',
+        repositoryRoot: 'C:/work/bridge',
+        confidence: 0.95,
+      },
+      repositoryEvidence: [],
+      codexFinalResponse: 'Implemented.',
+      completedWork: [],
+      changedFiles: [],
+      gitDiffSummary: '',
+      verificationResults: [],
+      knownFailures: [],
+      openQuestions: [],
+      relevantMemories: [],
+      attachments: [],
+      attachmentManifest: [],
+      budget: {
+        profile: {
+          maxFiles: 10,
+          maxTotalBytes: 1000,
+          maxSingleFileBytes: 500,
+          maxEstimatedTokens: 250,
+          preferFullFilesBelow: 100,
+          excerptLineWindow: 20,
+        },
+        usedFiles: 0,
+        totalBytes: 0,
+        estimatedTokens: 0,
+      },
+      expectedChatGptResponse: {
+        type: 'analysis-and-codex-prompt',
+        schemaVersion: '1.0',
+      },
+    };
+    expect(validateContextPack(pack).id).toBe('pack-1');
+    const schemaPath = path.resolve(import.meta.dirname, '../../../schemas/context-pack.v1.json');
+    const schema = JSON.parse(readFileSync(schemaPath, 'utf8')) as object;
+    const ajv = new Ajv2020({ strict: true });
+    addFormats(ajv);
+    expect(ajv.compile(schema)(pack)).toBe(true);
   });
 });

@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex-context-bridge.local/schemas/context-pack.v1.json",
+  "title": "ContextPack v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolVersion",
+    "id",
+    "createdAt",
+    "objective",
+    "project",
+    "repositoryEvidence",
+    "codexFinalResponse",
+    "completedWork",
+    "changedFiles",
+    "gitDiffSummary",
+    "verificationResults",
+    "knownFailures",
+    "openQuestions",
+    "relevantMemories",
+    "attachments",
+    "attachmentManifest",
+    "budget",
+    "expectedChatGptResponse"
+  ],
+  "properties": {
+    "protocolVersion": { "const": "1.0" },
+    "id": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "objective": { "type": "string", "minLength": 1 },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "repositoryRoot", "confidence"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "repositoryRoot": { "type": "string", "minLength": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "repositoryEvidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence" }
+    },
+    "codexThreadId": { "type": "string", "minLength": 1 },
+    "codexFinalResponse": { "type": "string" },
+    "completedWork": { "type": "array", "items": { "type": "string" } },
+    "changedFiles": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "gitDiffSummary": { "type": "string" },
+    "verificationResults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "status", "summary"],
+        "properties": {
+          "command": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["passed", "failed", "blocked", "not-run"] },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+    "knownFailures": { "type": "array", "items": { "type": "string" } },
+    "openQuestions": { "type": "array", "items": { "type": "string" } },
+    "relevantMemories": { "type": "array", "items": { "type": "string" } },
+    "attachments": { "type": "array", "items": { "$ref": "#/$defs/attachment" } },
+    "attachmentManifest": { "type": "array", "items": { "$ref": "#/$defs/manifest" } },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "usedFiles", "totalBytes", "estimatedTokens"],
+      "properties": {
+        "profile": { "$ref": "#/$defs/budgetProfile" },
+        "usedFiles": { "type": "integer", "minimum": 0 },
+        "totalBytes": { "type": "integer", "minimum": 0 },
+        "estimatedTokens": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "expectedChatGptResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "schemaVersion"],
+      "properties": {
+        "type": { "const": "analysis-and-codex-prompt" },
+        "schemaVersion": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value", "score"],
+      "properties": {
+        "type": {
+          "enum": ["git-remote", "repo-root", "project-name", "repository-marker", "agents-hash"]
+        },
+        "value": { "type": "string", "minLength": 1 },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "budgetProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxFiles",
+        "maxTotalBytes",
+        "maxSingleFileBytes",
+        "maxEstimatedTokens",
+        "preferFullFilesBelow",
+        "excerptLineWindow"
+      ],
+      "properties": {
+        "maxFiles": { "type": "integer", "minimum": 1 },
+        "maxTotalBytes": { "type": "integer", "minimum": 1 },
+        "maxSingleFileBytes": { "type": "integer", "minimum": 1 },
+        "maxEstimatedTokens": { "type": "integer", "minimum": 1 },
+        "preferFullFilesBelow": { "type": "integer", "minimum": 0 },
+        "excerptLineWindow": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "sourceSize",
+        "attachedBytes",
+        "estimatedTokens",
+        "mode",
+        "content",
+        "inclusionReason"
+      ],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "sourceSize": { "type": "integer", "minimum": 0 },
+        "attachedBytes": { "type": "integer", "minimum": 0 },
+        "estimatedTokens": { "type": "integer", "minimum": 0 },
+        "mode": { "enum": ["full", "excerpt", "diff"] },
+        "content": { "type": "string" },
+        "inclusionReason": { "type": "string", "minLength": 1 },
+        "startLine": { "type": "integer", "minimum": 1 },
+        "endLine": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "change", "status", "score", "reason"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "previousPath": { "type": "string", "minLength": 1 },
+        "change": { "enum": ["added", "modified", "renamed", "deleted", "unchanged"] },
+        "status": { "enum": ["attached", "manifest-only", "blocked", "deleted", "deduplicated"] },
+        "score": { "type": "number" },
+        "reason": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "size": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

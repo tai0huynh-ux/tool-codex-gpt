@@ -21,6 +21,10 @@ export default defineConfig({
         'packages/local-transport/src/index.ts',
       ),
       '@codex-context-bridge/file-store': path.join(root, 'packages/file-store/src/index.ts'),
+      '@codex-context-bridge/context-builder': path.join(
+        root,
+        'packages/context-builder/src/index.ts',
+      ),
       '@codex-context-bridge/secret-scanner': path.join(
         root,
         'packages/secret-scanner/src/index.ts',
