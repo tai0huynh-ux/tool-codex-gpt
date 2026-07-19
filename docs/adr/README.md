@@ -7,3 +7,4 @@ Each ADR should include status, context, decision, alternatives, security impact
 Accepted decisions:
 
 - `0001-native-messaging-transport.md` - Native Messaging for the extension boundary, with permission activation deferred to the packaging/security gate.
+- `0002-structured-surfaces-over-screen-control.md` - Structured Codex and ChatGPT boundaries are the runtime path; screen control is diagnostic only.

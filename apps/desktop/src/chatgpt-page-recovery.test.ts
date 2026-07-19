@@ -36,6 +36,10 @@ describe('ChatGPT page startup recovery', () => {
     ).resolves.toMatchObject({ action: 'none' });
     expect(openExternal).not.toHaveBeenCalled();
     expect(execute).toHaveBeenCalledTimes(1);
+    expect(execute).toHaveBeenCalledWith({
+      type: 'page.inspect',
+      destination: { mode: 'existing', conversationId: 'conversation-1' },
+    });
   });
 
   it('reloads the exact existing conversation once before retrying inspection', async () => {
@@ -107,6 +111,54 @@ describe('ChatGPT page startup recovery', () => {
       }),
     ).resolves.toMatchObject({ action: 'opened' });
     expect(openExternal).toHaveBeenCalledOnce();
+  });
+
+  it('reopens the persisted ChatGPT Project conversation path', async () => {
+    const execute = vi
+      .fn<DesktopBridgeService['execute']>()
+      .mockRejectedValueOnce(new Error('CHATGPT_TAB_NOT_FOUND'))
+      .mockResolvedValueOnce({ type: 'page.inspect.result', inspection: existingInspection });
+    const openExternal = vi.fn(() => Promise.resolve());
+
+    await expect(
+      ensureChatGptPageReadable({
+        bridge: bridge({
+          getStatus: () =>
+            Promise.resolve({
+              transport: 'native_messaging',
+              state: 'degraded',
+              permissionActive: true,
+            }),
+          execute,
+        }),
+        destination: {
+          mode: 'existing',
+          conversationId: 'conversation-1',
+          conversationPath: '/g/project-1/c/conversation-1',
+        },
+        openExternal,
+        wait: () => Promise.resolve(),
+      }),
+    ).resolves.toMatchObject({ action: 'opened' });
+    expect(openExternal).toHaveBeenCalledWith('https://chatgpt.com/g/project-1/c/conversation-1');
+  });
+
+  it('reports an unavailable conversation when ChatGPT redirects the exact tab away', async () => {
+    const openExternal = vi.fn(() => Promise.resolve());
+    const execute = vi.fn<DesktopBridgeService['execute']>(() =>
+      Promise.reject(new Error('CHATGPT_TAB_NOT_FOUND')),
+    );
+
+    await expect(
+      ensureChatGptPageReadable({
+        bridge: bridge({ execute }),
+        destination: { mode: 'existing', conversationId: 'conversation-missing' },
+        openExternal,
+        wait: () => Promise.resolve(),
+        retryDelaysMs: [1, 1],
+      }),
+    ).rejects.toThrow('CHATGPT_CONVERSATION_UNAVAILABLE');
+    expect(openExternal).toHaveBeenCalledWith('https://chatgpt.com/c/conversation-missing');
   });
 
   it('stops after bounded retries instead of reopening forever', async () => {

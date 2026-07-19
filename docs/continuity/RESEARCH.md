@@ -1,5 +1,14 @@
 # Research Log
 
+## Structured Codex and ChatGPT control surfaces
+
+- Decision status: accepted in ADR-0002.
+- Official Codex sources: `https://learn.chatgpt.com/guides/best-practices.md` and `https://learn.chatgpt.com/docs/developer-commands?surface=cli`.
+- Official findings: `codex exec` is the stable non-interactive surface, `codex mcp-server` is stable when another agent consumes Codex, and `codex app-server` remains experimental. The Codex guidance recommends MCP for external systems, skills for repeatable workflows, `AGENTS.md` for durable repository rules, and test-backed review gates.
+- Project decision: retain the verified structured JSONL Codex adapter and keep `codex mcp-server` as a future adapter-compatible option. Do not move production orchestration onto the experimental app server.
+- ChatGPT decision: keep exact-origin Native Messaging and rendered-DOM inspection. Windows Computer Use and screenshots are diagnostic/manual-acceptance tools only because they cannot always prove the active tab URL, account, workspace, or conversation.
+- Recovery finding: storing only a conversation ID loses ChatGPT Project routes, while unscoped `page.inspect` can observe an unrelated active ChatGPT tab. Persist the canonical conversation pathname, bind inspect/status/capture to the exact destination, and fail closed when ChatGPT redirects the requested conversation to home.
+
 ## Codex SDK TypeScript integration
 
 - Decision status: blocked live proof, interface retained.

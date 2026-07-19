@@ -56,11 +56,11 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 197 or more Vitest tests after current-conversation selection, two Chromium fixture E2E tests, the 46-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires package, packaged smoke, native relay, unsigned status, and generated staging checksums.
+Expected known-good baseline: formatting, lint, strict type-check, 219 or more Vitest tests after canonical ChatGPT destination recovery, two Chromium fixture E2E tests, the 46-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires package, packaged smoke, native relay, unsigned status, and generated staging checksums.
 
 ## Exact next task
 
-The chat-history archive MVP is implemented in the current working checkpoint and must be published after the required gates. It archives only exact existing conversations selected through the validated Native Messaging path, stores immutable SQLite revisions, auto-syncs while the app is open, and exports lossless project JSON. After publication, the separate live workflow remains paused at action-time user confirmation for reviewed payload `75cae5042832…428bae39`; do not click submit or infer approval from the prepared preview.
+The canonical ChatGPT destination recovery fix is implemented and must be published after the required gates. It preserves `/g/.../c/...` project paths, scopes inspection/status/capture to the exact destination, migrates legacy pilots when an exact rendered path is observed, and reports redirects to home as `CHATGPT_CONVERSATION_UNAVAILABLE`. After publication, the separate live workflow remains paused at action-time user confirmation for reviewed payload `75cae5042832…428bae39`; do not click submit or infer approval from the prepared preview.
 
 ## Expected files to modify
 
@@ -103,6 +103,7 @@ pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=p
 - Workflow send effects must be recoverable around acknowledgement boundaries and must never be repeated from projection state alone.
 - A `dispatching` effect is ambiguous after interruption; require confirmation or downstream idempotency evidence and never auto-resend it.
 - ChatGPT page recovery is bounded: inspect the exact persisted destination, reload it once, then open only `https://chatgpt.com/` or the encoded exact conversation URL; never auto-submit.
+- Existing ChatGPT destinations may include a validated canonical pathname. Preserve `/g/.../c/...`; never collapse an observed project route to `/c/...`, and never use screen/window state as routing identity.
 - A `dispatching` ChatGPT effect is ambiguous after restart; restore it as confirmation-required and do not consume a new approval or resend it.
 - Composer insertion is not a send acknowledgement. Keep `sent: false` until rendered capture proves the approved user payload was submitted and streaming completed.
 - ChatGPT submission is a distinct approved effect. Reserve its effect ID before asynchronous checks; retain the reservation on ambiguous errors and release it only for deterministic pre-click rejection.

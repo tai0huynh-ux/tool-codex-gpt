@@ -1,4 +1,5 @@
 import {
+  chatGptConversationIdFromPath,
   chatGptPageInspectionSchema,
   contextBridgeResponseSchema,
   type ChatGptPageIdentity,
@@ -77,10 +78,10 @@ export async function hashComposerText(text: string): Promise<string> {
 
 function identifyPage(location: Location, composerAvailable: boolean): ChatGptPageIdentity {
   if (location.origin !== 'https://chatgpt.com') return { mode: 'unsupported' };
-  const segments = location.pathname.split('/').filter(Boolean);
-  const conversationMarker = segments.lastIndexOf('c');
-  const conversationId = segments[conversationMarker + 1];
-  if (conversationMarker >= 0 && conversationId) return { mode: 'existing', conversationId };
+  const conversationId = chatGptConversationIdFromPath(location.pathname);
+  if (conversationId) {
+    return { mode: 'existing', conversationId, conversationPath: location.pathname };
+  }
   return composerAvailable ? { mode: 'new' } : { mode: 'unsupported' };
 }
 

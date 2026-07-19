@@ -1397,3 +1397,25 @@ Implemented exact rendered ChatGPT conversation archiving for the selected Live 
 Verification: `pnpm.cmd run format:check`, `pnpm.cmd run lint`, `pnpm.cmd run typecheck`, `pnpm.cmd run test` (214 tests), `pnpm.cmd run test:e2e` (2 Chromium tests), `pnpm.cmd run test:internal-beta-uat` (46 tests + 2 Chromium tests), `pnpm.cmd run build`, `pnpm.cmd run package:win`, `pnpm.cmd run smoke:packaged:win`, and `pnpm.cmd run test:pilot-packaged-restart` passed. Targeted archive/capture/pilot tests passed 32 cases.
 
 Security: no cookies, tokens, authorization headers, browser history, browser storage, private APIs, or raw filesystem/database handles cross into the renderer. Auto-sync is bounded and best-effort; new-chat destinations and streaming pages are not archived automatically. Authenticated ChatGPT submission and writable Codex execution remain separately approval-gated.
+
+## 2026-07-20 - Canonical ChatGPT destination recovery checkpoint
+
+### Goal
+
+Stop a persisted ChatGPT conversation from silently degrading into the home/new-chat page and remove Windows screen state from production routing decisions.
+
+### Root cause
+
+The extension could inspect an unrelated active ChatGPT tab because `page.inspect` had no destination. Pilots stored only a conversation ID, so recovery reconstructed `/c/<id>` and lost an observed ChatGPT Project route such as `/g/<project>/c/<id>`. When ChatGPT redirected an inaccessible conversation to home, the bounded recovery ended with the generic `CHATGPT_NOT_READY` code.
+
+### Changes
+
+Added validated optional canonical conversation paths to the shared destination/page contracts, persisted the rendered path for current pilots, and let legacy pilots retain it after successful exact inspection or archive sync. Inspection, streaming, capture, submit confirmation, and response status now carry the exact destination. Recovery reopens the canonical project path, ignores unrelated active tabs, and reports `CHATGPT_CONVERSATION_UNAVAILABLE` when a connected exact conversation cannot be restored. The renderer explains how to open the correct account/workspace conversation and re-inspect. ADR-0002 records that structured Codex/Native Messaging surfaces are production boundaries and screen control is diagnostic only.
+
+### Verification
+
+Targeted regression tests passed 70 cases. `pnpm.cmd run verify` passed migration parity, formatting, lint, strict type-check, 219 tests, two workflow fixture tests, two Chromium tests, and all workspace builds. `pnpm.cmd run test:internal-beta-uat` passed 46 tests plus two Chromium tests. Windows packaging, packaged/native-host smoke, and `pnpm.cmd run test:pilot-packaged-restart` passed; restart artifact `artifacts/pilot-restart-acceptance/2026-07-19T18-10-31-089Z/` reported zero runtime errors.
+
+### Security and limitations
+
+No browser profile, cookies, tokens, authorization headers, history, storage, private API, or screen-derived identity was used. Recovery remains bounded and never submits. A live authenticated check of the user's unavailable conversation was not claimed because Windows Computer Use could not verify the active Edge URL; the new deterministic behavior is covered by the Native Messaging boundary and packaged fixtures.

@@ -198,9 +198,59 @@ describe('Live Project Pilot renderer', () => {
     });
   });
 
-  it('auto-syncs an exact existing conversation and exposes history actions', async () => {
+  it('explains how to recover when the persisted conversation is unavailable', async () => {
+    api.inspectPilotChatGpt = vi.fn().mockResolvedValue({
+      ok: false,
+      error: {
+        code: 'CHATGPT_CONVERSATION_UNAVAILABLE',
+        message: 'CHATGPT_CONVERSATION_UNAVAILABLE',
+      },
+    });
+
+    await act(async () => {
+      button(container, 'Kiểm tra ChatGPT').click();
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain('Cuộc chat không khả dụng');
+    expect(container.textContent).toContain('Conversation đang mở');
+  });
+
+  it('surfaces an unavailable conversation from automatic archive sync', async () => {
     const existing = pilot({
       destination: { mode: 'existing', conversationId: 'conversation-1' },
+    });
+    api.listPilots = vi.fn().mockResolvedValue({ ok: true, value: [existing] });
+    api.syncPilotChatHistory = vi.fn().mockResolvedValue({
+      ok: false,
+      error: {
+        code: 'CHATGPT_CONVERSATION_UNAVAILABLE',
+        message: 'CHATGPT_CONVERSATION_UNAVAILABLE',
+      },
+    });
+
+    await act(async () => {
+      root.render(
+        createElement(LiveProjectPilot, {
+          projectId: 'project-2',
+          projectName: 'AI Website Pilot',
+          repositories: [repository],
+        }),
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain('Cuộc chat không khả dụng');
+  });
+
+  it('auto-syncs an exact existing conversation and exposes history actions', async () => {
+    const existing = pilot({
+      destination: {
+        mode: 'existing',
+        conversationId: 'conversation-1',
+        conversationPath: '/g/project-1/c/conversation-1',
+      },
       chatArchive: {
         sourceId: 'source-1',
         conversationId: 'conversation-1',
@@ -225,6 +275,7 @@ describe('Live Project Pilot renderer', () => {
     });
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(api.syncPilotChatHistory).toHaveBeenCalledWith('pilot-1');
+    expect(container.textContent).toContain('https://chatgpt.com/g/project-1/c/conversation-1');
     expect(container.textContent).toContain('Tự động lưu mỗi 30 giây');
     expect(container.textContent).toContain('Xuất toàn bộ lịch sử (.json)');
     await act(async () => {

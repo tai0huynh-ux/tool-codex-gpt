@@ -3,6 +3,7 @@ import type {
   ChatGptPageInspection,
   LocalTransportResult,
 } from '@codex-context-bridge/contracts';
+import { chatGptConversationIdFromPath } from '@codex-context-bridge/contracts';
 import type { DesktopBridgeService } from './ipc';
 
 const CHATGPT_ORIGIN = 'https://chatgpt.com';
@@ -23,8 +24,15 @@ export interface ChatGptPageRecoveryOptions {
 
 function destinationUrl(destination: ChatGptDestination): string {
   if (destination.mode === 'new') return `${CHATGPT_ORIGIN}/`;
-  const url = new URL(`${CHATGPT_ORIGIN}/c/${encodeURIComponent(destination.conversationId)}`);
-  if (url.origin !== CHATGPT_ORIGIN) throw new Error('CHATGPT_DESTINATION_INVALID');
+  const path =
+    destination.conversationPath ?? `/c/${encodeURIComponent(destination.conversationId)}`;
+  const url = new URL(path, CHATGPT_ORIGIN);
+  if (
+    url.origin !== CHATGPT_ORIGIN ||
+    chatGptConversationIdFromPath(url.pathname) !== destination.conversationId
+  ) {
+    throw new Error('CHATGPT_DESTINATION_INVALID');
+  }
   return url.href;
 }
 
@@ -47,7 +55,9 @@ async function inspect(
   options: ChatGptPageRecoveryOptions,
 ): Promise<ChatGptPageInspection | undefined> {
   try {
-    const value = inspectionFrom(await options.bridge.execute({ type: 'page.inspect' }));
+    const value = inspectionFrom(
+      await options.bridge.execute({ type: 'page.inspect', destination: options.destination }),
+    );
     const matches = matchesDestination(options.destination, value);
     options.audit?.({ action: 'inspect', outcome: matches ? 'allowed' : 'failed' });
     return matches ? value : undefined;
@@ -108,5 +118,9 @@ export async function ensureChatGptPageReadable(
     const recovered = await inspect(options);
     if (recovered) return { action, inspection: recovered };
   }
-  throw new Error(health.state === 'disconnected' ? 'TRANSPORT_DISCONNECTED' : 'CHATGPT_NOT_READY');
+  if (health.state === 'disconnected') throw new Error('TRANSPORT_DISCONNECTED');
+  if (health.state === 'connected' && options.destination.mode === 'existing') {
+    throw new Error('CHATGPT_CONVERSATION_UNAVAILABLE');
+  }
+  throw new Error('CHATGPT_NOT_READY');
 }

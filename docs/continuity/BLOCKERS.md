@@ -61,3 +61,18 @@
 - Status: implemented and locally verified.
 - The archive is intentionally limited to exact conversations explicitly bound to a project/pilot and to rendered DOM capture. It does not enumerate the ChatGPT account sidebar/history or read browser storage.
 - A capture is rejected when the bounded Native Messaging payload, message count, role, or character budget is exceeded; this preserves the 256 KiB transport safety limit rather than truncating silently.
+
+## CHATGPT-ROUTE-001
+
+- Status: resolved in the canonical destination checkpoint
+- First observed: 2026-07-20
+- Last verified: 2026-07-20
+- Affected phase: P18-PILOT-001 startup recovery and chat archive sync
+- Reproduction: persist an existing ChatGPT destination, let the exact URL resolve or redirect away from its conversation, and start recovery while another ChatGPT tab may be active
+- Expected: inspect and reopen only the persisted conversation, preserve a ChatGPT Project route, and report an actionable error when the conversation is unavailable
+- Actual before fix: `page.inspect` could observe an unrelated active ChatGPT tab, recovery reconstructed only `/c/<conversationId>`, and failure ended as generic `CHATGPT_NOT_READY`
+- Root cause: destination-less inspection plus persistence of the conversation ID without its canonical rendered pathname
+- Resolution: validate and retain canonical `/c/...` or `/g/.../c/...` paths, route inspect/status/capture through the exact destination, and fail closed as `CHATGPT_CONVERSATION_UNAVAILABLE`
+- Evidence: 70 targeted regression cases, 219 full Vitest tests, two workflow fixture E2E tests, two Chromium fixture tests, internal-beta UAT, build, package, packaged/native-host smoke, and packaged restart acceptance passed
+- Unsafe actions avoided: no browser profile, cookie, token, authorization header, history, storage, private endpoint, or screen-derived routing identity was used
+- Remaining limitation: the specific user conversation was not live-inspected because Computer Use could not verify the active Edge URL; account/workspace availability remains external state

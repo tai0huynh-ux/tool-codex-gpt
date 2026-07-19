@@ -79,7 +79,11 @@ describe('composer insertion', () => {
       'https://chatgpt.com/g/project-1/c/conversation-1',
     ) as unknown as Location;
     expect(await inspectChatGptPage(document, existingLocation)).toEqual({
-      page: { mode: 'existing', conversationId: 'conversation-1' },
+      page: {
+        mode: 'existing',
+        conversationId: 'conversation-1',
+        conversationPath: '/g/project-1/c/conversation-1',
+      },
       composer: { available: true, readOnly: false },
     });
 

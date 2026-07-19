@@ -298,39 +298,45 @@ describe('pilot desktop persistence', () => {
       now: () => '2026-07-19T08:00:00.000Z',
     });
     const codex = new FixtureCodexAdapter();
+    const execute = vi.fn<DesktopBridgeService['execute']>((operation) => {
+      if (operation.type === 'page.inspect') {
+        return Promise.resolve({
+          type: 'page.inspect.result',
+          inspection: {
+            page: {
+              mode: 'existing',
+              conversationId: 'conversation-current',
+              conversationPath: '/g/project-current/c/conversation-current',
+            },
+            composer: { available: true, readOnly: false },
+          },
+        });
+      }
+      if (operation.type === 'page.status') {
+        return Promise.resolve({
+          type: 'page.status.result',
+          streaming: false,
+          structuredResponse: {
+            ok: false,
+            error: { code: 'MARKER_NOT_FOUND', message: 'Not found.' },
+          },
+        });
+      }
+      return Promise.reject(new Error('NOT_USED'));
+    });
     const currentBridge: DesktopBridgeService = {
       ...bridge,
-      execute: (operation) => {
-        if (operation.type === 'page.inspect') {
-          return Promise.resolve({
-            type: 'page.inspect.result',
-            inspection: {
-              page: { mode: 'existing', conversationId: 'conversation-current' },
-              composer: { available: true, readOnly: false },
-            },
-          });
-        }
-        if (operation.type === 'page.status') {
-          return Promise.resolve({
-            type: 'page.status.result',
-            streaming: false,
-            structuredResponse: {
-              ok: false,
-              error: { code: 'MARKER_NOT_FOUND', message: 'Not found.' },
-            },
-          });
-        }
-        return Promise.reject(new Error('NOT_USED'));
-      },
+      execute,
     };
-    const created = await createPilotDesktopService({
+    const service = createPilotDesktopService({
       database,
       projects,
       workflows,
       bridge: currentBridge,
       codex,
       router: new ResponseRouter(database, workflows, projects, codex),
-    }).create({
+    });
+    const created = await service.create({
       projectId: 'project-1',
       repositoryId: 'repository-1',
       objective: 'Use the current conversation.',
@@ -340,12 +346,23 @@ describe('pilot desktop persistence', () => {
     expect(created.destination).toEqual({
       mode: 'existing',
       conversationId: 'conversation-current',
+      conversationPath: '/g/project-current/c/conversation-current',
     });
     expect(created.chatGptInspection).toMatchObject({
       pageMode: 'existing',
       conversationId: 'conversation-current',
+      conversationPath: '/g/project-current/c/conversation-current',
       hasDraft: false,
       streaming: false,
+    });
+    await service.inspectChatGpt(created.id);
+    expect(execute).toHaveBeenCalledWith({
+      type: 'page.inspect',
+      destination: created.destination,
+    });
+    expect(execute).toHaveBeenCalledWith({
+      type: 'page.status',
+      destination: created.destination,
     });
     database.close();
   });
@@ -369,6 +386,19 @@ describe('pilot desktop persistence', () => {
     const archiveBridge: DesktopBridgeService = {
       ...bridge,
       execute: (operation) => {
+        if (operation.type === 'page.inspect') {
+          return Promise.resolve({
+            type: 'page.inspect.result',
+            inspection: {
+              page: {
+                mode: 'existing',
+                conversationId: 'conversation-1',
+                conversationPath: '/g/project-1/c/conversation-1',
+              },
+              composer: { available: true, readOnly: false },
+            },
+          });
+        }
         if (operation.type === 'page.status') {
           return Promise.resolve({
             type: 'page.status.result',
@@ -411,6 +441,11 @@ describe('pilot desktop persistence', () => {
       conversationId: 'conversation-1',
       revisionCount: 1,
       latestMessageCount: 2,
+    });
+    expect(synced.destination).toEqual({
+      mode: 'existing',
+      conversationId: 'conversation-1',
+      conversationPath: '/g/project-1/c/conversation-1',
     });
     const exported = await service.exportChatHistory(created.id);
     expect(exported).toMatchObject({ canceled: false, conversationCount: 1, revisionCount: 1 });

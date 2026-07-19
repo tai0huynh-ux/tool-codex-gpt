@@ -33,6 +33,8 @@ The extension service worker reconnects only through a fixed native-host name, r
 
 Installed ChatGPT acceptance is a separate local release gate because CI has no authenticated user browser. Adapter and transport domain boundaries stay separate from renderer and extension trust boundaries.
 
+ADR-0002 keeps production orchestration on structured surfaces. Codex remains behind the tested JSONL `CodexAdapter` lifecycle, while ChatGPT remains behind exact-origin Native Messaging and rendered-DOM operations. Browser/Windows screen automation is diagnostic-only and never supplies conversation identity. Existing conversations retain an observed canonical pathname so `/g/.../c/...` routes reopen without being collapsed to `/c/...`; destination-bound inspection prevents an unrelated active tab from satisfying recovery.
+
 ## Dependency direction
 
 Contracts and database are foundational. Registry depends on database. Detector depends on contracts.

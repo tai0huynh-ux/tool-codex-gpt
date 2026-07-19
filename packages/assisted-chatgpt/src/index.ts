@@ -23,7 +23,7 @@ export interface CreateAssistedPreviewInput {
 }
 
 export interface AssistedChatGptAdapter {
-  inspect(): Promise<ChatGptPageInspection>;
+  inspect(destination?: ChatGptDestination): Promise<ChatGptPageInspection>;
   insert(input: {
     text: string;
     effectId: string;
@@ -37,8 +37,8 @@ export interface AssistedChatGptAdapter {
   }): Promise<{ submitted: boolean; textHash?: string; code?: string }>;
   copyToClipboard?(text: string): Promise<void>;
   clearComposer?(input: { effectId: string; expectedTextHash: string }): Promise<boolean>;
-  isStreaming(): Promise<boolean>;
-  capture(signal?: AbortSignal): Promise<ConversationSnapshot>;
+  isStreaming(destination?: ChatGptDestination): Promise<boolean>;
+  capture(signal?: AbortSignal, destination?: ChatGptDestination): Promise<ConversationSnapshot>;
 }
 
 export type AssistedDispatchResult =
@@ -252,7 +252,7 @@ export class AssistedChatGptService {
     if (method === 'clipboard' && !adapter.copyToClipboard) {
       throw new Error('CHATGPT_CLIPBOARD_UNAVAILABLE');
     }
-    const inspection = await adapter.inspect();
+    const inspection = await adapter.inspect(preview.destination);
     if (!pageMatches(preview.destination, inspection, false)) {
       throw new Error('CHATGPT_DESTINATION_MISMATCH');
     }
@@ -262,7 +262,7 @@ export class AssistedChatGptService {
     if (method === 'composer' && inspection.composer.textHash) {
       throw new Error('CHATGPT_DRAFT_CONFLICT');
     }
-    if (method === 'composer' && (await adapter.isStreaming())) {
+    if (method === 'composer' && (await adapter.isStreaming(preview.destination))) {
       throw new Error('CHATGPT_STREAMING_CONFLICT');
     }
 
@@ -340,12 +340,12 @@ export class AssistedChatGptService {
     if (effect.status === 'acknowledged') return { status: 'acknowledged', effect };
     if (effect.status !== 'dispatching') throw new Error('CHATGPT_CONFIRMATION_STATE_INVALID');
     this.assertEffectDestination(effect, destination);
-    const inspection = await adapter.inspect();
+    const inspection = await adapter.inspect(destination);
     if (!pageMatches(destination, inspection, true)) {
       throw new Error('CHATGPT_DESTINATION_MISMATCH');
     }
-    if (await adapter.isStreaming()) return { status: 'streaming', effect };
-    const snapshot = await adapter.capture(signal);
+    if (await adapter.isStreaming(destination)) return { status: 'streaming', effect };
+    const snapshot = await adapter.capture(signal, destination);
     const userMessage = latestUserMessage(snapshot);
     if (!userMessage || sha256(normalizeChatGptText(userMessage)) !== effect.payloadHash) {
       return { status: 'message_not_found', effect };

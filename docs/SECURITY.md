@@ -15,6 +15,8 @@ are isolated because they are inherently unstable.
 
 Assisted composer actions require an effect ID and approved payload hash. They fill but never submit, validate the active conversation destination, and clear text only when the current composer hash still matches. Clipboard fallback is explicit rather than automatic. A manual send is acknowledged only from rendered conversation capture after streaming stops.
 
+Existing-conversation routing binds the conversation ID to the canonical rendered pathname when available, including ChatGPT Project paths. Inspect, streaming, capture, reload, submit, and response checks target that exact destination. A redirect to the home/new-chat page fails closed as `CHATGPT_CONVERSATION_UNAVAILABLE`; Windows screen state, focus, and window titles are never accepted as routing evidence.
+
 ChatGPT responses are schema-validated and persisted as unique receipts before routing. Handoff, correlation, project, prompt, repository, worktree provider, and persisted Codex thread identity must all match. Mock adapter results remain labeled mock-only and ambiguous external failures stay confirmation-required.
 
 ## Files

@@ -1,4 +1,5 @@
 import {
+  chatGptConversationIdFromPath,
   localTransportOperationSchema,
   localTransportResultSchema,
   type ChatGptDestination,
@@ -41,11 +42,18 @@ function conversationId(url: string): string | undefined {
   try {
     const parsed = new URL(url);
     if (parsed.origin !== 'https://chatgpt.com') return undefined;
-    const segments = parsed.pathname.split('/').filter(Boolean);
-    const conversationMarker = segments.lastIndexOf('c');
-    return conversationMarker >= 0 ? segments[conversationMarker + 1] : undefined;
+    return chatGptConversationIdFromPath(parsed.pathname);
   } catch {
     return undefined;
+  }
+}
+
+function isNewChatUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.origin === 'https://chatgpt.com' && parsed.pathname === '/';
+  } catch {
+    return false;
   }
 }
 
@@ -66,7 +74,7 @@ function selectTab(tabs: BrowserTab[], destination?: ChatGptDestination): Browse
     destination?.mode === 'existing'
       ? eligible.filter((tab) => conversationId(tab.url ?? '') === destination.conversationId)
       : destination?.mode === 'new'
-        ? eligible.filter((tab) => conversationId(tab.url ?? '') === undefined)
+        ? eligible.filter((tab) => isNewChatUrl(tab.url ?? ''))
         : eligible;
   const selected = rankTabs(matching)[0];
   if (!selected) throw new Error('CHATGPT_TAB_NOT_FOUND');
@@ -174,6 +182,7 @@ export function createExtensionOperationExecutor(tabs: BrowserTabs): {
         operation.type === 'conversation.capture' ||
         operation.type === 'composer.insert' ||
         operation.type === 'composer.submit' ||
+        operation.type === 'page.inspect' ||
         operation.type === 'page.reload' ||
         operation.type === 'page.status'
           ? operation.destination

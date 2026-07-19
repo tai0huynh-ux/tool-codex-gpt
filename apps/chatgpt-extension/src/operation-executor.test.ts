@@ -54,6 +54,32 @@ describe('extension operation executor', () => {
     });
   });
 
+  it('inspects only the requested conversation instead of the active unrelated tab', async () => {
+    const sendMessage = vi.fn(() =>
+      Promise.resolve({
+        page: {
+          mode: 'existing',
+          conversationId: 'target',
+          conversationPath: '/g/project-1/c/target',
+        },
+        composer: { available: true, readOnly: false },
+      }),
+    );
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+
+    await expect(
+      executor.execute({
+        type: 'page.inspect',
+        destination: {
+          mode: 'existing',
+          conversationId: 'target',
+          conversationPath: '/g/project-1/c/target',
+        },
+      }),
+    ).resolves.toMatchObject({ type: 'page.inspect.result' });
+    expect(sendMessage).toHaveBeenCalledWith(20, { type: 'inspect-page' });
+  });
+
   it('captures only the exact existing conversation tab', async () => {
     const sendMessage = vi.fn(() =>
       Promise.resolve({

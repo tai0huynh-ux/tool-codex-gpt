@@ -30,12 +30,16 @@ function shortHash(value: string | undefined): string {
 }
 
 function errorText(response: PilotViewResponse): string {
-  return response.ok ? '' : `${response.error.code}: ${response.error.message}`;
+  if (response.ok) return '';
+  if (response.error.code === 'CHATGPT_CONVERSATION_UNAVAILABLE') {
+    return 'Cuộc chat không khả dụng trong tài khoản/workspace hiện tại. Hãy mở đúng conversation trong Edge rồi nhấn "Kiểm tra ChatGPT"; nếu vẫn lỗi, tạo pilot mới với "Conversation đang mở".';
+  }
+  return `${response.error.code}: ${response.error.message}`;
 }
 
 function destinationUrl(view: PilotView): string {
   return view.destination.mode === 'existing'
-    ? `https://chatgpt.com/c/${view.destination.conversationId}`
+    ? `https://chatgpt.com${view.destination.conversationPath ?? `/c/${view.destination.conversationId}`}`
     : 'https://chatgpt.com/';
 }
 
@@ -130,7 +134,13 @@ export function LiveProjectPilot({
       archiveSyncing.current = true;
       try {
         const response = await window.contextBridgeDesktop.syncPilotChatHistory(selected.id);
-        if (active && response.ok) replace(response.value);
+        if (active) {
+          if (response.ok) {
+            replace(response.value);
+          } else if (response.error.code === 'CHATGPT_CONVERSATION_UNAVAILABLE') {
+            setNotice(errorText(response));
+          }
+        }
       } catch {
         // Automatic sync is best-effort; the manual action surfaces actionable errors.
       } finally {

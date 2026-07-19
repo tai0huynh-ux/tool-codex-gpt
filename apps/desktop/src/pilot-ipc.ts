@@ -49,8 +49,13 @@ class NativeChatGptAdapter implements AssistedChatGptAdapter {
     return result as Extract<LocalTransportResult, { type: T }>;
   }
 
-  public async inspect() {
-    return (await this.execute({ type: 'page.inspect' }, 'page.inspect.result')).inspection;
+  public async inspect(destination?: ChatGptDestination) {
+    return (
+      await this.execute(
+        { type: 'page.inspect', ...(destination ? { destination } : {}) },
+        'page.inspect.result',
+      )
+    ).inspection;
   }
 
   public async insert(input: {
@@ -85,8 +90,13 @@ class NativeChatGptAdapter implements AssistedChatGptAdapter {
     };
   }
 
-  public async isStreaming(): Promise<boolean> {
-    return (await this.execute({ type: 'page.status' }, 'page.status.result')).streaming;
+  public async isStreaming(destination?: ChatGptDestination): Promise<boolean> {
+    return (
+      await this.execute(
+        { type: 'page.status', ...(destination ? { destination } : {}) },
+        'page.status.result',
+      )
+    ).streaming;
   }
 
   public async isConversationStreaming(destination: ChatGptDestination): Promise<boolean> {
@@ -94,9 +104,12 @@ class NativeChatGptAdapter implements AssistedChatGptAdapter {
       .streaming;
   }
 
-  public async capture(_signal?: AbortSignal): Promise<ConversationSnapshot> {
+  public async capture(
+    _signal?: AbortSignal,
+    destination?: ChatGptDestination,
+  ): Promise<ConversationSnapshot> {
     void _signal;
-    return this.captureConversation();
+    return this.captureConversation(destination);
   }
 
   public async captureConversation(
@@ -203,6 +216,21 @@ export function createPilotDesktopService(input: {
       status: 'failed',
       errorCode: 'CHATGPT_TRANSFER_FAILED',
     });
+  };
+
+  const retainConversationPath = (
+    view: PilotView,
+    inspection: Awaited<ReturnType<NativeChatGptAdapter['inspect']>>,
+  ): PilotView['destination'] => {
+    if (
+      view.destination.mode !== 'existing' ||
+      inspection.page.mode !== 'existing' ||
+      inspection.page.conversationId !== view.destination.conversationId ||
+      !inspection.page.conversationPath
+    ) {
+      return view.destination;
+    }
+    return { ...view.destination, conversationPath: inspection.page.conversationPath };
   };
 
   const refresh = async (view: PilotView): Promise<PilotView> => {
@@ -332,10 +360,16 @@ export function createPilotDesktopService(input: {
         resolvedDestination = {
           mode: 'existing',
           conversationId: inspection.page.conversationId,
+          ...(inspection.page.conversationPath
+            ? { conversationPath: inspection.page.conversationPath }
+            : {}),
         };
         chatGptInspection = {
           pageMode: inspection.page.mode,
           conversationId: inspection.page.conversationId,
+          ...(inspection.page.conversationPath
+            ? { conversationPath: inspection.page.conversationPath }
+            : {}),
           composerAvailable: inspection.composer.available,
           composerReadOnly: inspection.composer.readOnly,
           hasDraft: Boolean(inspection.composer.textHash),
@@ -387,14 +421,20 @@ export function createPilotDesktopService(input: {
       await input.ensureChatGptPage?.(view.destination);
       const status = await input.bridge.getStatus();
       if (status.state !== 'connected') throw new Error('TRANSPORT_DISCONNECTED');
-      const inspection = await chatGpt.inspect();
-      const streaming = await chatGpt.isStreaming();
+      const inspection = await chatGpt.inspect(view.destination);
+      const streaming = await chatGpt.isStreaming(view.destination);
       return save({
         ...view,
+        destination: retainConversationPath(view, inspection),
         chatGptInspection: {
           pageMode: inspection.page.mode,
           ...(inspection.page.mode === 'existing'
-            ? { conversationId: inspection.page.conversationId }
+            ? {
+                conversationId: inspection.page.conversationId,
+                ...(inspection.page.conversationPath
+                  ? { conversationPath: inspection.page.conversationPath }
+                  : {}),
+              }
             : {}),
           composerAvailable: inspection.composer.available,
           composerReadOnly: inspection.composer.readOnly,
@@ -474,6 +514,7 @@ export function createPilotDesktopService(input: {
       }
       const status = await input.bridge.execute({
         type: 'page.status',
+        destination: view.destination,
         expectedHandoffId: view.chatGptPreview.handoffId,
         expectedCorrelationId: view.chatGptPreview.correlationId,
         expectedProjectId: view.projectId,
@@ -503,6 +544,7 @@ export function createPilotDesktopService(input: {
       await input.ensureChatGptPage?.(view.destination);
       const transport = await input.bridge.getStatus();
       if (transport.state !== 'connected') throw new Error('TRANSPORT_DISCONNECTED');
+      const inspection = await chatGpt.inspect(view.destination);
       if (await chatGpt.isConversationStreaming(view.destination)) {
         throw new Error('CHATGPT_NOT_READY');
       }
@@ -512,7 +554,12 @@ export function createPilotDesktopService(input: {
         conversationId: view.destination.conversationId,
         snapshot,
       });
-      return save({ ...get(pilotId), chatArchive: summary });
+      const current = get(pilotId);
+      return save({
+        ...current,
+        destination: retainConversationPath(current, inspection),
+        chatArchive: summary,
+      });
     },
     exportChatHistory: async (pilotId) => {
       const view = get(pilotId);

@@ -307,6 +307,26 @@ describe('assisted page operations', () => {
     });
     expect(
       localTransportOperationSchema.parse({
+        type: 'page.inspect',
+        destination: {
+          mode: 'existing',
+          conversationId: 'conversation-1',
+          conversationPath: '/g/project-1/c/conversation-1',
+        },
+      }),
+    ).toMatchObject({ type: 'page.inspect', destination: { conversationId: 'conversation-1' } });
+    expect(() =>
+      localTransportOperationSchema.parse({
+        type: 'page.inspect',
+        destination: {
+          mode: 'existing',
+          conversationId: 'conversation-1',
+          conversationPath: '/g/project-1/c/conversation-2',
+        },
+      }),
+    ).toThrow();
+    expect(
+      localTransportOperationSchema.parse({
         type: 'page.reload',
         destination: { mode: 'existing', conversationId: 'conversation-1' },
       }),

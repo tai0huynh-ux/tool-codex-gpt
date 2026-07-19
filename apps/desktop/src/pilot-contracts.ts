@@ -1,5 +1,7 @@
 import {
   assistedChatGptPreviewSchema,
+  chatGptConversationIdFromPath,
+  chatGptConversationPathSchema,
   codexRoutePreviewSchema,
   contextBridgeResponseSchema,
 } from '@codex-context-bridge/contracts';
@@ -42,14 +44,34 @@ export const pilotIpcChannels = {
 
 export const pilotIdSchema = z.string().min(1).max(256);
 
-export const pilotDestinationSchema = z.discriminatedUnion('mode', [
-  z.object({ mode: z.literal('new') }).strict(),
-  z.object({ mode: z.literal('existing'), conversationId: pilotIdSchema }).strict(),
-]);
+export const pilotDestinationSchema = z
+  .discriminatedUnion('mode', [
+    z.object({ mode: z.literal('new') }).strict(),
+    z
+      .object({
+        mode: z.literal('existing'),
+        conversationId: pilotIdSchema,
+        conversationPath: chatGptConversationPathSchema.optional(),
+      })
+      .strict(),
+  ])
+  .superRefine((value, context) => {
+    if (
+      value.mode === 'existing' &&
+      value.conversationPath &&
+      chatGptConversationIdFromPath(value.conversationPath) !== value.conversationId
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['conversationPath'],
+        message: 'ChatGPT conversation path does not match the conversation ID.',
+      });
+    }
+  });
 
-export const pilotCreateDestinationSchema = z.discriminatedUnion('mode', [
+export const pilotCreateDestinationSchema = z.union([
   z.object({ mode: z.literal('current') }).strict(),
-  ...pilotDestinationSchema.options,
+  pilotDestinationSchema,
 ]);
 
 export const pilotListInputSchema = z.object({ projectId: pilotIdSchema.optional() }).strict();
@@ -100,6 +122,7 @@ export const pilotViewSchema = z
       .object({
         pageMode: z.enum(['new', 'existing', 'unsupported']),
         conversationId: pilotIdSchema.optional(),
+        conversationPath: chatGptConversationPathSchema.optional(),
         composerAvailable: z.boolean(),
         composerReadOnly: z.boolean(),
         hasDraft: z.boolean(),
@@ -133,6 +156,7 @@ export const pilotErrorCodeSchema = z.enum([
   'REPOSITORY_NOT_FOUND',
   'TRANSPORT_DISCONNECTED',
   'CHATGPT_NOT_READY',
+  'CHATGPT_CONVERSATION_UNAVAILABLE',
   'CHATGPT_CONFIRMATION_REQUIRED',
   'CHAT_ARCHIVE_DESTINATION_REQUIRED',
   'CHAT_ARCHIVE_EMPTY',

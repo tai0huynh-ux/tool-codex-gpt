@@ -141,16 +141,88 @@ export const structuredResponseErrorCodeSchema = z.enum([
   'DUPLICATE_RESPONSE',
 ]);
 
-export const chatGptDestinationSchema = z.discriminatedUnion('mode', [
-  z.object({ mode: z.literal('existing'), conversationId: z.string().min(1) }).strict(),
-  z.object({ mode: z.literal('new') }).strict(),
-]);
+const CHATGPT_ORIGIN = 'https://chatgpt.com';
 
-export const chatGptPageIdentitySchema = z.discriminatedUnion('mode', [
-  z.object({ mode: z.literal('existing'), conversationId: z.string().min(1) }).strict(),
-  z.object({ mode: z.literal('new') }).strict(),
-  z.object({ mode: z.literal('unsupported') }).strict(),
-]);
+export function chatGptConversationIdFromPath(path: string): string | undefined {
+  try {
+    if (!path.startsWith('/')) return undefined;
+    const parsed = new URL(path, CHATGPT_ORIGIN);
+    if (
+      parsed.origin !== CHATGPT_ORIGIN ||
+      parsed.pathname !== path ||
+      parsed.search ||
+      parsed.hash
+    ) {
+      return undefined;
+    }
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    const conversationMarker = segments.lastIndexOf('c');
+    return conversationMarker === segments.length - 2
+      ? segments[conversationMarker + 1]
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export const chatGptConversationPathSchema = z
+  .string()
+  .min(1)
+  .max(2_048)
+  .refine((value) => chatGptConversationIdFromPath(value) !== undefined, {
+    message: 'Invalid ChatGPT conversation path.',
+  });
+
+export const chatGptDestinationSchema = z
+  .discriminatedUnion('mode', [
+    z
+      .object({
+        mode: z.literal('existing'),
+        conversationId: z.string().min(1),
+        conversationPath: chatGptConversationPathSchema.optional(),
+      })
+      .strict(),
+    z.object({ mode: z.literal('new') }).strict(),
+  ])
+  .superRefine((value, context) => {
+    if (
+      value.mode === 'existing' &&
+      value.conversationPath &&
+      chatGptConversationIdFromPath(value.conversationPath) !== value.conversationId
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['conversationPath'],
+        message: 'ChatGPT conversation path does not match the conversation ID.',
+      });
+    }
+  });
+
+export const chatGptPageIdentitySchema = z
+  .discriminatedUnion('mode', [
+    z
+      .object({
+        mode: z.literal('existing'),
+        conversationId: z.string().min(1),
+        conversationPath: chatGptConversationPathSchema.optional(),
+      })
+      .strict(),
+    z.object({ mode: z.literal('new') }).strict(),
+    z.object({ mode: z.literal('unsupported') }).strict(),
+  ])
+  .superRefine((value, context) => {
+    if (
+      value.mode === 'existing' &&
+      value.conversationPath &&
+      chatGptConversationIdFromPath(value.conversationPath) !== value.conversationId
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['conversationPath'],
+        message: 'ChatGPT page path does not match the conversation ID.',
+      });
+    }
+  });
 
 export const chatGptPageInspectionSchema = z
   .object({
@@ -193,7 +265,12 @@ export const localTransportOperationSchema = z.discriminatedUnion('type', [
       destination: chatGptDestinationSchema,
     })
     .strict(),
-  z.object({ type: z.literal('page.inspect') }).strict(),
+  z
+    .object({
+      type: z.literal('page.inspect'),
+      destination: chatGptDestinationSchema.optional(),
+    })
+    .strict(),
   z
     .object({
       type: z.literal('page.reload'),
