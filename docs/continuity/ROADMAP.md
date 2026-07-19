@@ -181,4 +181,4 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
 - [ ] P18-PILOT-001 Deliver the desktop Live Project Pilot vertical slice
   - Depends on: P13-UI-001, P18-CODEX-001
   - Done when: typed main-process orchestration, website verification/preview, fixture E2E, recovery evidence, and a separately gated authenticated live run are complete
-  - Implementation checkpoint: `13ddbd4` (UI, IPC, persistence, verifier, preview boundary); fixture E2E, packaged acceptance, and live evidence remain open
+  - Implementation checkpoints: `13ddbd4` (UI, IPC, persistence, verifier, preview boundary), `960e566` (full fixture counterpart); packaged acceptance and live evidence remain open

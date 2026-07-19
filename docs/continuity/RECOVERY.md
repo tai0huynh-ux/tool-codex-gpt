@@ -60,7 +60,7 @@ Expected known-good baseline: formatting, lint, strict type-check, 190 or more V
 
 ## Exact next task
 
-P18-CODEX-001 is published at `c3ec3a7`; the pilot implementation checkpoint is published at `13ddbd4`. Next add fixture/project-pilot and packaged restart evidence. Do not claim a live ChatGPT submit, structured response, writable Codex run, or generated website from fixtures or prior no-submit/read-only smoke. The completed desktop UI acceptance evidence is under `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`.
+P18-CODEX-001 is published at `c3ec3a7`; pilot implementation and fixture checkpoints are published at `13ddbd4` and `960e566`. Next add packaged restart evidence. Do not claim a live ChatGPT submit, structured response, writable Codex run, or generated website from fixtures or prior no-submit/read-only smoke. The completed desktop UI acceptance evidence is under `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`.
 
 ## Expected files to modify
 

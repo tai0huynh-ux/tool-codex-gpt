@@ -1301,3 +1301,25 @@ The renderer receives only typed, schema-validated views; approval tokens, datab
 ### Next action
 
 Add `test:project-pilot`, packaged UI/restart evidence, and then attempt the authenticated path only if a safe user-opened ChatGPT destination is available.
+
+## 2026-07-19 13:56 +07:00 - P18-PILOT-001 fixture checkpoint
+
+### Goal
+
+Prove the complete reviewed pilot orchestration in a deterministic fixture without calling it live evidence.
+
+### Changes
+
+Added `test:project-pilot`, a full fixture flow using the typed pilot service, fixture ChatGPT transport, mock Codex lifecycle, temporary repository files, website verification, and persisted reload. The fixture exposed and removed a premature duplicate `sent_to_chatgpt` transition; durable effect acknowledgement remains the sole state transition owner.
+
+### Verification
+
+`pnpm.cmd run test:project-pilot` passed. The subsequent full `pnpm.cmd run verify` passed formatting, lint, strict type-check, 191 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, and all workspace builds. Published as `960e566`; `HEAD == origin/main` after push.
+
+### Security and limitations
+
+Fixture evidence is explicitly not live evidence. No browser credentials, cookies, tokens, history, profiles, private APIs, or real user repository writes were used.
+
+### Next action
+
+Run packaged pilot UI/restart acceptance, then determine whether a safe authenticated live destination is available.
