@@ -294,6 +294,14 @@ describe('assisted page operations', () => {
         expectedTextHash: 'a'.repeat(64),
       }),
     ).toMatchObject({ type: 'composer.clear' });
+    expect(
+      localTransportOperationSchema.parse({
+        type: 'composer.submit',
+        effectId: 'effect-submit',
+        expectedTextHash: 'a'.repeat(64),
+        destination: { mode: 'existing', conversationId: 'conversation-1' },
+      }),
+    ).toMatchObject({ type: 'composer.submit', effectId: 'effect-submit' });
     expect(localTransportOperationSchema.parse({ type: 'page.inspect' })).toEqual({
       type: 'page.inspect',
     });

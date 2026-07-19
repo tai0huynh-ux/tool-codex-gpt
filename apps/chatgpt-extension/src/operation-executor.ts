@@ -84,6 +84,13 @@ function messageFor(operation: LocalTransportOperation): unknown {
         effectId: operation.effectId,
         payloadHash: operation.payloadHash,
       };
+    case 'composer.submit':
+      return {
+        type: 'submit-composer',
+        effectId: operation.effectId,
+        expectedTextHash: operation.expectedTextHash,
+        destination: operation.destination,
+      };
     case 'page.inspect':
       return { type: 'inspect-page' };
     case 'composer.clear':
@@ -116,6 +123,11 @@ function resultFor(operation: LocalTransportOperation, response: unknown): Local
     case 'composer.insert':
       return localTransportResultSchema.parse({
         type: 'composer.insert.result',
+        ...(response as object),
+      });
+    case 'composer.submit':
+      return localTransportResultSchema.parse({
+        type: 'composer.submit.result',
         ...(response as object),
       });
     case 'page.inspect':
@@ -151,7 +163,10 @@ export function createExtensionOperationExecutor(tabs: BrowserTabs): {
           status: availableTabs.some((tab) => tab.id !== undefined) ? 'ready' : 'degraded',
         });
       }
-      const destination = operation.type === 'composer.insert' ? operation.destination : undefined;
+      const destination =
+        operation.type === 'composer.insert' || operation.type === 'composer.submit'
+          ? operation.destination
+          : undefined;
       const tab = selectTab(availableTabs, destination);
       if (tab.id === undefined) throw new Error('CHATGPT_TAB_NOT_FOUND');
       const response = await sendToTab(tabs, tab.id, messageFor(operation));

@@ -129,11 +129,15 @@ class FakeAdapter implements AssistedChatGptAdapter {
   public insertCount = 0;
   public copyCount = 0;
   public clearCount = 0;
+  public submitCount = 0;
   public inserted = true;
   public insertedHash: string | undefined;
   public copyError: Error | undefined;
   public clearResult = true;
   public streaming = false;
+  public submitResult: { submitted: boolean; textHash?: string; code?: string } = {
+    submitted: true,
+  };
   public messages: { role: string; text: string }[] = [];
 
   public inspect() {
@@ -156,6 +160,16 @@ class FakeAdapter implements AssistedChatGptAdapter {
   public clearComposer() {
     this.clearCount += 1;
     return Promise.resolve(this.clearResult);
+  }
+
+  public submit(input: { expectedTextHash: string }) {
+    this.submitCount += 1;
+    return Promise.resolve({
+      ...this.submitResult,
+      ...(this.submitResult.submitted && !this.submitResult.textHash
+        ? { textHash: input.expectedTextHash }
+        : {}),
+    });
   }
 
   public isStreaming() {
@@ -321,6 +335,51 @@ describe('assisted dispatch', () => {
 });
 
 describe('manual-send acknowledgement and cancellation', () => {
+  it('submits only a dispatching approved effect and leaves acknowledgement to capture', async () => {
+    const { service, workflows } = setup();
+    const { preview, effect } = approvedEffect(service);
+    const adapter = new FakeAdapter();
+    await service.dispatch(preview, effect.id, 'composer', adapter);
+
+    await expect(
+      service.submitApproved(effect.id, preview.destination, adapter),
+    ).resolves.toMatchObject({ status: 'submitted', effect: { status: 'dispatching' } });
+    expect(adapter.submitCount).toBe(1);
+    expect(workflows.getEffect(effect.id)?.status).toBe('dispatching');
+
+    adapter.submitResult = { submitted: false, code: 'DUPLICATE_EFFECT' };
+    await expect(
+      service.submitApproved(effect.id, preview.destination, adapter),
+    ).resolves.toMatchObject({ status: 'confirmation_required' });
+    expect(workflows.getEffect(effect.id)?.status).toBe('dispatching');
+  });
+
+  it('blocks drafts and streaming before composer insertion', async () => {
+    const draft = setup();
+    const draftEffect = approvedEffect(draft.service);
+    const draftAdapter = new FakeAdapter();
+    draftAdapter.inspection = {
+      ...draftAdapter.inspection,
+      composer: { available: true, readOnly: false, textHash: 'a'.repeat(64) },
+    };
+    await expect(
+      draft.service.dispatch(draftEffect.preview, draftEffect.effect.id, 'composer', draftAdapter),
+    ).rejects.toThrow('CHATGPT_DRAFT_CONFLICT');
+
+    const streaming = setup();
+    const streamingEffect = approvedEffect(streaming.service);
+    const streamingAdapter = new FakeAdapter();
+    streamingAdapter.streaming = true;
+    await expect(
+      streaming.service.dispatch(
+        streamingEffect.preview,
+        streamingEffect.effect.id,
+        'composer',
+        streamingAdapter,
+      ),
+    ).rejects.toThrow('CHATGPT_STREAMING_CONFLICT');
+  });
+
   it('waits through streaming and acknowledges only the matching captured user message', async () => {
     const { service, workflows } = setup();
     const { preview, effect } = approvedEffect(service);

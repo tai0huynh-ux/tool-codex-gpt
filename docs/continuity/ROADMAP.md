@@ -167,3 +167,16 @@ Each task has a stable ID, dependency, acceptance condition, and publication rec
   - Depends on: P17-BETA-001
   - Done when: each available project/workflow control is exercised against an isolated fixture, runtime defects are fixed and retested from the beginning, packaged Electron UI is non-blank, and the acceptance evidence is recorded
   - Evidence: `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`; 12 controls inventoried; 7 checks passed
+
+## Phase 18 - Live project pilot
+
+- [ ] P18-CHATGPT-001 Add explicitly approved ChatGPT submission
+  - Depends on: P11-CHAT-001, P6-IPC-005
+  - Done when: semantic submit, exact destination/hash checks, draft/streaming/disabled guards, ambiguous-send handling, and concurrent duplicate prevention pass targeted and full verification
+  - Checkpoint: this working tree contains the implementation; publish after the final gate
+- [ ] P18-CODEX-001 Add repository-bound `workspace_write_no_network` profile
+  - Depends on: P12-HANDOFF-001, P18-CHATGPT-001
+  - Done when: explicit approval selects the profile, exact registered root/fingerprint is enforced, path escape is blocked, and network remains disabled
+- [ ] P18-PILOT-001 Deliver the desktop Live Project Pilot vertical slice
+  - Depends on: P13-UI-001, P18-CODEX-001
+  - Done when: typed main-process orchestration, website verification/preview, fixture E2E, recovery evidence, and a separately gated authenticated live run are complete

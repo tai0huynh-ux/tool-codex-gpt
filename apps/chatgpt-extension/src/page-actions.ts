@@ -3,6 +3,7 @@ import {
   contextBridgeResponseSchema,
   type ChatGptPageIdentity,
   type ChatGptPageInspection,
+  type ChatGptDestination,
   type ContextBridgeResponse,
 } from '@codex-context-bridge/contracts';
 import { selectors } from './selectors';
@@ -109,6 +110,54 @@ export async function clearComposerText(
   const currentText = normalizeComposerText(composerText(composer));
   if (!currentText || (await hashComposerText(currentText)) !== expectedTextHash) return false;
   return setComposerText(composer, '');
+}
+
+export type ComposerSubmitResult =
+  | { submitted: true; textHash: string }
+  | {
+      submitted: false;
+      code:
+        | 'COMPOSER_UNAVAILABLE'
+        | 'COMPOSER_READ_ONLY'
+        | 'DESTINATION_MISMATCH'
+        | 'STREAMING'
+        | 'HASH_MISMATCH'
+        | 'SUBMIT_DISABLED';
+    };
+
+function pageMatchesDestination(
+  page: ChatGptPageIdentity,
+  destination: ChatGptDestination,
+): boolean {
+  return destination.mode === 'existing'
+    ? page.mode === 'existing' && page.conversationId === destination.conversationId
+    : page.mode === 'new';
+}
+
+export async function submitComposer(
+  document: Document,
+  location: Location,
+  expectedTextHash: string,
+  destination: ChatGptDestination,
+): Promise<ComposerSubmitResult> {
+  const inspection = await inspectChatGptPage(document, location);
+  if (!pageMatchesDestination(inspection.page, destination)) {
+    return { submitted: false, code: 'DESTINATION_MISMATCH' };
+  }
+  const composer = findComposer(document);
+  if (!composer) return { submitted: false, code: 'COMPOSER_UNAVAILABLE' };
+  if (isReadOnlyComposer(composer)) return { submitted: false, code: 'COMPOSER_READ_ONLY' };
+  if (isStreaming(document)) return { submitted: false, code: 'STREAMING' };
+  const textHash = await hashComposerText(composerText(composer));
+  if (textHash !== expectedTextHash) return { submitted: false, code: 'HASH_MISMATCH' };
+  const submit = selectors.submit
+    .map((selector) => document.querySelector<HTMLButtonElement>(selector))
+    .find((candidate) => candidate !== null);
+  if (!submit || submit.disabled || submit.getAttribute('aria-disabled') === 'true') {
+    return { submitted: false, code: 'SUBMIT_DISABLED' };
+  }
+  submit.click();
+  return { submitted: true, textHash };
 }
 
 export type StructuredResponseErrorCode =

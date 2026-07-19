@@ -2,6 +2,28 @@
 
 Entries are append-only after publication.
 
+## 2026-07-19 12:59 +07:00 - P18-CHATGPT-001 (in progress)
+
+### Goal
+
+Add an explicitly approved ChatGPT submit operation without weakening the existing no-submit insertion boundary.
+
+### Changes
+
+Added the versioned `composer.submit` contract/result, semantic submit selectors and exact page/destination/hash checks, draft and streaming pre-insert guards, assisted-service submit orchestration, and a content-script effect reservation that blocks concurrent duplicate clicks while retaining confirmation-required ambiguity.
+
+### Verification
+
+The initial full `pnpm.cmd run verify` passed migration parity, formatting, lint, strict type-check, 174 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, and all workspace builds. The regression set then passed 46 tests, including the newly reproduced concurrent submit race and deterministic rejection retry behavior.
+
+### Security and limitations
+
+The operation still requires the existing main-process approval path; a successful DOM click is not treated as acknowledgement. No live ChatGPT submit was performed, no browser credentials/profile data was read, and no ambiguous result is retried automatically.
+
+### Next action
+
+Run the checkpoint publication procedure, then begin the repository-bound Codex workspace-write profile as a separate atomic checkpoint.
+
 ## 2026-07-18 14:33 +07:00 - P0-CONT-001
 
 ### Goal

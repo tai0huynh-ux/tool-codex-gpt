@@ -6,7 +6,9 @@ import {
   inspectChatGptPage,
   insertComposerText,
   isStreaming,
+  submitComposer,
 } from './page-actions';
+import type { ChatGptDestination } from '@codex-context-bridge/contracts';
 
 interface CaptureRequest {
   type: 'capture-conversation';
@@ -20,6 +22,12 @@ interface InsertRequest {
 interface InspectRequest {
   type: 'inspect-page';
 }
+interface SubmitRequest {
+  type: 'submit-composer';
+  effectId: string;
+  expectedTextHash: string;
+  destination: ChatGptDestination;
+}
 interface ClearRequest {
   type: 'clear-composer-text';
   effectId: string;
@@ -32,7 +40,33 @@ interface StatusRequest {
   expectedProjectId?: string;
 }
 type ExtensionRequest =
-  CaptureRequest | InsertRequest | InspectRequest | ClearRequest | StatusRequest;
+  CaptureRequest | InsertRequest | SubmitRequest | InspectRequest | ClearRequest | StatusRequest;
+
+type SubmitResult =
+  | Awaited<ReturnType<typeof submitComposer>>
+  | {
+      submitted: false;
+      code: 'DUPLICATE_EFFECT';
+    };
+
+export function createSubmitEffectGuard(): (
+  effectId: string,
+  submit: () => Promise<Awaited<ReturnType<typeof submitComposer>>>,
+) => Promise<SubmitResult> {
+  const reservedEffects = new Set<string>();
+  return async (effectId, submit) => {
+    if (reservedEffects.has(effectId)) {
+      return { submitted: false, code: 'DUPLICATE_EFFECT' };
+    }
+    reservedEffects.add(effectId);
+    // A thrown submit remains reserved because the click outcome is ambiguous.
+    const result = await submit();
+    if (!result.submitted) reservedEffects.delete(effectId);
+    return result;
+  };
+}
+
+const submitEffect = createSubmitEffectGuard();
 
 if (location.origin === 'https://chatgpt.com' && typeof chrome !== 'undefined') {
   void chrome.runtime.sendMessage({ type: 'bridge-content-ready' }).catch(() => undefined);
@@ -58,6 +92,16 @@ if (location.origin === 'https://chatgpt.com' && typeof chrome !== 'undefined') 
 
     if (request.type === 'inspect-page') {
       void inspectChatGptPage(document, location).then(sendResponse);
+      return true;
+    }
+
+    if (request.type === 'submit-composer') {
+      void (async () => {
+        const result = await submitEffect(request.effectId, () =>
+          submitComposer(document, location, request.expectedTextHash, request.destination),
+        );
+        sendResponse(result);
+      })();
       return true;
     }
 

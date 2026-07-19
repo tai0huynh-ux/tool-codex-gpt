@@ -92,6 +92,29 @@ describe('extension operation executor', () => {
     expect(sendMessage).toHaveBeenCalledWith(30, expect.any(Object));
   });
 
+  it('routes an approved submit to the same exact destination identity', async () => {
+    const sendMessage = vi.fn(() => Promise.resolve({ submitted: true, textHash: 'b'.repeat(64) }));
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+    await expect(
+      executor.execute({
+        type: 'composer.submit',
+        effectId: 'effect-submit',
+        expectedTextHash: 'b'.repeat(64),
+        destination: { mode: 'existing', conversationId: 'target' },
+      }),
+    ).resolves.toEqual({
+      type: 'composer.submit.result',
+      submitted: true,
+      textHash: 'b'.repeat(64),
+    });
+    expect(sendMessage).toHaveBeenCalledWith(20, {
+      type: 'submit-composer',
+      effectId: 'effect-submit',
+      expectedTextHash: 'b'.repeat(64),
+      destination: { mode: 'existing', conversationId: 'target' },
+    });
+  });
+
   it('fails closed when the requested conversation is not open', async () => {
     const executor = createExtensionOperationExecutor(tabs());
     await expect(

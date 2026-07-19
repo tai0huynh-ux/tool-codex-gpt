@@ -180,6 +180,14 @@ export const localTransportOperationSchema = z.discriminatedUnion('type', [
       destination: chatGptDestinationSchema,
     })
     .strict(),
+  z
+    .object({
+      type: z.literal('composer.submit'),
+      effectId: z.string().min(1).max(256),
+      expectedTextHash: z.string().regex(/^[a-f0-9]{64}$/),
+      destination: chatGptDestinationSchema,
+    })
+    .strict(),
   z.object({ type: z.literal('page.inspect') }).strict(),
   z
     .object({
@@ -279,6 +287,35 @@ export const localTransportResultSchema = z.discriminatedUnion('type', [
         .optional(),
     })
     .strict(),
+  z
+    .object({
+      type: z.literal('composer.submit.result'),
+      submitted: z.boolean(),
+      textHash: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
+      code: z
+        .enum([
+          'COMPOSER_UNAVAILABLE',
+          'COMPOSER_READ_ONLY',
+          'DESTINATION_MISMATCH',
+          'STREAMING',
+          'HASH_MISMATCH',
+          'SUBMIT_DISABLED',
+          'DUPLICATE_EFFECT',
+        ])
+        .optional(),
+    })
+    .strict()
+    .superRefine((value, context) => {
+      if (value.submitted && !value.textHash) {
+        context.addIssue({ code: 'custom', message: 'Submitted composer requires textHash.' });
+      }
+      if (!value.submitted && !value.code) {
+        context.addIssue({ code: 'custom', message: 'Rejected composer submit requires code.' });
+      }
+    }),
   z
     .object({
       type: z.literal('page.inspect.result'),

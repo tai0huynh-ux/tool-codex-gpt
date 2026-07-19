@@ -55,5 +55,7 @@
 | Native host install     | relay, registry, restart        | `pnpm.cmd run smoke:installed-native-host:win`                                       | clean per-user Chrome/Edge/Chromium registration    | prior pass; clean install not rerun          | checkpoint         |
 | Native host relay       | non-destructive installed relay | `node scripts/smoke-native-host.mjs`                                                 | active per-user installation                        | pass three times                             | checkpoint         |
 | Installed ChatGPT       | live no-submit browser smoke    | `pnpm.cmd run smoke:installed-chatgpt:win`                                           | user-confirmed Edge extension and authenticated tab | prior pass; not rerun to protect session     | checkpoint         |
+| ChatGPT submit guard    | concurrent idempotency unit     | `pnpm.cmd run test`                                                                  | jsdom                                               | 2 tests pass                                 | P18-CHATGPT-001    |
+| ChatGPT submit boundary | destination/hash/state unit     | `pnpm.cmd run test`                                                                  | jsdom/local                                         | 44 tests pass                                | P18-CHATGPT-001    |
 
 Fixture and mock results never count as live integration evidence.

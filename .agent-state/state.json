@@ -4,13 +4,13 @@
   "branch": "main",
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
-  "currentPhase": "Internal Beta Ready",
-  "currentTaskId": "P17-BETA-002",
-  "status": "complete",
+  "currentPhase": "Live Vertical Slice In Progress",
+  "currentTaskId": "P18-CHATGPT-001",
+  "status": "in_progress",
   "lastCheckpoint": {
-    "id": "P17-BETA-002",
+    "id": "P18-CHATGPT-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-19T02:01:00.000Z"
+    "completedAt": "2026-07-19T12:59:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -59,16 +59,16 @@
     "Packaged live UI acceptance recorded 12 controls and 7 of 7 checks passed",
     "pnpm.cmd run verify passed with 169 Vitest tests, two workflow E2E, two Chromium E2E, and 15 workspace builds",
     "pnpm.cmd run test:internal-beta-uat passed 43 targeted tests and two Chromium flows",
-    "pnpm.cmd run package:win and pnpm.cmd run smoke:packaged:win passed after preload.cjs parity fix"
+    "pnpm.cmd run package:win and pnpm.cmd run smoke:packaged:win passed after preload.cjs parity fix",
+    "P18 ChatGPT submit targeted regression set passed 46 tests, including concurrent effect idempotency and deterministic rejection retry"
   ],
   "knownFailures": [],
   "activeBlockers": [],
   "nextActions": [
-    "Distribute the checksum-verified unsigned build to a small internal group.",
-    "Collect user feedback on installation, mapping, capture, recovery, and handoff usability.",
-    "Decide separately whether to code-sign the Windows build.",
-    "Decide separately whether to publish the extension or expand approval modes."
+    "Publish P18-CHATGPT-001 after the full verification gate and remote hash check.",
+    "Add the repository-bound workspace_write_no_network Codex profile with path and fingerprint tests.",
+    "Wire the typed desktop Live Project Pilot orchestration and keep live execution explicitly gated."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-19T02:01:00.000Z"
+  "updatedAt": "2026-07-19T12:59:00.000Z"
 }

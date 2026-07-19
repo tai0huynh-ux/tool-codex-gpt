@@ -2,15 +2,15 @@
 
 ## Current phase
 
-Internal Beta Ready. The accepted MVP is published, the internal-beta UAT and Windows artifact set pass, and team installation guidance is complete.
+Live Vertical Slice In Progress. The accepted MVP remains published; this checkpoint adds the explicitly approved ChatGPT submit boundary before the desktop pilot orchestration is wired.
 
 ## Current objective
 
-Distribute the verified unsigned build to a small internal group, collect feedback, and keep all sends explicitly reviewed and approved. Desktop UI acceptance is complete for the available non-destructive controls.
+Complete the live ChatGPT -> Codex project pilot without weakening the read-only default or claiming fixture evidence as live evidence. Every external send remains explicitly reviewed and approved.
 
 ## Last completed checkpoint
 
-P17-BETA-002 - Complete live desktop UI acceptance and packaged parity. Resolve with `git log -1 --grep "desktop UI acceptance"`.
+P18-CHATGPT-001 - Add explicitly approved ChatGPT submission with exact destination/hash checks and idempotent effect guarding. This checkpoint is being closed now; resolve with `git log -1 --grep "explicitly approved ChatGPT submission"`.
 
 ## Current verified capabilities
 
@@ -27,6 +27,8 @@ P17-BETA-002 - Complete live desktop UI acceptance and packaged parity. Resolve 
 - The production Codex adapter uses the SDK-bundled binary and a temporary bundled catalog, preserves external configuration, forces read-only/approval-never/network-disabled execution, owns structured JSONL lifecycle and exact cancellation, and cleans temporary runtime state.
 - Long conversation capture accumulates virtualized windows, preserves duplicate messages with stable IDs, updates streaming text, and supports abort.
 - Composer insertion uses native editing behavior for controlled textareas and contenteditable fields, honors cancellation and read-only state, and never submits automatically.
+- Explicit ChatGPT submission is a separate approved operation: it revalidates exact destination, composer hash, streaming/read-only/disabled state, uses a semantic control, and preserves confirmation-required ambiguity.
+- Content-script submit effects reserve their ID before asynchronous checks, preventing concurrent duplicate clicks while allowing deterministic pre-click rejection retries.
 - Structured ChatGPT responses use strict paired markers, a 100,000-character default bound, schema validation, handoff/correlation/project checks, and duplicate rejection.
 - ADR-0001 selects Native Messaging without opening a LAN listener or silently activating extension permissions.
 - The extension manifest explicitly includes the user-authorized `nativeMessaging` permission and activates the fixed-host service worker without adding `<all_urls>`.
@@ -105,13 +107,13 @@ P17-BETA-002 - Complete live desktop UI acceptance and packaged parity. Resolve 
 
 ## Next three actions
 
-1. Distribute the checksum-verified unsigned build to a small internal group.
-2. Collect usability, recovery, and compatibility feedback without enabling automatic submission.
-3. Decide separately whether to code-sign, publish the extension, or expand approval modes.
+1. Publish P18-CHATGPT-001 after the full verification gate and remote hash check.
+2. Add the repository-bound `workspace_write_no_network` Codex profile with path/fingerprint tests.
+3. Wire the typed desktop Live Project Pilot orchestration and keep live execution blocked unless authenticated destinations are safely available.
 
 ## Latest verification
 
-`pnpm.cmd run verify` passed locally on 2026-07-19 with migration parity, formatting, lint, strict type-check, 169 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. `pnpm.cmd run test:internal-beta-uat` passed 43 targeted tests plus two Chromium flows. Windows package and packaged smoke passed after the preload parity fix. The isolated packaged UI acceptance recorded 12 controls and 7/7 passing checks. The previously accepted live Edge smoke was not rerun to avoid disrupting the active user session; clean-install smoke was also not rerun because the app is installed and active.
+`pnpm.cmd run verify` passed locally on 2026-07-19 with migration parity, formatting, lint, strict type-check, 174 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all 15 buildable workspace projects. The targeted P18 regression set passed 46 tests, including concurrent ChatGPT submit idempotency. The previously accepted live Edge smoke was not rerun to avoid disrupting the active user session; this checkpoint is not a live ChatGPT submit claim.
 
 ## Latest commit
 
@@ -123,4 +125,4 @@ Resolve the published hash with `git rev-parse origin/main`; publication require
 
 ## Last updated
 
-2026-07-19 02:01 +07:00.
+2026-07-19 12:59 +07:00.

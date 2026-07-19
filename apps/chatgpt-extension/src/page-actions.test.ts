@@ -8,6 +8,7 @@ import {
   inspectChatGptPage,
   insertComposerText,
   parseStructuredResponse,
+  submitComposer,
 } from './page-actions';
 
 const response = {
@@ -95,6 +96,70 @@ describe('composer insertion', () => {
     expect(document.querySelector<HTMLTextAreaElement>('textarea')?.value).toBe(text);
     expect(await clearComposerText(document, textHash)).toBe(true);
     expect(document.querySelector<HTMLTextAreaElement>('textarea')?.value).toBe('');
+  });
+
+  it('submits through an enabled semantic control only after exact safety checks', async () => {
+    document.body.innerHTML = `
+      <form>
+        <textarea id="prompt-textarea"></textarea>
+        <button type="submit" data-testid="send-button">Send</button>
+      </form>`;
+    let submitted = 0;
+    document.querySelector('form')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      submitted += 1;
+    });
+    const text = 'Approved exact payload';
+    expect(insertComposerText(document, text)).toBe(true);
+    const textHash = await hashComposerText(text);
+    await expect(
+      submitComposer(
+        document,
+        new URL('https://chatgpt.com/c/conversation-1') as unknown as Location,
+        textHash,
+        { mode: 'existing', conversationId: 'conversation-1' },
+      ),
+    ).resolves.toEqual({ submitted: true, textHash });
+    expect(submitted).toBe(1);
+
+    await expect(
+      submitComposer(
+        document,
+        new URL('https://chatgpt.com/c/conversation-2') as unknown as Location,
+        textHash,
+        { mode: 'existing', conversationId: 'conversation-1' },
+      ),
+    ).resolves.toEqual({ submitted: false, code: 'DESTINATION_MISMATCH' });
+    await expect(
+      submitComposer(
+        document,
+        new URL('https://chatgpt.com/c/conversation-1') as unknown as Location,
+        'f'.repeat(64),
+        { mode: 'existing', conversationId: 'conversation-1' },
+      ),
+    ).resolves.toEqual({ submitted: false, code: 'HASH_MISMATCH' });
+    expect(submitted).toBe(1);
+  });
+
+  it('blocks submit while streaming or when the semantic control is disabled', async () => {
+    document.body.innerHTML = `
+      <textarea id="prompt-textarea">Approved exact payload</textarea>
+      <button data-testid="send-button" disabled>Send</button>`;
+    const textHash = await hashComposerText('Approved exact payload');
+    await expect(
+      submitComposer(document, new URL('https://chatgpt.com/') as unknown as Location, textHash, {
+        mode: 'new',
+      }),
+    ).resolves.toEqual({ submitted: false, code: 'SUBMIT_DISABLED' });
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      '<button data-testid="stop-button">Stop</button>',
+    );
+    await expect(
+      submitComposer(document, new URL('https://chatgpt.com/') as unknown as Location, textHash, {
+        mode: 'new',
+      }),
+    ).resolves.toEqual({ submitted: false, code: 'STREAMING' });
   });
 });
 

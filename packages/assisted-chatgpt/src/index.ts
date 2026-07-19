@@ -30,6 +30,11 @@ export interface AssistedChatGptAdapter {
     payloadHash: string;
     destination: ChatGptDestination;
   }): Promise<{ inserted: boolean; textHash?: string }>;
+  submit?(input: {
+    effectId: string;
+    expectedTextHash: string;
+    destination: ChatGptDestination;
+  }): Promise<{ submitted: boolean; textHash?: string; code?: string }>;
   copyToClipboard?(text: string): Promise<void>;
   clearComposer?(input: { effectId: string; expectedTextHash: string }): Promise<boolean>;
   isStreaming(): Promise<boolean>;
@@ -47,6 +52,11 @@ export type AssistedConfirmationResult =
   | { status: 'message_not_found'; effect: WorkflowEffect }
   | { status: 'confirmation_required'; effect: WorkflowEffect }
   | { status: 'acknowledged'; effect: WorkflowEffect };
+
+export type AssistedSubmitResult =
+  | { status: 'submitted'; effect: WorkflowEffect }
+  | { status: 'confirmation_required'; effect: WorkflowEffect }
+  | { status: 'failed'; effect: WorkflowEffect; code: string };
 
 function sha256(value: string): string {
   return createHash('sha256').update(value, 'utf8').digest('hex');
@@ -249,6 +259,12 @@ export class AssistedChatGptService {
     if (method === 'composer' && (!inspection.composer.available || inspection.composer.readOnly)) {
       throw new Error('CHATGPT_COMPOSER_UNAVAILABLE');
     }
+    if (method === 'composer' && inspection.composer.textHash) {
+      throw new Error('CHATGPT_DRAFT_CONFLICT');
+    }
+    if (method === 'composer' && (await adapter.isStreaming())) {
+      throw new Error('CHATGPT_STREAMING_CONFLICT');
+    }
 
     const dispatching = this.workflows.beginDispatch(effect.id);
     try {
@@ -280,6 +296,36 @@ export class AssistedChatGptService {
       throw new Error('CHATGPT_DISPATCH_CONFIRMATION_REQUIRED', { cause: error });
     }
     return { status: 'awaiting_user_send', effect: dispatching, method };
+  }
+
+  public async submitApproved(
+    effectId: string,
+    destination: ChatGptDestination,
+    adapter: AssistedChatGptAdapter,
+  ): Promise<AssistedSubmitResult> {
+    const effect = this.workflows.getEffect(effectId);
+    if (!effect) throw new Error('EFFECT_NOT_FOUND');
+    if (effect.status === 'acknowledged') return { status: 'submitted', effect };
+    if (effect.status !== 'dispatching') throw new Error('CHATGPT_SUBMIT_STATE_INVALID');
+    this.assertEffectDestination(effect, destination);
+    if (!adapter.submit) throw new Error('CHATGPT_SUBMIT_UNAVAILABLE');
+    try {
+      const result = await adapter.submit({
+        effectId: effect.id,
+        expectedTextHash: effect.payloadHash,
+        destination,
+      });
+      if (result.submitted && result.textHash === effect.payloadHash) {
+        return { status: 'submitted', effect };
+      }
+      if (result.code === 'DUPLICATE_EFFECT') {
+        return { status: 'confirmation_required', effect };
+      }
+      const code = result.code ?? 'CHATGPT_SUBMIT_REJECTED';
+      return { status: 'failed', effect: this.workflows.failEffect(effect.id, code), code };
+    } catch (error) {
+      throw new Error('CHATGPT_SUBMIT_CONFIRMATION_REQUIRED', { cause: error });
+    }
   }
 
   public async confirmOnce(
