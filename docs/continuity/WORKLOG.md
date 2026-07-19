@@ -1323,3 +1323,25 @@ Fixture evidence is explicitly not live evidence. No browser credentials, cookie
 ### Next action
 
 Run packaged pilot UI/restart acceptance, then determine whether a safe authenticated live destination is available.
+
+## 2026-07-19 14:36 +07:00 - P18-PILOT-001 packaged restart checkpoint
+
+### Goal
+
+Prove that the packaged Codex runtime starts from its Electron ASAR layout and that a persisted terminal pilot remains readable after the desktop process restarts.
+
+### Changes
+
+Pinned the Codex runtime and Windows platform package in the desktop application, translated dependency executable paths from `app.asar` to `app.asar.unpacked`, rebuilt workspace dependencies before Windows packaging, awaited Codex disposal before closing SQLite, and stopped terminal pilot refresh from querying process-local run handles. Added a packaged restart acceptance script and regression coverage for each boundary.
+
+### Verification
+
+Targeted regression tests passed 19 cases. `pnpm.cmd run verify` passed migration parity, formatting, lint, strict type-check, 195 Vitest tests, two recoverable workflow fixture E2E tests, two Chromium fixture E2E tests, and all workspace builds. Internal-beta UAT passed 46 targeted tests plus two Chromium flows, and the live read-only Codex spike passed start, resume, cancellation, sandbox, and failure mapping. `pnpm.cmd run package:win` and `pnpm.cmd run smoke:packaged:win` passed. `pnpm.cmd run test:pilot-packaged-restart` launched the packaged executable twice, restored a fixture-only `codex_completed` pilot, displayed its persisted final response, and recorded zero renderer runtime errors under `artifacts/pilot-restart-acceptance/2026-07-19T07-34-45-337Z/`.
+
+### Security and limitations
+
+The acceptance used temporary app data and a temporary Git repository, did not connect to ChatGPT, did not run writable production Codex, and did not touch browser credentials, profiles, cookies, tokens, history, user repositories, or the active installed application. The evidence remains explicitly fixture-only.
+
+### Next action
+
+Confirm whether a safe user-opened authenticated ChatGPT destination with an empty composer is available. If it is, run one bounded temporary-repository live pilot with explicit approvals; otherwise record the external blocker without substituting fixture evidence.

@@ -233,13 +233,16 @@ export function findBundledCodexBinary(): string {
   const codexRequire = createRequire(codexPackage);
   const target = platformTarget();
   const platformPackage = codexRequire.resolve(`${target.packageName}/package.json`);
-  return path.join(
-    path.dirname(platformPackage),
-    'vendor',
-    target.triple,
-    'bin',
-    target.binaryName,
+  return resolvePackagedExecutablePath(
+    path.join(path.dirname(platformPackage), 'vendor', target.triple, 'bin', target.binaryName),
   );
+}
+
+export function resolvePackagedExecutablePath(candidate: string): string {
+  const asarSegment = `${path.sep}app.asar${path.sep}`;
+  return candidate.includes(asarSegment)
+    ? candidate.replace(asarSegment, `${path.sep}app.asar.unpacked${path.sep}`)
+    : candidate;
 }
 
 export async function createIsolatedCodexRuntime(): Promise<SdkRuntime> {

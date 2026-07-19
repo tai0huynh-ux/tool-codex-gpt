@@ -9,6 +9,9 @@ New-Item -ItemType Directory -Force -Path $extensionRoot | Out-Null
 
 Push-Location $repositoryRoot
 try {
+  # Electron Builder packages workspace dist outputs, so refresh every dependency first.
+  & pnpm.cmd run build
+  if ($LASTEXITCODE -ne 0) { throw 'Workspace build failed before desktop packaging.' }
   & pnpm.cmd --filter '@codex-context-bridge/desktop' run dist:win
   if ($LASTEXITCODE -ne 0) { throw 'Desktop packaging failed.' }
   $unpackedRoot = Join-Path $artifactRoot 'desktop/win-unpacked'

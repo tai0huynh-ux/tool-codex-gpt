@@ -56,11 +56,11 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 190 or more Vitest tests after P18, two Chromium fixture E2E tests, the 43-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires package, packaged smoke, native relay, unsigned status, and generated staging checksums.
+Expected known-good baseline: formatting, lint, strict type-check, 195 or more Vitest tests after the packaged restart checkpoint, two Chromium fixture E2E tests, the 46-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires package, packaged smoke, native relay, unsigned status, and generated staging checksums.
 
 ## Exact next task
 
-P18-CODEX-001 is published at `c3ec3a7`; pilot implementation and fixture checkpoints are published at `13ddbd4` and `960e566`. Next add packaged restart evidence. Do not claim a live ChatGPT submit, structured response, writable Codex run, or generated website from fixtures or prior no-submit/read-only smoke. The completed desktop UI acceptance evidence is under `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`.
+P18-CODEX-001 is published at `c3ec3a7`; pilot implementation and fixture checkpoints are published at `13ddbd4` and `960e566`. Packaged restart acceptance now passes against isolated app data; next attempt one bounded authenticated live pilot only if a safe user-opened ChatGPT destination is available. Do not claim a live ChatGPT submit, structured response, writable Codex run, or generated website from fixture-only packaged restart evidence. The new restart evidence is under `artifacts/pilot-restart-acceptance/2026-07-19T07-34-45-337Z/`.
 
 ## Expected files to modify
 
@@ -81,6 +81,7 @@ pnpm.cmd run build
 pnpm.cmd run test:codex-spike
 pnpm.cmd run package:win
 pnpm.cmd run smoke:packaged:win
+pnpm.cmd run test:pilot-packaged-restart
 pnpm.cmd run smoke:installed-native-host:win
 pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=pass --native-relay=pass
 ```
@@ -103,6 +104,8 @@ pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=p
 - Composer insertion is not a send acknowledgement. Keep `sent: false` until rendered capture proves the approved user payload was submitted and streaming completed.
 - ChatGPT submission is a distinct approved effect. Reserve its effect ID before asynchronous checks; retain the reservation on ambiguous errors and release it only for deterministic pre-click rejection.
 - `workspace_write_no_network` is not a global adapter mode: bind it into the approval destination, require the registry validator, canonical non-symlink root, exact project/fingerprint, and pass no additional writable roots.
+- Packaged native executables resolved through dependencies may point inside `app.asar`; production execution must translate them to the matching `app.asar.unpacked` path and packaging tests must prove the pinned platform package is present.
+- Adapter run handles are process-local. Persisted terminal pilot views must restore from SQLite after restart instead of querying a newly constructed adapter for an old run ID.
 - Keep mock evidence labeled fixture-only; rerun the separate live Codex spike before claiming production acceptance in a new environment.
 
 ## Blockers and safe alternatives

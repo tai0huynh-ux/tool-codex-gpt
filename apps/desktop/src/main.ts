@@ -179,10 +179,22 @@ async function startDesktop(): Promise<void> {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
-  app.on('before-quit', () => {
-    void codex.dispose();
-    projectDatabase?.close();
-    projectDatabase = undefined;
+  let shutdownStarted = false;
+  app.on('before-quit', (event) => {
+    if (shutdownStarted) return;
+    event.preventDefault();
+    shutdownStarted = true;
+    void (async () => {
+      try {
+        await codex.dispose();
+      } catch (error) {
+        console.error('CODEX_DISPOSE_FAILED', error);
+      } finally {
+        projectDatabase?.close();
+        projectDatabase = undefined;
+        app.quit();
+      }
+    })();
   });
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();

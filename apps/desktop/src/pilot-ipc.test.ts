@@ -285,4 +285,59 @@ describe('pilot desktop persistence', () => {
     expect(JSON.stringify(refreshed)).not.toContain('approvalToken');
     database.close();
   });
+
+  it('restores terminal pilots without querying a reopened Codex adapter', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-19T08:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, {
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const firstCodex = new FixtureCodexAdapter();
+    const firstService = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge,
+      codex: firstCodex,
+      router: new ResponseRouter(database, workflows, projects, firstCodex),
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const created = await firstService.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Create a static site.',
+      destination: { mode: 'new' },
+    });
+    database.prepare('UPDATE settings SET value_json = ? WHERE key = ?').run(
+      JSON.stringify({
+        ...created,
+        status: 'codex_completed',
+        codexRunId: 'reopened-run-no-longer-available',
+        finalResponse: 'Created index.html and styles.css.',
+      }),
+      `live-project-pilot:${created.id}`,
+    );
+
+    const reopenedCodex = new FixtureCodexAdapter();
+    reopenedCodex.getRun = () => Promise.reject(new Error('CODEX_RUN_NOT_FOUND'));
+    const restored = await createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge,
+      codex: reopenedCodex,
+      router: new ResponseRouter(database, workflows, projects, reopenedCodex),
+    }).list('project-1');
+
+    expect(restored).toMatchObject([
+      {
+        id: created.id,
+        status: 'codex_completed',
+        finalResponse: 'Created index.html and styles.css.',
+      },
+    ]);
+    database.close();
+  });
 });

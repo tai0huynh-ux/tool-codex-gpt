@@ -20,6 +20,8 @@
     "@codex-context-bridge/project-registry": "workspace:*",
     "@codex-context-bridge/response-router": "workspace:*",
     "@codex-context-bridge/workflow-engine": "workspace:*",
+    "@openai/codex": "0.144.5",
+    "@openai/codex-win32-x64": "npm:@openai/codex@0.144.5-win32-x64",
     "@vitejs/plugin-react": "^5.0.0",
     "better-sqlite3": "12.11.1",
     "bindings": "1.5.0",

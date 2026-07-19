@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { CodexRun, CodexRunEvent } from './index';
-import { SdkCodexAdapter } from './sdk';
+import { resolvePackagedExecutablePath, SdkCodexAdapter } from './sdk';
 
 interface FakeThread {
   runStreamed(
@@ -50,6 +50,26 @@ function startInput() {
 }
 
 describe('SdkCodexAdapter', () => {
+  it('resolves native executables from Electron asar unpacked storage', () => {
+    const packaged = path.join(
+      'C:',
+      'app',
+      'resources',
+      'app.asar',
+      'node_modules',
+      '@openai',
+      'codex-win32-x64',
+      'vendor',
+      'bin',
+      'codex.exe',
+    );
+
+    expect(resolvePackagedExecutablePath(packaged)).toBe(
+      packaged.replace(`${path.sep}app.asar${path.sep}`, `${path.sep}app.asar.unpacked${path.sep}`),
+    );
+    expect(resolvePackagedExecutablePath('C:\\local\\codex.exe')).toBe('C:\\local\\codex.exe');
+  });
+
   it('requires a validator and selects workspace-write with network disabled only for the explicit profile', async () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'codex-workspace-profile-'));
     mkdirSync(path.join(root, 'nested'));

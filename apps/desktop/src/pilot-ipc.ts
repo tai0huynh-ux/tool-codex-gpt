@@ -141,6 +141,8 @@ export function createPilotDesktopService(input: {
     const workflow = input.workflows.getRun(view.workflowRunId);
     if (!workflow) throw new Error('PILOT_STATE_INVALID');
     if (!view.codexRunId) return view;
+    // Terminal persisted pilots are self-contained; a fresh adapter may not retain old run handles.
+    if (view.status === 'codex_completed' || view.status === 'failed') return view;
     const run = await input.codex.getRun(view.codexRunId);
     if (run.status === 'completed') {
       return Promise.resolve(
