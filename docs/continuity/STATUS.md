@@ -10,7 +10,7 @@ Complete the live ChatGPT -> Codex project pilot without weakening the read-only
 
 ## Last completed checkpoint
 
-P18-CHATGPT-001 - Add explicitly approved ChatGPT submission with exact destination/hash checks and idempotent effect guarding. This checkpoint is being closed now; resolve with `git log -1 --grep "explicitly approved ChatGPT submission"`.
+P18-CHATGPT-001 - Add explicitly approved ChatGPT submission with exact destination/hash checks and idempotent effect guarding. Published as `c7c7b9d`; resolve with `git log -1 --grep "explicitly approved ChatGPT submission"`.
 
 ## Current verified capabilities
 
@@ -29,6 +29,7 @@ P18-CHATGPT-001 - Add explicitly approved ChatGPT submission with exact destinat
 - Composer insertion uses native editing behavior for controlled textareas and contenteditable fields, honors cancellation and read-only state, and never submits automatically.
 - Explicit ChatGPT submission is a separate approved operation: it revalidates exact destination, composer hash, streaming/read-only/disabled state, uses a semantic control, and preserves confirmation-required ambiguity.
 - Content-script submit effects reserve their ID before asynchronous checks, preventing concurrent duplicate clicks while allowing deterministic pre-click rejection retries.
+- Codex execution profiles bind to the approval destination: `read_only` is the default, while `workspace_write_no_network` requires exact registry validation and maps only to workspace-write with network disabled.
 - Structured ChatGPT responses use strict paired markers, a 100,000-character default bound, schema validation, handoff/correlation/project checks, and duplicate rejection.
 - ADR-0001 selects Native Messaging without opening a LAN listener or silently activating extension permissions.
 - The extension manifest explicitly includes the user-authorized `nativeMessaging` permission and activates the fixed-host service worker without adding `<all_urls>`.
@@ -107,9 +108,9 @@ P18-CHATGPT-001 - Add explicitly approved ChatGPT submission with exact destinat
 
 ## Next three actions
 
-1. Publish P18-CHATGPT-001 after the full verification gate and remote hash check.
-2. Add the repository-bound `workspace_write_no_network` Codex profile with path/fingerprint tests.
-3. Wire the typed desktop Live Project Pilot orchestration and keep live execution blocked unless authenticated destinations are safely available.
+1. Publish P18-CODEX-001 after the full verification gate and remote hash check.
+2. Wire the typed desktop Live Project Pilot orchestration and keep live execution explicitly gated.
+3. Add website verification, preview, and restart-recovery evidence for the pilot.
 
 ## Latest verification
 

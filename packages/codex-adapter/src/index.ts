@@ -1,9 +1,12 @@
 import { randomUUID } from 'node:crypto';
 
+export type CodexExecutionProfile = 'read_only' | 'workspace_write_no_network';
+
 export interface StartThreadInput {
   projectId: string;
   repositoryFingerprint: string;
   workingDirectory: string;
+  executionProfile?: CodexExecutionProfile;
 }
 
 export interface CodexThread extends StartThreadInput {

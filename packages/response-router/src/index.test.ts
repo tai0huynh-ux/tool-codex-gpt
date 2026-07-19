@@ -101,16 +101,18 @@ function capture(router: ResponseRouter) {
 function prepared(
   router: ResponseRouter,
   destination: CodexDestination = { mode: 'new-thread', repositoryId: 'repository-1' },
+  executionProfile: 'read_only' | 'workspace_write_no_network' = 'read_only',
 ) {
   const receipt = capture(router);
   const preview = router.createPreview(receipt.receiptId, destination);
-  const approval = router.approve(preview, 60_000);
+  const approval = router.approve(preview, 60_000, executionProfile);
   const effect = router.prepare(
     preview,
     { id: approval.approval.id, token: approval.token },
     'codex-route-key-1',
+    executionProfile,
   ).effect;
-  return { effect, preview, receipt };
+  return { effect, preview, receipt, executionProfile };
 }
 
 describe('response capture and preview', () => {
@@ -227,6 +229,22 @@ describe('Codex routing', () => {
       withProvider.router.dispatch(route.preview, route.effect.id),
     ).resolves.toMatchObject({
       thread: { workingDirectory: 'C:/work/bridge-feature' },
+    });
+  });
+
+  it('binds workspace-write to the explicit approval and routes no-network execution only then', async () => {
+    const { router } = setup();
+    const route = prepared(router, undefined, 'workspace_write_no_network');
+
+    await expect(router.dispatch(route.preview, route.effect.id, 'read_only')).rejects.toThrow(
+      'CODEX_EXECUTION_PROFILE_MISMATCH',
+    );
+    await expect(
+      router.dispatch(route.preview, route.effect.id, 'workspace_write_no_network'),
+    ).resolves.toMatchObject({
+      thread: {
+        executionProfile: 'workspace_write_no_network',
+      },
     });
   });
 

@@ -57,5 +57,7 @@
 | Installed ChatGPT       | live no-submit browser smoke    | `pnpm.cmd run smoke:installed-chatgpt:win`                                           | user-confirmed Edge extension and authenticated tab | prior pass; not rerun to protect session     | checkpoint         |
 | ChatGPT submit guard    | concurrent idempotency unit     | `pnpm.cmd run test`                                                                  | jsdom                                               | 2 tests pass                                 | P18-CHATGPT-001    |
 | ChatGPT submit boundary | destination/hash/state unit     | `pnpm.cmd run test`                                                                  | jsdom/local                                         | 44 tests pass                                | P18-CHATGPT-001    |
+| Codex profile           | sandbox/validator/idempotency   | `pnpm.cmd run test`                                                                  | local/temp roots                                    | 15 adapter tests pass                        | P18-CODEX-001      |
+| Codex profile routing   | approval/profile binding        | `pnpm.cmd run test`                                                                  | SQLite and mock adapter                             | 1 profile route pass                         | P18-CODEX-001      |
 
 Fixture and mock results never count as live integration evidence.

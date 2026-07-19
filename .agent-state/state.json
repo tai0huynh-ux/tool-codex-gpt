@@ -5,7 +5,7 @@
   "headCommit": "HEAD",
   "lastPushedCommit": "origin/main",
   "currentPhase": "Live Vertical Slice In Progress",
-  "currentTaskId": "P18-CHATGPT-001",
+  "currentTaskId": "P18-CODEX-001",
   "status": "in_progress",
   "lastCheckpoint": {
     "id": "P18-CHATGPT-001",
@@ -60,14 +60,15 @@
     "pnpm.cmd run verify passed with 169 Vitest tests, two workflow E2E, two Chromium E2E, and 15 workspace builds",
     "pnpm.cmd run test:internal-beta-uat passed 43 targeted tests and two Chromium flows",
     "pnpm.cmd run package:win and pnpm.cmd run smoke:packaged:win passed after preload.cjs parity fix",
-    "P18 ChatGPT submit targeted regression set passed 46 tests, including concurrent effect idempotency and deterministic rejection retry"
+    "P18 ChatGPT submit targeted regression set passed 46 tests, including concurrent effect idempotency and deterministic rejection retry",
+    "P18 Codex profile targeted adapter and response-router tests passed 31 cases, including root/fingerprint/profile fail-closed checks"
   ],
   "knownFailures": [],
   "activeBlockers": [],
   "nextActions": [
-    "Publish P18-CHATGPT-001 after the full verification gate and remote hash check.",
-    "Add the repository-bound workspace_write_no_network Codex profile with path and fingerprint tests.",
-    "Wire the typed desktop Live Project Pilot orchestration and keep live execution explicitly gated."
+    "Publish P18-CODEX-001 after the full verification gate and remote hash check.",
+    "Wire the typed desktop Live Project Pilot orchestration and supply the registry validator only after approval.",
+    "Add website verification, preview, and restart-recovery evidence for the pilot."
   ],
   "workingTreeExpectedClean": true,
   "updatedAt": "2026-07-19T12:59:00.000Z"

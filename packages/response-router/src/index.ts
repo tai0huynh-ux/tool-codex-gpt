@@ -9,6 +9,7 @@ import {
 } from '@codex-context-bridge/contracts';
 import type {
   CodexAdapter,
+  CodexExecutionProfile,
   CodexRun,
   CodexRunEvent,
   CodexThread,
@@ -55,16 +56,27 @@ function sha256(value: string): string {
   return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
-function destinationBinding(destination: CodexDestination): { type: string; id: string } {
+function assertExecutionProfile(profile: unknown): CodexExecutionProfile {
+  if (profile !== 'read_only' && profile !== 'workspace_write_no_network') {
+    throw new Error('CODEX_EXECUTION_PROFILE_INVALID');
+  }
+  return profile;
+}
+
+function destinationBinding(
+  destination: CodexDestination,
+  profile: CodexExecutionProfile = 'read_only',
+): { type: string; id: string } {
+  const suffix = profile === 'workspace_write_no_network' ? `:${profile}` : '';
   switch (destination.mode) {
     case 'existing-thread':
-      return { type: 'codex_thread', id: destination.threadMappingId };
+      return { type: 'codex_thread', id: `${destination.threadMappingId}${suffix}` };
     case 'new-thread':
-      return { type: 'codex_repository', id: destination.repositoryId };
+      return { type: 'codex_repository', id: `${destination.repositoryId}${suffix}` };
     case 'new-worktree':
       return {
         type: 'codex_worktree',
-        id: `${destination.repositoryId}:${destination.worktreeName}`,
+        id: `${destination.repositoryId}:${destination.worktreeName}${suffix}`,
       };
   }
 }
@@ -182,9 +194,14 @@ export class ResponseRouter {
     });
   }
 
-  public approve(previewInput: CodexRoutePreview, ttlMs: number) {
+  public approve(
+    previewInput: CodexRoutePreview,
+    ttlMs: number,
+    executionProfile: CodexExecutionProfile = 'read_only',
+  ) {
     const preview = this.validatePreview(previewInput);
-    const destination = destinationBinding(preview.destination);
+    const profile = assertExecutionProfile(executionProfile);
+    const destination = destinationBinding(preview.destination, profile);
     return this.database.transaction(() => {
       this.workflows.transition(preview.workflowRunId, {
         toState: 'codex_prompt_approved',
@@ -206,9 +223,11 @@ export class ResponseRouter {
     previewInput: CodexRoutePreview,
     approval: { id: string; token: string },
     idempotencyKey: string,
+    executionProfile: CodexExecutionProfile = 'read_only',
   ) {
     const preview = this.validatePreview(previewInput);
-    const destination = destinationBinding(preview.destination);
+    const profile = assertExecutionProfile(executionProfile);
+    const destination = destinationBinding(preview.destination, profile);
     return this.workflows.prepareSend({
       workflowRunId: preview.workflowRunId,
       operation: 'send_codex',
@@ -225,17 +244,26 @@ export class ResponseRouter {
   public async dispatch(
     previewInput: CodexRoutePreview,
     effectId: string,
+    executionProfile: CodexExecutionProfile = 'read_only',
   ): Promise<{
     effect: WorkflowEffect;
     thread: CodexThread;
     run: CodexRun;
   }> {
     const preview = this.validatePreview(previewInput);
+    const profile = assertExecutionProfile(executionProfile);
     const effect = this.workflows.getEffect(effectId);
     if (!effect) throw new Error('EFFECT_NOT_FOUND');
     if (effect.status === 'dispatching') throw new Error('CODEX_DISPATCH_CONFIRMATION_REQUIRED');
     if (effect.status !== 'prepared') throw new Error('CODEX_EFFECT_NOT_DISPATCHABLE');
-    const target = await this.resolveTarget(preview.projectId, preview.destination);
+    const expectedDestination = destinationBinding(preview.destination, profile);
+    if (
+      effect.destinationType !== expectedDestination.type ||
+      effect.destinationId !== expectedDestination.id
+    ) {
+      throw new Error('CODEX_EXECUTION_PROFILE_MISMATCH');
+    }
+    const target = await this.resolveTarget(preview.projectId, preview.destination, profile);
     this.workflows.beginDispatch(effect.id);
     try {
       const thread = target.thread ?? (await this.codex.startThread(target.start));
@@ -347,9 +375,15 @@ export class ResponseRouter {
   private async resolveTarget(
     projectId: string,
     destination: CodexDestination,
+    executionProfile: CodexExecutionProfile,
   ): Promise<{
     thread?: CodexThread;
-    start: { projectId: string; repositoryFingerprint: string; workingDirectory: string };
+    start: {
+      projectId: string;
+      repositoryFingerprint: string;
+      workingDirectory: string;
+      executionProfile?: CodexExecutionProfile;
+    };
   }> {
     const repository = this.resolveDestination(projectId, destination);
     if (destination.mode === 'existing-thread') {
@@ -361,6 +395,9 @@ export class ResponseRouter {
         thread.repositoryFingerprint !== repository.fingerprint
       ) {
         throw new Error('CODEX_THREAD_IDENTITY_MISMATCH');
+      }
+      if ((thread.executionProfile ?? 'read_only') !== executionProfile) {
+        throw new Error('CODEX_THREAD_PROFILE_MISMATCH');
       }
       return { thread, start: thread };
     }
@@ -376,6 +413,7 @@ export class ResponseRouter {
           projectId,
           repositoryFingerprint: worktree.repositoryFingerprint,
           workingDirectory: worktree.workingDirectory,
+          ...(executionProfile !== 'read_only' ? { executionProfile } : {}),
         },
       };
     }
@@ -384,6 +422,7 @@ export class ResponseRouter {
         projectId,
         repositoryFingerprint: repository.fingerprint,
         workingDirectory: repository.worktreeRoot ?? repository.canonicalRoot,
+        ...(executionProfile !== 'read_only' ? { executionProfile } : {}),
       },
     };
   }

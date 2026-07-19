@@ -2,6 +2,28 @@
 
 Entries are append-only after publication.
 
+## 2026-07-19 13:12 +07:00 - P18-CODEX-001 (in progress)
+
+### Goal
+
+Add a repository-bound Codex execution profile that can write only the explicitly registered temporary repository while keeping read-only as the default.
+
+### Changes
+
+Added `CodexExecutionProfile`, canonical non-symlink root validation, a required registry validator for workspace-write, profile-specific SDK sandbox selection, and response-router approval/destination binding. Workspace-write preserves approval policy `never`, network disabled, web search disabled, and exact working-directory routing; existing threads must match the approved profile.
+
+### Verification
+
+Targeted adapter and response-router tests pass. Negative cases cover missing validator, non-directory root, project/fingerprint/root mismatch, and approved-profile mismatch.
+
+### Security and limitations
+
+No live writable Codex run was performed. The production main-process registry validator is still supplied by the upcoming desktop pilot orchestration; without it, workspace-write fails closed. Fixture results remain fixture-only.
+
+### Next action
+
+Run the full verification gate, publish the atomic Codex profile checkpoint, then wire the desktop pilot to supply the validator only after explicit approval.
+
 ## 2026-07-19 12:59 +07:00 - P18-CHATGPT-001 (in progress)
 
 ### Goal

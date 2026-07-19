@@ -46,8 +46,11 @@ hashes, capability tokens, file content, and audit detail payloads remain main-p
 ## Codex runtime
 
 The production Codex adapter launches only the SDK-bundled binary with structured JSONL stdio. Every turn is
-forced to the requested repository working directory with read-only sandboxing, approval policy `never`, and
-network/web search disabled. A bundled model catalog is copied to a mode-restricted temporary directory and
+forced to the requested repository working directory with approval policy `never` and network/web search
+disabled. The default `read_only` profile uses read-only sandboxing. The only write-capable profile,
+`workspace_write_no_network`, is accepted after an explicit approved effect, requires a registry validator to
+confirm the exact project, fingerprint, canonical non-symlink directory, and root, and passes only that root as
+the SDK working directory. A bundled model catalog is copied to a mode-restricted temporary directory and
 selected through a per-process override, so external Codex configuration and credentials are not edited.
 The adapter owns stdin/stdout/stderr, aborts the exact child process on cancellation, waits for child work
 before runtime cleanup, bounds captured stderr, maps failures to stable redacted codes, and removes temporary

@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Live Vertical Slice In Progress. The accepted MVP, internal-beta fixture UAT, Windows package, packaged smoke, and non-destructive installed relay verification pass; P18-CHATGPT-001 is the active checkpoint.
+Live Vertical Slice In Progress. The accepted MVP, internal-beta fixture UAT, Windows package, packaged smoke, and non-destructive installed relay verification pass; P18-CODEX-001 is the active checkpoint.
 
 ## Last known-good commit
 
@@ -60,7 +60,7 @@ Expected known-good baseline: formatting, lint, strict type-check, 174 or more V
 
 ## Exact next task
 
-Close and publish P18-CHATGPT-001 with the full verification gate, then implement P18-CODEX-001. Do not claim a live ChatGPT submit from the prior no-submit smoke or from fixtures. The completed desktop UI acceptance evidence is under `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`.
+P18-CHATGPT-001 is published at `c7c7b9d`. Close and publish P18-CODEX-001 with the full verification gate, then implement P18-PILOT-001. Do not claim a live ChatGPT submit or writable Codex run from prior no-submit/live-read-only smoke or fixtures. The completed desktop UI acceptance evidence is under `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`.
 
 ## Expected files to modify
 
@@ -102,6 +102,7 @@ pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=p
 - A `dispatching` effect is ambiguous after interruption; require confirmation or downstream idempotency evidence and never auto-resend it.
 - Composer insertion is not a send acknowledgement. Keep `sent: false` until rendered capture proves the approved user payload was submitted and streaming completed.
 - ChatGPT submission is a distinct approved effect. Reserve its effect ID before asynchronous checks; retain the reservation on ambiguous errors and release it only for deterministic pre-click rejection.
+- `workspace_write_no_network` is not a global adapter mode: bind it into the approval destination, require the registry validator, canonical non-symlink root, exact project/fingerprint, and pass no additional writable roots.
 - Keep mock evidence labeled fixture-only; rerun the separate live Codex spike before claiming production acceptance in a new environment.
 
 ## Blockers and safe alternatives

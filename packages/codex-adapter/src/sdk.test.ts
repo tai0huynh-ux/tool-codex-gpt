@@ -1,4 +1,7 @@
 import type { ThreadEvent, ThreadOptions, TurnOptions } from '@openai/codex-sdk';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { CodexRun, CodexRunEvent } from './index';
 import { SdkCodexAdapter } from './sdk';
@@ -47,6 +50,145 @@ function startInput() {
 }
 
 describe('SdkCodexAdapter', () => {
+  it('requires a validator and selects workspace-write with network disabled only for the explicit profile', async () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'codex-workspace-profile-'));
+    mkdirSync(path.join(root, 'nested'));
+    const options: ThreadOptions[] = [];
+    const validated: { projectId: string; fingerprint: string; root: string }[] = [];
+    const adapter = new SdkCodexAdapter({
+      createId: () => 'profile-run',
+      createRuntime: runtime({
+        startThread: (input) => {
+          options.push(input ?? {});
+          return eventThread([
+            { type: 'thread.started', thread_id: 'profile-thread' },
+            { type: 'turn.started' },
+            {
+              type: 'item.completed',
+              item: { id: 'profile-message', type: 'agent_message', text: 'profile result' },
+            },
+            {
+              type: 'turn.completed',
+              usage: {
+                input_tokens: 1,
+                cached_input_tokens: 0,
+                output_tokens: 1,
+                reasoning_output_tokens: 0,
+              },
+            },
+          ]);
+        },
+        resumeThread: () => eventThread([]),
+      }),
+      validateWorkspaceWrite: (input) => {
+        validated.push({
+          projectId: input.projectId,
+          fingerprint: input.repositoryFingerprint,
+          root: input.canonicalRoot,
+        });
+      },
+    });
+
+    try {
+      const thread = await adapter.startThread({
+        projectId: 'project-profile',
+        repositoryFingerprint: 'fingerprint-profile',
+        workingDirectory: root,
+        executionProfile: 'workspace_write_no_network',
+      });
+      await adapter.runTurn(thread.id, 'create the approved fixture');
+      expect(options[0]).toMatchObject({
+        approvalPolicy: 'never',
+        networkAccessEnabled: false,
+        sandboxMode: 'workspace-write',
+        webSearchMode: 'disabled',
+        workingDirectory: thread.workingDirectory,
+      });
+      expect(validated).toEqual([
+        {
+          projectId: 'project-profile',
+          fingerprint: 'fingerprint-profile',
+          root: thread.workingDirectory,
+        },
+      ]);
+    } finally {
+      await adapter.dispose();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('fails closed for workspace-write without registry validation or with a non-directory root', async () => {
+    const noValidator = new SdkCodexAdapter({
+      createRuntime: runtime({
+        startThread: () => eventThread([]),
+        resumeThread: () => eventThread([]),
+      }),
+    });
+    await expect(
+      noValidator.startThread({
+        ...startInput(),
+        executionProfile: 'workspace_write_no_network',
+      }),
+    ).rejects.toThrow('CODEX_WORKSPACE_WRITE_VALIDATION_REQUIRED');
+    await noValidator.dispose();
+
+    const fileRoot = path.join(os.tmpdir(), `codex-workspace-file-${String(Date.now())}.txt`);
+    writeFileSync(fileRoot, 'not a directory');
+    const adapter = new SdkCodexAdapter({
+      createRuntime: runtime({
+        startThread: () => eventThread([]),
+        resumeThread: () => eventThread([]),
+      }),
+      validateWorkspaceWrite: () => undefined,
+    });
+    try {
+      await expect(
+        adapter.startThread({
+          ...startInput(),
+          workingDirectory: fileRoot,
+          executionProfile: 'workspace_write_no_network',
+        }),
+      ).rejects.toThrow('CODEX_WORKSPACE_ROOT_NOT_DIRECTORY');
+    } finally {
+      await adapter.dispose();
+      rmSync(fileRoot, { force: true });
+    }
+  });
+
+  it('blocks workspace-write when the canonical root, project, or fingerprint escapes registration', async () => {
+    const registeredRoot = mkdtempSync(path.join(os.tmpdir(), 'codex-registered-root-'));
+    const outsideRoot = mkdtempSync(path.join(os.tmpdir(), 'codex-outside-root-'));
+    const adapter = new SdkCodexAdapter({
+      createRuntime: runtime({
+        startThread: () => eventThread([]),
+        resumeThread: () => eventThread([]),
+      }),
+      validateWorkspaceWrite: (input) => {
+        if (
+          input.canonicalRoot !== path.resolve(registeredRoot) ||
+          input.projectId !== 'registered-project' ||
+          input.repositoryFingerprint !== 'registered-fingerprint'
+        ) {
+          throw new Error('CODEX_WORKSPACE_IDENTITY_MISMATCH');
+        }
+      },
+    });
+    try {
+      await expect(
+        adapter.startThread({
+          projectId: 'registered-project',
+          repositoryFingerprint: 'registered-fingerprint',
+          workingDirectory: outsideRoot,
+          executionProfile: 'workspace_write_no_network',
+        }),
+      ).rejects.toThrow('CODEX_WORKSPACE_IDENTITY_MISMATCH');
+    } finally {
+      await adapter.dispose();
+      rmSync(registeredRoot, { recursive: true, force: true });
+      rmSync(outsideRoot, { recursive: true, force: true });
+    }
+  });
+
   it('maps structured SDK events and replaces the provisional thread ID', async () => {
     const options: ThreadOptions[] = [];
     const adapter = new SdkCodexAdapter({

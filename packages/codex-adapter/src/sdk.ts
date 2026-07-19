@@ -1,6 +1,6 @@
 import { execFile, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
@@ -14,11 +14,34 @@ import type {
   CodexRunError,
   CodexRunEvent,
   CodexThread,
+  CodexExecutionProfile,
   StartThreadInput,
 } from './index';
 
 const execFileAsync = promisify(execFile);
 const MAX_ERROR_MESSAGE_LENGTH = 240;
+
+function sandboxFor(
+  profile: CodexExecutionProfile | undefined,
+): NonNullable<ThreadOptions['sandboxMode']> {
+  return profile === 'workspace_write_no_network' ? 'workspace-write' : 'read-only';
+}
+
+export async function canonicalWorkspaceRoot(workingDirectory: string): Promise<string> {
+  let rootStat;
+  try {
+    rootStat = await lstat(workingDirectory);
+  } catch {
+    throw new Error('CODEX_WORKSPACE_ROOT_NOT_FOUND');
+  }
+  if (rootStat.isSymbolicLink()) throw new Error('CODEX_WORKSPACE_ROOT_SYMLINK');
+  if (!rootStat.isDirectory()) throw new Error('CODEX_WORKSPACE_ROOT_NOT_DIRECTORY');
+  try {
+    return path.resolve(await realpath(workingDirectory));
+  } catch {
+    throw new Error('CODEX_WORKSPACE_ROOT_NOT_FOUND');
+  }
+}
 
 interface SdkThreadLike {
   runStreamed(
@@ -160,6 +183,9 @@ export interface SdkCodexAdapterOptions {
   resolveThread?: (
     threadId: string,
   ) => Promise<StartThreadInput | undefined> | StartThreadInput | undefined;
+  validateWorkspaceWrite?: (
+    input: StartThreadInput & { canonicalRoot: string },
+  ) => Promise<void> | void;
   now?: () => string;
   createId?: () => string;
 }
@@ -279,21 +305,24 @@ export class SdkCodexAdapter implements CodexAdapter {
   private readonly listeners = new Map<string, Set<(event: CodexRunEvent) => void>>();
   private readonly runtime: Promise<SdkRuntime>;
   private readonly resolveThreadIdentity?: SdkCodexAdapterOptions['resolveThread'];
+  private readonly validateWorkspaceWrite?: SdkCodexAdapterOptions['validateWorkspaceWrite'];
   private readonly now: () => string;
   private readonly createId: () => string;
 
   public constructor(options: SdkCodexAdapterOptions = {}) {
     this.runtime = (options.createRuntime ?? createIsolatedCodexRuntime)();
     this.resolveThreadIdentity = options.resolveThread;
+    this.validateWorkspaceWrite = options.validateWorkspaceWrite;
     this.now = options.now ?? (() => new Date().toISOString());
     this.createId = options.createId ?? randomUUID;
   }
 
-  public startThread(input: StartThreadInput): Promise<CodexThread> {
+  public async startThread(input: StartThreadInput): Promise<CodexThread> {
+    const workingDirectory = await this.prepareWorkingDirectory(input);
     const metadata: CodexThread = {
       ...input,
       id: this.createId(),
-      workingDirectory: path.resolve(input.workingDirectory),
+      workingDirectory,
     };
     this.threads.set(metadata.id, { metadata, resume: false });
     return Promise.resolve(metadata);
@@ -304,10 +333,11 @@ export class SdkCodexAdapter implements CodexAdapter {
     if (existing) return existing.metadata;
     const identity = await this.resolveThreadIdentity?.(threadId);
     if (!identity) throw new Error('CODEX_THREAD_NOT_FOUND');
+    const workingDirectory = await this.prepareWorkingDirectory(identity);
     const metadata: CodexThread = {
       ...identity,
       id: threadId,
-      workingDirectory: path.resolve(identity.workingDirectory),
+      workingDirectory,
     };
     this.threads.set(threadId, { metadata, resume: true });
     return metadata;
@@ -384,7 +414,7 @@ export class SdkCodexAdapter implements CodexAdapter {
       const options: ThreadOptions = {
         approvalPolicy: 'never',
         networkAccessEnabled: false,
-        sandboxMode: 'read-only',
+        sandboxMode: sandboxFor(thread.metadata.executionProfile),
         skipGitRepoCheck: false,
         webSearchMode: 'disabled',
         workingDirectory: thread.metadata.workingDirectory,
@@ -435,6 +465,18 @@ export class SdkCodexAdapter implements CodexAdapter {
       this.failRun(record.run.id, error);
       if (!lifecycleStarted) started.reject(new Error(error.code));
     }
+  }
+
+  private async prepareWorkingDirectory(input: StartThreadInput): Promise<string> {
+    if (input.executionProfile !== 'workspace_write_no_network') {
+      return path.resolve(input.workingDirectory);
+    }
+    const canonicalRoot = await canonicalWorkspaceRoot(input.workingDirectory);
+    if (!this.validateWorkspaceWrite) {
+      throw new Error('CODEX_WORKSPACE_WRITE_VALIDATION_REQUIRED');
+    }
+    await this.validateWorkspaceWrite({ ...input, canonicalRoot, workingDirectory: canonicalRoot });
+    return canonicalRoot;
   }
 
   private rekeyThread(oldId: string, newId: string, thread: ThreadRecord): void {
