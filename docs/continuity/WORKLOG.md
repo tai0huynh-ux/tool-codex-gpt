@@ -1279,3 +1279,25 @@ Only temporary Git fixtures and temporary app data were used. No user project, b
 ### Next action
 
 Fetch, verify ancestry, commit the accepted checkpoint, push `main`, confirm `HEAD == origin/main`, and monitor the final GitHub Actions Verify run.
+
+## 2026-07-19 13:47 +07:00 - P18-PILOT-001 implementation checkpoint
+
+### Goal
+
+Wire the desktop Live Project Pilot without claiming authenticated live execution.
+
+### Changes
+
+Added shared strict pilot contracts, main-process typed orchestration and SQLite persistence, refreshable production Codex completion projection, explicit ChatGPT/Codex approval controls, static website verification, and a sandboxed preview BrowserWindow. Renderer mocks and focused IPC, persistence, UI, and verifier tests were added.
+
+### Verification
+
+`pnpm.cmd run verify` passed migration parity, formatting, lint, strict type-check, 190 Vitest tests, two recoverable workflow fixture tests, two Chromium fixture tests, and all 15 workspace builds. Published as `13ddbd4` after fetch/ancestry verification; `HEAD == origin/main`.
+
+### Security and limitations
+
+The renderer receives only typed, schema-validated views; approval tokens, database handles, audit details, credentials, cookies, tokens, and browser history remain outside the renderer. Website verification is local and fail-closed. No live ChatGPT submit, structured response, writable Codex run, website generation, or restart acceptance has been claimed.
+
+### Next action
+
+Add `test:project-pilot`, packaged UI/restart evidence, and then attempt the authenticated path only if a safe user-opened ChatGPT destination is available.

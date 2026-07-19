@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Live Vertical Slice In Progress. The accepted MVP, internal-beta fixture UAT, Windows package, packaged smoke, and non-destructive installed relay verification pass; P18-CODEX-001 is the active checkpoint.
+Live Vertical Slice In Progress. The accepted MVP, internal-beta fixture UAT, Windows package, packaged smoke, and non-destructive installed relay verification pass; P18-PILOT-001 is the active checkpoint after published P18-CODEX-001.
 
 ## Last known-good commit
 
@@ -56,11 +56,11 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 174 or more Vitest tests after P18, two Chromium fixture E2E tests, the 43-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires package, packaged smoke, native relay, unsigned status, and generated staging checksums.
+Expected known-good baseline: formatting, lint, strict type-check, 190 or more Vitest tests after P18, two Chromium fixture E2E tests, the 43-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires package, packaged smoke, native relay, unsigned status, and generated staging checksums.
 
 ## Exact next task
 
-P18-CHATGPT-001 is published at `c7c7b9d`. Close and publish P18-CODEX-001 with the full verification gate, then implement P18-PILOT-001. Do not claim a live ChatGPT submit or writable Codex run from prior no-submit/live-read-only smoke or fixtures. The completed desktop UI acceptance evidence is under `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`.
+P18-CODEX-001 is published at `c3ec3a7`; the pilot implementation checkpoint is published at `13ddbd4`. Next add fixture/project-pilot and packaged restart evidence. Do not claim a live ChatGPT submit, structured response, writable Codex run, or generated website from fixtures or prior no-submit/read-only smoke. The completed desktop UI acceptance evidence is under `artifacts/ui-acceptance/2026-07-18T18-59-16-216Z/`.
 
 ## Expected files to modify
 
