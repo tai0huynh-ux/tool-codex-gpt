@@ -27,6 +27,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm -r --if-present typecheck",
     "test": "vitest run",
     "test:workflow-e2e": "vitest run tests/integration/recoverable-workflow.test.ts",
+    "test:project-pilot": "vitest run tests/integration/project-pilot.test.ts",
     "test:e2e": "pnpm run test:workflow-e2e && playwright test",
     "test:internal-beta-uat": "vitest run tests/integration/recoverable-workflow.test.ts packages/context-builder/src/index.test.ts packages/assisted-chatgpt/src/index.test.ts packages/response-router/src/index.test.ts packages/workflow-engine/src/index.test.ts && playwright test",
     "test:watch": "vitest",
