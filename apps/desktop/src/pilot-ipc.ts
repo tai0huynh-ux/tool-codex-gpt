@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type {
   AssistedChatGptPreview,
+  ChatGptRenderedCatalog,
   ChatGptDestination,
   ContextBridgeResponse,
   ConversationSnapshot,
@@ -15,10 +16,12 @@ import type { SqliteDatabase } from '@codex-context-bridge/database';
 import type { ProjectRegistry } from '@codex-context-bridge/project-registry';
 import type { ResponseRouter } from '@codex-context-bridge/response-router';
 import type { WorkflowEngine } from '@codex-context-bridge/workflow-engine';
-import type { z } from 'zod';
+import { z } from 'zod';
 import type { DesktopBridgeService, IpcInvokeEventLike, IpcMainLike } from './ipc';
 import {
   pilotCreateInputSchema,
+  chatGptDiscoveryResponseSchema,
+  codexTargetCatalogResponseSchema,
   chatHistoryExportResponseSchema,
   pilotErrorCodeSchema,
   pilotIdInputSchema,
@@ -29,12 +32,15 @@ import {
   pilotViewSchema,
   type PilotCreateInput,
   type ChatHistoryExportResult,
+  type CodexTargetCatalog,
   type PilotView,
 } from './pilot-contracts';
 import { ChatArchiveStore } from './chat-archive';
+import type { CodexChangeBundleResult, GitChangeBaseline } from './codex-change-bundle';
 import { verifyStaticWebsite } from './website-verifier';
 
 const PILOT_PREFIX = 'live-project-pilot:';
+const PILOT_BASELINE_PREFIX = 'live-project-pilot-baseline:';
 const WORKSPACE_PROFILE: CodexExecutionProfile = 'workspace_write_no_network';
 
 class NativeChatGptAdapter implements AssistedChatGptAdapter {
@@ -131,6 +137,8 @@ interface ChatGptEffectRow {
 
 export interface PilotDesktopService {
   list(projectId?: string): Promise<PilotView[]>;
+  discoverChatGpt(): Promise<ChatGptRenderedCatalog>;
+  listCodexTargets(): Promise<CodexTargetCatalog>;
   create(input: PilotCreateInput): Promise<PilotView>;
   refresh(pilotId: string): Promise<PilotView>;
   inspectChatGpt(pilotId: string): Promise<PilotView>;
@@ -140,6 +148,7 @@ export interface PilotDesktopService {
   syncChatHistory(pilotId: string): Promise<PilotView>;
   exportChatHistory(pilotId: string): Promise<ChatHistoryExportResult>;
   approveCodex(pilotId: string): Promise<PilotView>;
+  revealCodexBundle(pilotId: string): Promise<PilotView>;
   verifyWebsite(pilotId: string): Promise<PilotView>;
   openPreview(pilotId: string): Promise<PilotView>;
 }
@@ -157,6 +166,14 @@ export function createPilotDesktopService(input: {
     suggestedFileName: string;
     content: string;
   }) => Promise<string | null>;
+  captureCodexBaseline?: (repositoryRoot: string) => Promise<GitChangeBaseline>;
+  createCodexBundle?: (input: {
+    repositoryRoot: string;
+    baseline: GitChangeBaseline;
+    finalResponse: string;
+    pilotId: string;
+  }) => Promise<CodexChangeBundleResult>;
+  revealCodexBundle?: (zipPath: string) => Promise<void>;
   now?: () => string;
 }): PilotDesktopService {
   const now = input.now ?? (() => new Date().toISOString());
@@ -180,6 +197,37 @@ export function createPilotDesktopService(input: {
       .get(`${PILOT_PREFIX}${pilotId}`) as { value_json: string } | undefined;
     if (!row) throw new Error('PILOT_NOT_FOUND');
     return pilotViewSchema.parse(JSON.parse(row.value_json) as unknown);
+  };
+  const saveBaseline = (pilotId: string, baseline: GitChangeBaseline): void => {
+    input.database
+      .prepare(
+        `INSERT INTO settings (key, value_json, updated_at) VALUES (?, ?, ?)
+         ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`,
+      )
+      .run(`${PILOT_BASELINE_PREFIX}${pilotId}`, JSON.stringify(baseline), now());
+  };
+  const getBaseline = (pilotId: string): GitChangeBaseline | undefined => {
+    const row = input.database
+      .prepare('SELECT value_json FROM settings WHERE key = ?')
+      .get(`${PILOT_BASELINE_PREFIX}${pilotId}`) as { value_json: string } | undefined;
+    return row ? (JSON.parse(row.value_json) as GitChangeBaseline) : undefined;
+  };
+
+  const bundleCompleted = async (view: PilotView): Promise<PilotView> => {
+    if (view.codexBundle || !input.createCodexBundle || !view.finalResponse) return view;
+    const baseline = getBaseline(view.id);
+    if (!baseline) return save({ ...view, codexBundleErrorCode: 'CODEX_BASELINE_FAILED' });
+    try {
+      const codexBundle = await input.createCodexBundle({
+        repositoryRoot: view.repositoryRoot,
+        baseline,
+        finalResponse: view.finalResponse,
+        pilotId: view.id,
+      });
+      return save({ ...view, codexBundle });
+    } catch {
+      return save({ ...view, codexBundleErrorCode: 'CODEX_BUNDLE_FAILED' });
+    }
   };
 
   const recoverChatGptEffect = (view: PilotView): PilotView => {
@@ -239,16 +287,16 @@ export function createPilotDesktopService(input: {
     if (!workflow) throw new Error('PILOT_STATE_INVALID');
     if (!view.codexRunId) return view;
     // Terminal persisted pilots are self-contained; a fresh adapter may not retain old run handles.
-    if (view.status === 'codex_completed' || view.status === 'failed') return view;
+    if (view.status === 'codex_completed') return bundleCompleted(view);
+    if (view.status === 'failed') return view;
     const run = await input.codex.getRun(view.codexRunId);
     if (run.status === 'completed') {
-      return Promise.resolve(
-        save({
-          ...view,
-          status: 'codex_completed',
-          ...(run.finalResponse ? { finalResponse: run.finalResponse } : {}),
-        }),
-      );
+      const completed = save({
+        ...view,
+        status: 'codex_completed',
+        ...(run.finalResponse ? { finalResponse: run.finalResponse } : {}),
+      });
+      return bundleCompleted(completed);
     }
     if (run.status === 'failed') {
       return save({ ...view, status: 'failed', errorCode: run.error?.code ?? 'INTERNAL_ERROR' });
@@ -342,12 +390,60 @@ export function createPilotDesktopService(input: {
         .filter((view) => !projectId || view.projectId === projectId);
       return Promise.all(views.map((view) => refresh(view)));
     },
-    create: async ({ projectId, repositoryId, objective, destination }) => {
+    discoverChatGpt: async () => {
+      const transport = await input.bridge.getStatus();
+      if (transport.state !== 'connected') throw new Error('TRANSPORT_DISCONNECTED');
+      const result = await input.bridge.execute({ type: 'conversation.discover' });
+      if (result.type !== 'conversation.discover.result') {
+        throw new Error('TRANSPORT_RESULT_INVALID');
+      }
+      return result.catalog;
+    },
+    listCodexTargets: () =>
+      Promise.resolve({
+        projects: input.projects.list().map((project) => ({
+          projectId: project.id,
+          projectName: project.name,
+          repositories: input.projects.listRepositories(project.id).map((repository) => ({
+            id: repository.id,
+            canonicalRoot: repository.canonicalRoot,
+            fingerprint: repository.fingerprint,
+            ...(repository.branch ? { branch: repository.branch } : {}),
+          })),
+          threads: input.projects.listCodexThreads(project.id).map((thread) => ({
+            mappingId: thread.id,
+            externalThreadId: thread.externalThreadId,
+            repositoryFingerprint: thread.repositoryFingerprint,
+            updatedAt: thread.updatedAt,
+          })),
+        })),
+      }),
+    create: async ({ projectId, repositoryId, objective, destination, codexDestination }) => {
       const project = input.projects.get(projectId);
       const repository = input.projects.getRepository(repositoryId);
-      if (!project || project.archivedAt) throw new Error('PROJECT_NOT_FOUND');
-      if (repository?.projectId !== projectId || repository.archivedAt) {
+      if (!project) throw new Error('PROJECT_NOT_FOUND');
+      if (project.archivedAt) throw new Error('PROJECT_NOT_FOUND');
+      if (!repository) throw new Error('REPOSITORY_NOT_FOUND');
+      if (repository.projectId !== projectId || repository.archivedAt) {
         throw new Error('REPOSITORY_NOT_FOUND');
+      }
+      const resolvedCodexDestination = codexDestination ?? {
+        mode: 'new-thread' as const,
+        repositoryId,
+      };
+      if (resolvedCodexDestination.mode === 'new-thread') {
+        if (resolvedCodexDestination.repositoryId !== repositoryId) {
+          throw new Error('REPOSITORY_NOT_FOUND');
+        }
+      } else {
+        const mapping = input.projects.getCodexThread(resolvedCodexDestination.threadMappingId);
+        if (!mapping) throw new Error('REPOSITORY_NOT_FOUND');
+        if (
+          mapping.projectId !== projectId ||
+          mapping.repositoryFingerprint !== repository.fingerprint
+        ) {
+          throw new Error('REPOSITORY_NOT_FOUND');
+        }
       }
       let resolvedDestination: PilotView['destination'];
       let chatGptInspection: PilotView['chatGptInspection'];
@@ -408,6 +504,7 @@ export function createPilotDesktopService(input: {
         repositoryFingerprint: repository.fingerprint,
         objective: objective.trim(),
         destination: resolvedDestination,
+        codexDestination: resolvedCodexDestination,
         workflowRunId: workflow.id,
         status: 'draft',
         ...(chatGptInspection ? { chatGptInspection } : {}),
@@ -531,8 +628,10 @@ export function createPilotDesktopService(input: {
         expectedProjectId: view.projectId,
       });
       const codexPreview = input.router.createPreview(receipt.receiptId, {
-        mode: 'new-thread',
-        repositoryId: view.repositoryId,
+        ...(view.codexDestination ?? {
+          mode: 'new-thread' as const,
+          repositoryId: view.repositoryId,
+        }),
       });
       return save({ ...view, status: 'codex_ready', response, codexPreview });
     },
@@ -591,22 +690,27 @@ export function createPilotDesktopService(input: {
       };
     },
     approveCodex: async (pilotId) => {
-      const view = get(pilotId);
+      let view = get(pilotId);
       if (view.status !== 'codex_ready' || !view.codexPreview) {
         throw new Error('PILOT_STATE_INVALID');
       }
-      const approval = input.router.approve(view.codexPreview, 5 * 60_000, WORKSPACE_PROFILE);
+      const codexPreview = view.codexPreview;
+      if (input.captureCodexBaseline) {
+        try {
+          saveBaseline(view.id, await input.captureCodexBaseline(view.repositoryRoot));
+          view = save({ ...view, codexBundleErrorCode: undefined });
+        } catch {
+          throw new Error('CODEX_BASELINE_FAILED');
+        }
+      }
+      const approval = input.router.approve(codexPreview, 5 * 60_000, WORKSPACE_PROFILE);
       const effect = input.router.prepare(
-        view.codexPreview,
+        codexPreview,
         { id: approval.approval.id, token: approval.token },
         `pilot:${view.id}:codex`,
         WORKSPACE_PROFILE,
       ).effect;
-      const dispatched = await input.router.dispatch(
-        view.codexPreview,
-        effect.id,
-        WORKSPACE_PROFILE,
-      );
+      const dispatched = await input.router.dispatch(codexPreview, effect.id, WORKSPACE_PROFILE);
       return save({
         ...view,
         status: 'codex_running',
@@ -614,6 +718,14 @@ export function createPilotDesktopService(input: {
         codexThreadId: dispatched.thread.id,
         codexRunId: dispatched.run.id,
       });
+    },
+    revealCodexBundle: async (pilotId) => {
+      const view = get(pilotId);
+      if (!view.codexBundle || !input.revealCodexBundle) {
+        throw new Error('CODEX_BUNDLE_NOT_READY');
+      }
+      await input.revealCodexBundle(view.codexBundle.zipPath);
+      return view;
     },
     verifyWebsite: async (pilotId) => {
       const view = get(pilotId);
@@ -694,6 +806,20 @@ export function registerPilotIpc(
     (value) => service.list((value as { projectId?: string }).projectId),
   );
   register(
+    pilotIpcChannels.discoverChatGpt,
+    'pilot.discover-chatgpt',
+    z.undefined(),
+    chatGptDiscoveryResponseSchema,
+    () => service.discoverChatGpt(),
+  );
+  register(
+    pilotIpcChannels.listCodexTargets,
+    'pilot.list-codex-targets',
+    z.undefined(),
+    codexTargetCatalogResponseSchema,
+    () => service.listCodexTargets(),
+  );
+  register(
     pilotIpcChannels.create,
     'pilot.create',
     pilotCreateInputSchema,
@@ -755,6 +881,13 @@ export function registerPilotIpc(
     pilotIdInputSchema,
     pilotViewResponseSchema,
     (value) => service.approveCodex((value as { pilotId: string }).pilotId),
+  );
+  register(
+    pilotIpcChannels.revealCodexBundle,
+    'pilot.reveal-codex-bundle',
+    pilotIdInputSchema,
+    pilotViewResponseSchema,
+    (value) => service.revealCodexBundle((value as { pilotId: string }).pilotId),
   );
   register(
     pilotIpcChannels.verifyWebsite,

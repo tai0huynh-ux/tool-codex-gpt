@@ -3,12 +3,26 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $executable = Join-Path $repositoryRoot 'artifacts/desktop/win-unpacked/CodexContextBridge.exe'
 $nativeHostExecutable = Join-Path $repositoryRoot 'artifacts/desktop/win-unpacked/resources/CodexContextBridgeNativeHost.exe'
+$zipRuntimePath = Join-Path $repositoryRoot 'artifacts/desktop/win-unpacked/resources/app.asar/node_modules/fflate'
 $profileRoot = Join-Path $env:TEMP "context-bridge-smoke-$([guid]::NewGuid().ToString('N'))"
 $appDataRoot = Join-Path $profileRoot 'appdata'
 $capabilityPath = Join-Path $appDataRoot 'Codex Context Bridge/native-transport-capability'
 $startupErrorPath = Join-Path $profileRoot 'desktop-stderr.log'
+$zipRuntimeMarker = Join-Path $profileRoot 'zip-runtime-ready'
 New-Item -ItemType Directory -Force -Path $profileRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $appDataRoot | Out-Null
+
+$previousElectronRunAsNode = $env:ELECTRON_RUN_AS_NODE
+try {
+  $env:ELECTRON_RUN_AS_NODE = '1'
+  & $executable -e "require(process.argv[1]); require('fs').writeFileSync(process.argv[2], 'ready');" $zipRuntimePath $zipRuntimeMarker
+  for ($attempt = 0; $attempt -lt 20 -and !(Test-Path -LiteralPath $zipRuntimeMarker); $attempt++) {
+    Start-Sleep -Milliseconds 100
+  }
+  if (!(Test-Path -LiteralPath $zipRuntimeMarker)) { throw 'Packaged ZIP runtime dependency preflight failed.' }
+} finally {
+  $env:ELECTRON_RUN_AS_NODE = $previousElectronRunAsNode
+}
 
 function Stop-ProcessTree([int]$ProcessId) {
   $children = Get-CimInstance Win32_Process -Filter "ParentProcessId = $ProcessId"

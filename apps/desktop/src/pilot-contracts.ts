@@ -1,5 +1,6 @@
 import {
   assistedChatGptPreviewSchema,
+  chatGptRenderedCatalogSchema,
   chatGptConversationIdFromPath,
   chatGptConversationPathSchema,
   codexRoutePreviewSchema,
@@ -29,6 +30,8 @@ const websiteVerificationSchema = z
 
 export const pilotIpcChannels = {
   list: 'pilot:list',
+  discoverChatGpt: 'pilot:discover-chatgpt',
+  listCodexTargets: 'pilot:list-codex-targets',
   create: 'pilot:create',
   refresh: 'pilot:refresh',
   inspectChatGpt: 'pilot:inspect-chatgpt',
@@ -38,6 +41,7 @@ export const pilotIpcChannels = {
   syncChatHistory: 'pilot:sync-chat-history',
   exportChatHistory: 'pilot:export-chat-history',
   approveCodex: 'pilot:approve-codex',
+  revealCodexBundle: 'pilot:reveal-codex-bundle',
   verifyWebsite: 'pilot:verify-website',
   openPreview: 'pilot:open-preview',
 } as const;
@@ -81,6 +85,12 @@ export const pilotCreateInputSchema = z
     repositoryId: pilotIdSchema,
     objective: z.string().trim().min(1).max(20_000),
     destination: pilotCreateDestinationSchema,
+    codexDestination: z
+      .discriminatedUnion('mode', [
+        z.object({ mode: z.literal('new-thread'), repositoryId: pilotIdSchema }).strict(),
+        z.object({ mode: z.literal('existing-thread'), threadMappingId: pilotIdSchema }).strict(),
+      ])
+      .optional(),
   })
   .strict();
 export const pilotIdInputSchema = z.object({ pilotId: pilotIdSchema }).strict();
@@ -116,6 +126,12 @@ export const pilotViewSchema = z
     repositoryFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
     objective: z.string().min(1).max(20_000),
     destination: pilotDestinationSchema,
+    codexDestination: z
+      .discriminatedUnion('mode', [
+        z.object({ mode: z.literal('new-thread'), repositoryId: pilotIdSchema }).strict(),
+        z.object({ mode: z.literal('existing-thread'), threadMappingId: pilotIdSchema }).strict(),
+      ])
+      .optional(),
     workflowRunId: pilotIdSchema,
     status: pilotStatusSchema,
     chatGptInspection: z
@@ -139,6 +155,28 @@ export const pilotViewSchema = z
     codexThreadId: pilotIdSchema.optional(),
     codexRunId: pilotIdSchema.optional(),
     finalResponse: z.string().max(100_000).optional(),
+    codexBundle: z
+      .object({
+        zipPath: z.string().min(1).max(32_768),
+        sha256: z.string().regex(/^[a-f0-9]{64}$/),
+        size: z.number().int().nonnegative(),
+        changedFiles: z.array(z.string().min(1).max(2_048)).max(5_000),
+        includedFiles: z.array(z.string().min(1).max(2_048)).max(100),
+        blockedFiles: z
+          .array(
+            z
+              .object({
+                path: z.string().min(1).max(2_048),
+                reason: z.string().min(1).max(512),
+              })
+              .strict(),
+          )
+          .max(5_000),
+        createdAt: z.iso.datetime(),
+      })
+      .strict()
+      .optional(),
+    codexBundleErrorCode: z.string().min(1).max(256).optional(),
     errorCode: z.string().min(1).max(256).optional(),
     websiteVerification: websiteVerificationSchema.optional(),
     createdAt: z.iso.datetime(),
@@ -165,6 +203,9 @@ export const pilotErrorCodeSchema = z.enum([
   'CHAT_ARCHIVE_WRITE_FAILED',
   'CHAT_ARCHIVE_EXPORT_FAILED',
   'CODEX_CONFIRMATION_REQUIRED',
+  'CODEX_BASELINE_FAILED',
+  'CODEX_BUNDLE_FAILED',
+  'CODEX_BUNDLE_NOT_READY',
   'INTERNAL_ERROR',
 ]);
 
@@ -182,6 +223,49 @@ export const pilotViewResponseSchema = z.discriminatedUnion('ok', [
 ]);
 export const pilotListResponseSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(true), value: z.array(pilotViewSchema) }).strict(),
+  pilotFailureSchema,
+]);
+
+export const chatGptDiscoveryResponseSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), value: chatGptRenderedCatalogSchema }).strict(),
+  pilotFailureSchema,
+]);
+
+export const codexTargetCatalogSchema = z
+  .object({
+    projects: z.array(
+      z
+        .object({
+          projectId: pilotIdSchema,
+          projectName: z.string().min(1).max(512),
+          repositories: z.array(
+            z
+              .object({
+                id: pilotIdSchema,
+                canonicalRoot: z.string().min(1).max(32_768),
+                fingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+                branch: z.string().min(1).max(512).optional(),
+              })
+              .strict(),
+          ),
+          threads: z.array(
+            z
+              .object({
+                mappingId: pilotIdSchema,
+                externalThreadId: pilotIdSchema,
+                repositoryFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+                updatedAt: z.iso.datetime(),
+              })
+              .strict(),
+          ),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export const codexTargetCatalogResponseSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), value: codexTargetCatalogSchema }).strict(),
   pilotFailureSchema,
 ]);
 
@@ -208,5 +292,8 @@ export type PilotCreateInput = z.infer<typeof pilotCreateInputSchema>;
 export type PilotView = z.infer<typeof pilotViewSchema>;
 export type PilotViewResponse = z.infer<typeof pilotViewResponseSchema>;
 export type PilotListResponse = z.infer<typeof pilotListResponseSchema>;
+export type ChatGptDiscoveryResponse = z.infer<typeof chatGptDiscoveryResponseSchema>;
+export type CodexTargetCatalog = z.infer<typeof codexTargetCatalogSchema>;
+export type CodexTargetCatalogResponse = z.infer<typeof codexTargetCatalogResponseSchema>;
 export type ChatHistoryExportResult = z.infer<typeof chatHistoryExportResultSchema>;
 export type ChatHistoryExportResponse = z.infer<typeof chatHistoryExportResponseSchema>;

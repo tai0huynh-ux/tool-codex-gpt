@@ -103,6 +103,13 @@ function view(overrides: Partial<PilotView> = {}): PilotView {
 function stubService(overrides: Partial<PilotDesktopService> = {}): PilotDesktopService {
   return {
     list: () => Promise.resolve([]),
+    discoverChatGpt: () =>
+      Promise.resolve({
+        conversations: [],
+        capturedAt: '2026-07-19T08:00:00.000Z',
+        truncated: false,
+      }),
+    listCodexTargets: () => Promise.resolve({ projects: [] }),
     create: () => Promise.resolve(view()),
     refresh: () => Promise.resolve(view()),
     inspectChatGpt: () => Promise.resolve(view()),
@@ -119,6 +126,7 @@ function stubService(overrides: Partial<PilotDesktopService> = {}): PilotDesktop
         exportedAt: '2026-07-19T08:00:00.000Z',
       }),
     approveCodex: () => Promise.resolve(view()),
+    revealCodexBundle: () => Promise.resolve(view()),
     verifyWebsite: () => Promise.resolve(view()),
     openPreview: () => Promise.resolve(view()),
     ...overrides,
@@ -126,6 +134,53 @@ function stubService(overrides: Partial<PilotDesktopService> = {}): PilotDesktop
 }
 
 describe('pilot IPC boundary', () => {
+  it('exposes rendered ChatGPT discovery and local Codex targets through typed channels', async () => {
+    const ipc = new FakeIpcMain();
+    registerPilotIpc(
+      ipc,
+      stubService({
+        discoverChatGpt: () =>
+          Promise.resolve({
+            conversations: [
+              {
+                conversationId: 'conversation-1',
+                conversationPath: '/c/conversation-1',
+                title: 'Rendered chat',
+                current: true,
+              },
+            ],
+            capturedAt: '2026-07-20T08:00:00.000Z',
+            truncated: false,
+          }),
+        listCodexTargets: () =>
+          Promise.resolve({
+            projects: [
+              {
+                projectId: 'project-1',
+                projectName: 'Pilot',
+                repositories: [
+                  {
+                    id: 'repository-1',
+                    canonicalRoot: 'C:/pilot',
+                    fingerprint: 'a'.repeat(64),
+                  },
+                ],
+                threads: [],
+              },
+            ],
+          }),
+      }),
+      { validateSender: () => true },
+    );
+
+    await expect(
+      ipc.handlers.get(pilotIpcChannels.discoverChatGpt)?.({ sender: { id: 7 } }),
+    ).resolves.toMatchObject({ ok: true, value: { conversations: [{ title: 'Rendered chat' }] } });
+    await expect(
+      ipc.handlers.get(pilotIpcChannels.listCodexTargets)?.({ sender: { id: 7 } }),
+    ).resolves.toMatchObject({ ok: true, value: { projects: [{ projectName: 'Pilot' }] } });
+  });
+
   it('accepts a bounded objective and rejects empty, oversized, unknown, and untrusted requests', async () => {
     const ipc = new FakeIpcMain();
     const audit = vi.fn();
@@ -201,6 +256,80 @@ describe('pilot IPC boundary', () => {
 });
 
 describe('pilot desktop persistence', () => {
+  it('discovers rendered conversations and lists verified Codex thread mappings', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-20T08:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    const repository = projects.registerRepository(
+      'project-1',
+      { repoRoot: 'C:/pilot' },
+      'repository-1',
+    );
+    projects.registerCodexThread({
+      id: 'mapping-1',
+      projectId: 'project-1',
+      repositoryFingerprint: repository.fingerprint,
+      externalThreadId: 'thread-1',
+    });
+    const workflows = new WorkflowEngine(database);
+    const codex = new FixtureCodexAdapter();
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+      bridge: {
+        ...bridge,
+        execute: (operation) => {
+          if (operation.type !== 'conversation.discover') {
+            return Promise.reject(new Error('NOT_USED'));
+          }
+          return Promise.resolve({
+            type: 'conversation.discover.result',
+            catalog: {
+              conversations: [
+                {
+                  conversationId: 'conversation-1',
+                  conversationPath: '/c/conversation-1',
+                  title: 'Rendered chat',
+                  current: true,
+                },
+              ],
+              capturedAt: '2026-07-20T08:00:00.000Z',
+              truncated: false,
+            },
+          });
+        },
+      },
+      now: () => '2026-07-20T08:00:00.000Z',
+    });
+
+    await expect(service.discoverChatGpt()).resolves.toMatchObject({
+      conversations: [{ conversationId: 'conversation-1' }],
+    });
+    await expect(service.listCodexTargets()).resolves.toMatchObject({
+      projects: [
+        {
+          projectId: 'project-1',
+          threads: [{ mappingId: 'mapping-1', externalThreadId: 'thread-1' }],
+        },
+      ],
+    });
+    const created = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Continue the existing thread.',
+      destination: { mode: 'new' },
+      codexDestination: { mode: 'existing-thread', threadMappingId: 'mapping-1' },
+    });
+    expect(created.codexDestination).toEqual({
+      mode: 'existing-thread',
+      threadMappingId: 'mapping-1',
+    });
+    database.close();
+  });
+
   it('restores an orphaned dispatching ChatGPT effect as confirmation-required', async () => {
     const database = openDatabase(':memory:');
     const projects = new ProjectRegistry(database, () => '2026-07-19T08:00:00.000Z');
@@ -546,6 +675,71 @@ describe('pilot desktop persistence', () => {
       finalResponse: 'Created index.html and styles.css.',
     });
     expect(JSON.stringify(refreshed)).not.toContain('approvalToken');
+    database.close();
+  });
+
+  it('creates a persisted safe ZIP projection after Codex completes', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-20T08:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, {
+      now: () => '2026-07-20T08:00:00.000Z',
+    });
+    const codex = new FixtureCodexAdapter();
+    const createCodexBundle = vi.fn(() =>
+      Promise.resolve({
+        zipPath: 'C:/bundles/pilot-1.zip',
+        sha256: 'b'.repeat(64),
+        size: 1_024,
+        changedFiles: ['index.html', 'secret.txt'],
+        includedFiles: ['index.html'],
+        blockedFiles: [{ path: 'secret.txt', reason: 'SECRET_DETECTED:openai-key' }],
+        createdAt: '2026-07-20T08:10:00.000Z',
+      }),
+    );
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge,
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+      createCodexBundle,
+      now: () => '2026-07-20T08:10:00.000Z',
+    });
+    const created = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Create a static site.',
+      destination: { mode: 'new' },
+    });
+    database
+      .prepare('INSERT INTO settings (key, value_json, updated_at) VALUES (?, ?, ?)')
+      .run(
+        `live-project-pilot-baseline:${created.id}`,
+        JSON.stringify({ head: 'a'.repeat(40), entries: [], capturedAt: created.createdAt }),
+        created.createdAt,
+      );
+    database
+      .prepare('UPDATE settings SET value_json = ? WHERE key = ?')
+      .run(
+        JSON.stringify({ ...created, status: 'codex_running', codexRunId: codex.run.id }),
+        `live-project-pilot:${created.id}`,
+      );
+
+    const refreshed = await service.refresh(created.id);
+    expect(refreshed).toMatchObject({
+      status: 'codex_completed',
+      codexBundle: {
+        zipPath: 'C:/bundles/pilot-1.zip',
+        includedFiles: ['index.html'],
+        blockedFiles: [{ path: 'secret.txt', reason: 'SECRET_DETECTED:openai-key' }],
+      },
+    });
+    expect(createCodexBundle).toHaveBeenCalledWith(
+      expect.objectContaining({ pilotId: created.id, finalResponse: codex.run.finalResponse }),
+    );
     database.close();
   });
 

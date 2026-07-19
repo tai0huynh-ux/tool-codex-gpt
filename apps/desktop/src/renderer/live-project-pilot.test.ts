@@ -71,6 +71,11 @@ function baseApi(): ContextBridgeDesktopApi {
       ok: true,
       value: [pilot({ status: 'chatgpt_ready', chatGptPreview })],
     }),
+    discoverPilotChatGpt: vi.fn().mockResolvedValue({
+      ok: true,
+      value: { conversations: [], capturedAt: timestamp, truncated: false },
+    }),
+    listPilotCodexTargets: vi.fn().mockResolvedValue({ ok: true, value: { projects: [] } }),
     createPilot: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
     refreshPilot: vi
       .fn()
@@ -107,6 +112,10 @@ function baseApi(): ContextBridgeDesktopApi {
     approvePilotCodex: vi
       .fn()
       .mockResolvedValue({ ok: true, value: pilot({ status: 'codex_running' }) }),
+    revealPilotCodexBundle: vi.fn().mockResolvedValue({
+      ok: true,
+      value: pilot({ status: 'codex_completed' }),
+    }),
   };
 }
 
@@ -174,6 +183,7 @@ describe('Live Project Pilot renderer', () => {
       repositoryId: 'repository-1',
       objective: SAMPLE_PILOT_OBJECTIVE,
       destination: { mode: 'new' },
+      codexDestination: { mode: 'new-thread', repositoryId: 'repository-1' },
     });
     expect(container.textContent).toContain('Pilot đã được tạo trong SQLite');
   });
@@ -195,7 +205,67 @@ describe('Live Project Pilot renderer', () => {
       repositoryId: 'repository-1',
       objective: SAMPLE_PILOT_OBJECTIVE,
       destination: { mode: 'current' },
+      codexDestination: { mode: 'new-thread', repositoryId: 'repository-1' },
     });
+  });
+
+  it('lists rendered ChatGPT chats and limits each expanded Codex project to five threads', async () => {
+    api.discoverPilotChatGpt = vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        conversations: [
+          {
+            conversationId: 'conversation-1',
+            conversationPath: '/g/chat-project/c/conversation-1',
+            title: 'MVP planning',
+            projectId: 'chat-project',
+            projectName: 'ChatGPT Project',
+            current: true,
+          },
+        ],
+        capturedAt: timestamp,
+        truncated: false,
+      },
+    });
+    api.listPilotCodexTargets = vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        projects: [
+          {
+            projectId: 'project-1',
+            projectName: 'AI Website Pilot',
+            repositories: [repository],
+            threads: Array.from({ length: 7 }, (_, index) => ({
+              mappingId: `mapping-${String(index + 1)}`,
+              externalThreadId: `thread-${String(index + 1)}`,
+              repositoryFingerprint: repository.fingerprint,
+              updatedAt: timestamp,
+            })),
+          },
+        ],
+      },
+    });
+
+    await act(async () => {
+      root.render(
+        createElement(LiveProjectPilot, {
+          projectId: 'project-2',
+          projectName: 'AI Website Pilot',
+          repositories: [repository],
+        }),
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain('MVP planning');
+    expect(container.textContent).toContain('thread-5');
+    expect(container.textContent).not.toContain('thread-6');
+    await act(async () => {
+      button(container, 'Hiện thêm 5 đoạn chat').click();
+      await Promise.resolve();
+    });
+    expect(container.textContent).toContain('thread-7');
   });
 
   it('explains how to recover when the persisted conversation is unavailable', async () => {

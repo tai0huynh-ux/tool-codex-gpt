@@ -20,6 +20,31 @@ function tabs(overrides: Partial<BrowserTabs> = {}): BrowserTabs {
 }
 
 describe('extension operation executor', () => {
+  it('discovers conversations from the active rendered ChatGPT sidebar', async () => {
+    const sendMessage = vi.fn(() =>
+      Promise.resolve({
+        conversations: [
+          {
+            conversationId: 'target',
+            conversationPath: '/g/project-1/c/target',
+            title: 'Target chat',
+            projectId: 'project-1',
+            projectName: 'Project One',
+            current: false,
+          },
+        ],
+        capturedAt: '2026-07-20T08:00:00.000Z',
+        truncated: false,
+      }),
+    );
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+    await expect(executor.execute({ type: 'conversation.discover' })).resolves.toMatchObject({
+      type: 'conversation.discover.result',
+      catalog: { conversations: [{ conversationId: 'target' }] },
+    });
+    expect(sendMessage).toHaveBeenCalledWith(30, { type: 'discover-conversations' });
+  });
+
   it('reports degraded health without a rendered ChatGPT tab', async () => {
     const executor = createExtensionOperationExecutor(tabs({ query: () => Promise.resolve([]) }));
     await expect(executor.execute({ type: 'bridge.health' })).resolves.toEqual({

@@ -9,9 +9,13 @@ import {
   submitComposer,
 } from './page-actions';
 import type { ChatGptDestination } from '@codex-context-bridge/contracts';
+import { discoverRenderedConversations } from './conversation-discovery';
 
 interface CaptureRequest {
   type: 'capture-conversation';
+}
+interface DiscoverRequest {
+  type: 'discover-conversations';
 }
 interface InsertRequest {
   type: 'insert-composer-text';
@@ -44,6 +48,7 @@ interface StatusRequest {
 }
 type ExtensionRequest =
   | CaptureRequest
+  | DiscoverRequest
   | InsertRequest
   | SubmitRequest
   | InspectRequest
@@ -92,6 +97,11 @@ if (location.origin === 'https://chatgpt.com' && typeof chrome !== 'undefined') 
     if (request.type === 'capture-conversation') {
       void captureConversationPage(document, location).then(sendResponse);
       return true;
+    }
+
+    if (request.type === 'discover-conversations') {
+      sendResponse(discoverRenderedConversations(document, location));
+      return false;
     }
 
     if (request.type === 'insert-composer-text') {

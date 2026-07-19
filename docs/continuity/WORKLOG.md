@@ -1419,3 +1419,31 @@ Targeted regression tests passed 70 cases. `pnpm.cmd run verify` passed migratio
 ### Security and limitations
 
 No browser profile, cookies, tokens, authorization headers, history, storage, private API, or screen-derived identity was used. Recovery remains bounded and never submits. A live authenticated check of the user's unavailable conversation was not claimed because Windows Computer Use could not verify the active Edge URL; the new deterministic behavior is covered by the Native Messaging boundary and packaged fixtures.
+
+## 2026-07-20 - Multi-connection catalog and safe Codex ZIP checkpoint
+
+### Goal
+
+Let the user select rendered ChatGPT conversations and verified Codex projects/threads, keep several independent connections active, and preserve complete Codex output plus changed files without weakening the file or browser trust boundaries.
+
+### Changes
+
+Added a bounded MV3 rendered-sidebar discovery operation that preserves canonical project conversation paths and never reads account APIs or browser state. Added typed desktop catalogs for Codex projects, repositories, and persisted thread mappings; the Vietnamese workspace expands/collapses projects, shows five threads initially, reveals five more per action, and binds each SQLite pilot to a new or existing Codex thread. Active pilots poll completion independently and startup recovery handles up to eight unique exact ChatGPT destinations.
+
+Before approved Codex dispatch, the main process records Git HEAD plus dirty-file fingerprints. Completion compares new commits and working-tree changes, revalidates every candidate through canonical path, symlink, exclusion, size, binary, and secret checks, and creates an audited ZIP containing the complete Codex report, manifest, and accepted files. Deleted or blocked files are manifest-only. The renderer can reveal the ZIP for explicit review and attachment.
+
+### Defect and fix
+
+The first packaged build stayed alive without initializing the bridge. An Electron-as-Node reproduction proved `archiver` was present in `app.asar` but its transitive `readdir-glob` dependency was missing under the pnpm/electron-builder layout. Replaced it with dependency-free `fflate` and added a packaged ZIP-runtime preflight before launch. Packaged smoke then passed.
+
+### Verification
+
+`pnpm.cmd run verify` passed migration parity, formatting, lint, strict type-check, 228 Vitest tests, two workflow fixture E2E tests, two Chromium tests, and all workspace builds. `pnpm.cmd run test:internal-beta-uat` passed 46 tests plus two Chromium tests. `pnpm.cmd run package:win`, `pnpm.cmd run smoke:packaged:win`, and `pnpm.cmd run test:pilot-packaged-restart` passed; restart artifact `artifacts/pilot-restart-acceptance/2026-07-19T18-50-24-800Z/` reported zero runtime errors. Installed-host smoke stopped before modification because an existing user Registry64 registration was detected.
+
+### Security and limitations
+
+Discovery is rendered-DOM-only and capped at 200 links. ZIP creation is local, audited, secret-safe, and explicitly reviewed. Automatic browser file upload remains unimplemented because a safe size-bounded production file-input boundary has not been accepted. No authenticated ChatGPT submit or writable live Codex run is claimed by this checkpoint.
+
+### Next action
+
+Publish this checkpoint. The separate live pilot remains paused for action-time confirmation of payload `75cae5042832…428bae39`; after any confirmed ChatGPT send, stop again for the independent Codex workspace-write approval.

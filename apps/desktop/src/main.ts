@@ -28,6 +28,7 @@ import {
 import { createWorkflowDesktopService, registerWorkflowIpc } from './workflow-ipc';
 import { createPilotDesktopService, registerPilotIpc } from './pilot-ipc';
 import { ensureChatGptPageReadable } from './chatgpt-page-recovery';
+import { captureGitChangeBaseline, createCodexChangeBundle } from './codex-change-bundle';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const trustedRendererIds = new Set<number>();
@@ -180,6 +181,21 @@ async function startDesktop(): Promise<void> {
     codex,
     openPreview: openWebsitePreview,
     ensureChatGptPage,
+    captureCodexBaseline: (repositoryRoot) => captureGitChangeBaseline(repositoryRoot),
+    createCodexBundle: ({ repositoryRoot, baseline, finalResponse, pilotId }) =>
+      createCodexChangeBundle({
+        repositoryRoot,
+        baseline,
+        finalResponse,
+        pilotId,
+        outputDirectory: path.join(app.getPath('userData'), 'codex-bundles'),
+        audit: ({ action, outcome }) =>
+          auditDesktopTransfer(action, outcome === 'allowed' ? 'allowed' : 'blocked'),
+      }),
+    revealCodexBundle: (zipPath) => {
+      shell.showItemInFolder(zipPath);
+      return Promise.resolve();
+    },
     saveChatHistory: async ({ suggestedFileName, content }) => {
       const selection = await dialog.showSaveDialog({
         title: 'Xuất toàn bộ lịch sử ChatGPT đã lưu',
@@ -199,12 +215,24 @@ async function startDesktop(): Promise<void> {
   void pilotService
     .list()
     .then(async (pilots) => {
-      const chatGptPilot = pilots.find((pilot) =>
-        ['draft', 'chatgpt_ready', 'chatgpt_dispatched', 'chatgpt_confirmation_required'].includes(
-          pilot.status,
-        ),
-      );
-      if (chatGptPilot) await ensureChatGptPage(chatGptPilot.destination);
+      const destinations = pilots
+        .filter((pilot) =>
+          [
+            'draft',
+            'chatgpt_ready',
+            'chatgpt_dispatched',
+            'chatgpt_confirmation_required',
+          ].includes(pilot.status),
+        )
+        .map((pilot) => pilot.destination)
+        .filter(
+          (destination, index, all) =>
+            all.findIndex(
+              (candidate) => JSON.stringify(candidate) === JSON.stringify(destination),
+            ) === index,
+        )
+        .slice(0, 8);
+      for (const destination of destinations) await ensureChatGptPage(destination);
     })
     .catch((error: unknown) => {
       const code = error instanceof Error ? error.message : 'CHATGPT_NOT_READY';

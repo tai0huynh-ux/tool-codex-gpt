@@ -10,7 +10,7 @@ Complete the live ChatGPT -> Codex project pilot without weakening the read-only
 
 ## Last completed checkpoint
 
-P18-PILOT-001 current-conversation checkpoint - Resolve the user-opened ChatGPT conversation through Native Messaging in the main process, persist its exact existing-thread destination, and expose a Vietnamese UI option without requiring manual conversation ID entry. Authenticated sending remains explicitly approval-gated.
+P18-PILOT-001 multi-connection catalog and safe bundle checkpoint - Discover only rendered ChatGPT sidebar conversations, list verified Codex projects/thread mappings with five-item expansion, persist independent connection tabs, detect terminal ChatGPT/Codex states, and create an audited secret-safe ZIP of Codex reports and changed files. Local ZIP attachment remains explicit; authenticated sending remains separately approval-gated.
 
 ## Current verified capabilities
 
@@ -40,6 +40,11 @@ P18-PILOT-001 current-conversation checkpoint - Resolve the user-opened ChatGPT 
 - Codex runs expose replayable ordered start, progress, completion, failure, and cancellation events without allowing terminal-state overwrite.
 - The production Codex adapter uses the SDK-bundled binary and a temporary bundled catalog, preserves external configuration, forces read-only/approval-never/network-disabled execution, owns structured JSONL lifecycle and exact cancellation, and cleans temporary runtime state.
 - Long conversation capture accumulates virtualized windows, preserves duplicate messages with stable IDs, updates streaming text, and supports abort.
+- Rendered ChatGPT sidebar discovery preserves `/g/.../c/...` paths, caps output at 200 conversations, reports truncation, and never reads account APIs, browser profiles, storage, history, cookies, or tokens.
+- The pilot workspace lists Codex projects with collapsible verified thread mappings, shows five threads initially, reveals five more per action, and lets each persisted pilot bind an exact ChatGPT conversation to either a new or existing Codex thread.
+- Multiple active pilots poll terminal state independently; startup recovery opens up to eight unique persisted ChatGPT destinations without using Windows screen state as identity.
+- Approved Codex runs capture a main-process Git baseline and terminal completion creates an audited ZIP containing the full report, manifest, and only path/symlink/exclusion/size/binary/secret-safe changed files. Deleted and blocked files remain manifest-only.
+- Packaged smoke now preflights the ZIP runtime inside `app.asar`; the regression caught and removed an `archiver` transitive-dependency packaging failure before acceptance.
 - Composer insertion uses native editing behavior for controlled textareas and contenteditable fields, honors cancellation and read-only state, and never submits automatically.
 - Explicit ChatGPT submission is a separate approved operation: it revalidates exact destination, composer hash, streaming/read-only/disabled state, uses a semantic control, and preserves confirmation-required ambiguity.
 - Content-script submit effects reserve their ID before asynchronous checks, preventing concurrent duplicate clicks while allowing deterministic pre-click rejection retries.

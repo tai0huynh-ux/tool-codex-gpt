@@ -240,8 +240,28 @@ export const chatGptPageInspectionSchema = z
   })
   .strict();
 
+export const chatGptRenderedConversationSchema = z
+  .object({
+    conversationId: z.string().min(1).max(512),
+    conversationPath: chatGptConversationPathSchema,
+    title: z.string().min(1).max(300),
+    projectId: z.string().min(1).max(512).optional(),
+    projectName: z.string().min(1).max(300).optional(),
+    current: z.boolean(),
+  })
+  .strict();
+
+export const chatGptRenderedCatalogSchema = z
+  .object({
+    conversations: z.array(chatGptRenderedConversationSchema).max(200),
+    capturedAt: z.iso.datetime(),
+    truncated: z.boolean(),
+  })
+  .strict();
+
 export const localTransportOperationSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('bridge.health') }).strict(),
+  z.object({ type: z.literal('conversation.discover') }).strict(),
   z
     .object({
       type: z.literal('conversation.capture'),
@@ -353,6 +373,12 @@ const structuredResponseResultSchema = z.discriminatedUnion('ok', [
 ]);
 
 export const localTransportResultSchema = z.discriminatedUnion('type', [
+  z
+    .object({
+      type: z.literal('conversation.discover.result'),
+      catalog: chatGptRenderedCatalogSchema,
+    })
+    .strict(),
   z
     .object({
       type: z.literal('bridge.health.result'),
@@ -472,6 +498,8 @@ export type ConversationSnapshot = z.infer<typeof conversationSnapshotSchema>;
 export type ChatGptDestination = z.infer<typeof chatGptDestinationSchema>;
 export type ChatGptPageIdentity = z.infer<typeof chatGptPageIdentitySchema>;
 export type ChatGptPageInspection = z.infer<typeof chatGptPageInspectionSchema>;
+export type ChatGptRenderedConversation = z.infer<typeof chatGptRenderedConversationSchema>;
+export type ChatGptRenderedCatalog = z.infer<typeof chatGptRenderedCatalogSchema>;
 export type LocalTransportOperation = z.infer<typeof localTransportOperationSchema>;
 export type LocalTransportRequest = z.infer<typeof localTransportRequestSchema>;
 export type ExtensionTransportRequest = z.infer<typeof extensionTransportRequestSchema>;

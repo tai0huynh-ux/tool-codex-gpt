@@ -192,10 +192,14 @@ export type WorkflowListResponse = z.infer<typeof workflowListResponseSchema>;
 export type WorkflowViewResponse = z.infer<typeof workflowViewResponseSchema>;
 export {
   pilotIpcChannels,
+  chatGptDiscoveryResponseSchema,
+  codexTargetCatalogResponseSchema,
   chatHistoryExportResponseSchema,
   pilotListResponseSchema,
   pilotViewResponseSchema,
   type PilotCreateInput,
+  type ChatGptDiscoveryResponse,
+  type CodexTargetCatalogResponse,
   type ChatHistoryExportResponse,
   type PilotListResponse,
   type PilotView,

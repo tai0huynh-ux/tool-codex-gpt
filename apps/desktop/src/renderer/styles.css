@@ -221,6 +221,60 @@ h1 {
   margin: 1rem 0;
   border: 1px solid rgba(248, 242, 229, 0.25);
 }
+.pilot-target-browser,
+.pilot-chat-catalog {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(247, 241, 229, 0.24);
+  background: rgba(0, 0, 0, 0.13);
+}
+.pilot-target-project {
+  display: grid;
+  gap: 0.35rem;
+}
+.pilot-target-project > button,
+.pilot-target-threads button,
+.pilot-chat-catalog button {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  border: 1px solid rgba(247, 241, 229, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  padding: 0.65rem;
+  text-align: left;
+}
+.pilot-target-project > button.active,
+.pilot-target-threads button.active,
+.pilot-chat-catalog button.active {
+  border-color: #e98257;
+  background: rgba(233, 130, 87, 0.16);
+}
+.pilot-target-threads {
+  display: grid;
+  gap: 0.3rem;
+  padding-left: 1rem;
+}
+.pilot-target-threads button,
+.pilot-chat-catalog button {
+  grid-template-columns: 1fr auto;
+}
+.pilot-target-browser small,
+.pilot-chat-catalog small {
+  color: #b9c3ba;
+  font-size: 0.68rem;
+}
+.pilot-target-browser .show-more,
+.pilot-chat-catalog .show-more {
+  display: block;
+  border-style: dashed;
+  color: #f0a17e;
+  text-align: center;
+}
 .pilot-destination label {
   display: flex;
   gap: 0.45rem;
@@ -309,6 +363,17 @@ h1 {
   overflow-wrap: anywhere;
   color: #c9d4cb;
   font-size: 0.7rem;
+}
+.pilot-bundle {
+  display: grid;
+  gap: 0.45rem;
+  margin: 1rem 0;
+  padding: 0.85rem;
+  border: 1px solid #4f8c68;
+  background: rgba(79, 140, 104, 0.12);
+}
+.pilot-bundle button {
+  justify-self: start;
 }
 .pilot-preview,
 .pilot-response,

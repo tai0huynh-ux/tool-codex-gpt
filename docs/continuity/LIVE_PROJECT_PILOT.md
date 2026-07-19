@@ -6,6 +6,11 @@
 
 The desktop now resolves the user-opened existing ChatGPT conversation through connected Native Messaging without requiring manual ID entry. A reviewed payload is persisted for a temporary Git repository, but the representational ChatGPT submit remains blocked until action-time user confirmation.
 
+The local workspace can also discover conversation links currently rendered in the ChatGPT sidebar, list
+verified Codex project/thread mappings, and maintain independent connection tabs. Completed approved Codex
+runs can create a reviewed ZIP containing the full report, manifest, and only safety-accepted changed files.
+This does not authorize sending the existing reviewed payload or automatically uploading the ZIP.
+
 ## Current evidence
 
 - Tested baseline: `849812b`; current-conversation changes are awaiting publication
@@ -17,6 +22,7 @@ The desktop now resolves the user-opened existing ChatGPT conversation through c
 - Codex adapter: production `SdkCodexAdapter`, `workspace_write_no_network` profile
 - Codex run ID: fixture-only persisted missing-handle marker; no production Codex turn was executed
 - Changed files: none in the temporary repository during restart acceptance
+- Catalog/bundle checkpoint: 228 tests, internal-beta UAT, Windows package, ZIP-runtime packaged smoke, native-host smoke, and fixture-only restart pass
 - Website verification: local verifier implemented and tested; generated artifact not run yet
 - Preview result: reviewed ChatGPT handoff prepared with hash `75cae5042832…428bae39`; website preview not run yet
 - Restart recovery: passed in packaged Electron; terminal status and final response restored from SQLite after close/reopen with zero renderer runtime errors
@@ -25,7 +31,7 @@ The desktop now resolves the user-opened existing ChatGPT conversation through c
 
 ## Safe limits
 
-No cookies, tokens, authorization headers, browser history, browser profiles, credentials, private APIs, manual clipboard, manual ChatGPT/Codex typing, or real user repository writes are permitted. A live run must use a temporary Git repository registered through the app UI.
+No cookies, tokens, authorization headers, browser history, browser profiles, credentials, private APIs, manual clipboard, manual ChatGPT/Codex typing, automatic local-file upload, or real user repository writes are permitted. A live run must use a temporary Git repository registered through the app UI.
 
 ## Next gate
 

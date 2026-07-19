@@ -36,7 +36,7 @@ TypeScript pnpm monorepo with Electron/React desktop, an MV3 ChatGPT capture/ass
 
 ## Current phase
 
-Live Vertical Slice In Progress. The accepted MVP, internal-beta fixture UAT, Windows package, packaged smoke, and non-destructive installed relay verification pass; P18-PILOT-001 is the active checkpoint after published P18-CODEX-001.
+Live Vertical Slice In Progress. The accepted MVP, internal-beta fixture UAT, Windows package, packaged smoke, rendered conversation catalog, multi-pilot workspace, and safe changed-file ZIP pass; P18-PILOT-001 remains active because authenticated live sending is separately approval-gated.
 
 ## Last known-good commit
 
@@ -56,11 +56,11 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 219 or more Vitest tests after canonical ChatGPT destination recovery, two Chromium fixture E2E tests, the 46-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires package, packaged smoke, native relay, unsigned status, and generated staging checksums.
+Expected known-good baseline: formatting, lint, strict type-check, 228 or more Vitest tests, two Chromium fixture E2E tests, the 46-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires packaging, the ZIP-runtime packaged preflight, packaged app/native-host smoke, and fixture-only packaged restart recovery. The installed-host smoke must not overwrite an existing user registration.
 
 ## Exact next task
 
-The canonical ChatGPT destination recovery fix is implemented and must be published after the required gates. It preserves `/g/.../c/...` project paths, scopes inspection/status/capture to the exact destination, migrates legacy pilots when an exact rendered path is observed, and reports redirects to home as `CHATGPT_CONVERSATION_UNAVAILABLE`. After publication, the separate live workflow remains paused at action-time user confirmation for reviewed payload `75cae5042832…428bae39`; do not click submit or infer approval from the prepared preview.
+Publish the rendered-catalog, verified Codex target tree, multi-connection pilot, and safe ZIP checkpoint after the required gates. After publication, the separate live workflow remains paused at action-time user confirmation for reviewed payload `75cae5042832…428bae39`; do not click submit, attach a ZIP, or infer approval from a prepared preview. Automatic browser file upload remains a separate unimplemented security boundary.
 
 ## Expected files to modify
 

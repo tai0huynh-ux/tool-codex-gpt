@@ -305,6 +305,9 @@ describe('assisted page operations', () => {
     expect(localTransportOperationSchema.parse({ type: 'page.inspect' })).toEqual({
       type: 'page.inspect',
     });
+    expect(localTransportOperationSchema.parse({ type: 'conversation.discover' })).toEqual({
+      type: 'conversation.discover',
+    });
     expect(
       localTransportOperationSchema.parse({
         type: 'page.inspect',

@@ -25,6 +25,15 @@ function fixtureBridge(): DesktopBridgeService {
   const execute = async (operation: LocalTransportOperation): Promise<LocalTransportResult> => {
     await Promise.resolve();
     switch (operation.type) {
+      case 'conversation.discover':
+        return {
+          type: 'conversation.discover.result',
+          catalog: {
+            conversations: [],
+            capturedAt: '2026-07-19T14:00:00.000Z',
+            truncated: false,
+          },
+        };
       case 'page.inspect':
         return {
           type: 'page.inspect.result',

@@ -1,5 +1,6 @@
+import type { ChatGptRenderedCatalog } from '@codex-context-bridge/contracts';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { PilotView, PilotViewResponse } from '../pilot-contracts';
+import type { CodexTargetCatalog, PilotView, PilotViewResponse } from '../pilot-contracts';
 import type { ProjectView } from '../project-ipc';
 
 export const SAMPLE_PILOT_OBJECTIVE = `Hãy tạo một trang web tĩnh đơn giản bằng HTML và CSS.
@@ -54,10 +55,18 @@ export function LiveProjectPilot({
 }): React.JSX.Element {
   const [items, setItems] = useState<PilotView[]>([]);
   const [selectedId, setSelectedId] = useState('');
+  const [targetProjectId, setTargetProjectId] = useState(projectId);
   const [repositoryId, setRepositoryId] = useState(repositories[0]?.id ?? '');
   const [objective, setObjective] = useState('');
   const [destinationMode, setDestinationMode] = useState<'current' | 'new' | 'existing'>('new');
   const [conversationId, setConversationId] = useState('');
+  const [conversationPath, setConversationPath] = useState('');
+  const [threadMappingId, setThreadMappingId] = useState('');
+  const [chatCatalog, setChatCatalog] = useState<ChatGptRenderedCatalog>();
+  const [codexTargets, setCodexTargets] = useState<CodexTargetCatalog>({ projects: [] });
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(() => new Set([projectId]));
+  const [threadLimits, setThreadLimits] = useState<Record<string, number>>({});
+  const [chatLimit, setChatLimit] = useState(5);
   const [transport, setTransport] = useState('Chưa kiểm tra');
   const [notice, setNotice] = useState('Chưa có dữ liệu nào được gửi.');
   const [busy, setBusy] = useState(false);
@@ -67,17 +76,32 @@ export function LiveProjectPilot({
     () => items.find((item) => item.id === selectedId) ?? items[0],
     [items, selectedId],
   );
-  const selectedRepository = repositories.find((item) => item.id === repositoryId);
+  const activeItems = useMemo(
+    () => items.filter((item) => ['chatgpt_dispatched', 'codex_running'].includes(item.status)),
+    [items],
+  );
+  const activeKey = activeItems.map((item) => `${item.id}:${item.status}`).join('|');
+  const selectedTargetProject =
+    codexTargets.projects.find((item) => item.projectId === targetProjectId) ??
+    codexTargets.projects.find((item) => item.projectId === projectId);
+  const targetRepositories = selectedTargetProject?.repositories ?? repositories;
+  const selectedRepository = targetRepositories.find((item) => item.id === repositoryId);
 
   const replace = (view: PilotView): void => {
     setItems((current) => [view, ...current.filter((item) => item.id !== view.id)]);
     setSelectedId(view.id);
   };
 
+  const merge = (view: PilotView): void => {
+    setItems((current) => current.map((item) => (item.id === view.id ? view : item)));
+  };
+
   const load = async (): Promise<void> => {
-    const [pilots, health] = await Promise.all([
-      window.contextBridgeDesktop.listPilots(projectId),
+    const [pilots, health, targets, discovered] = await Promise.all([
+      window.contextBridgeDesktop.listPilots(),
       window.contextBridgeDesktop.getTransportStatus(),
+      window.contextBridgeDesktop.listPilotCodexTargets(),
+      window.contextBridgeDesktop.discoverPilotChatGpt(),
     ]);
     if (pilots.ok) {
       setItems(pilots.value);
@@ -87,6 +111,25 @@ export function LiveProjectPilot({
     } else {
       setNotice(`${pilots.error.code}: ${pilots.error.message}`);
     }
+    if (targets.ok) {
+      setCodexTargets(targets.value);
+      const preferred =
+        targets.value.projects.find((item) => item.projectId === projectId) ??
+        targets.value.projects[0];
+      if (preferred) {
+        setTargetProjectId((current) =>
+          targets.value.projects.some((item) => item.projectId === current)
+            ? current
+            : preferred.projectId,
+        );
+        setRepositoryId((current) =>
+          preferred.repositories.some((item) => item.id === current)
+            ? current
+            : (preferred.repositories[0]?.id ?? ''),
+        );
+      }
+    }
+    if (discovered.ok) setChatCatalog(discovered.value);
     setTransport(
       health.ok
         ? `${health.value.state} / nativeMessaging ${health.value.permissionActive ? 'active' : 'inactive'}`
@@ -95,36 +138,50 @@ export function LiveProjectPilot({
   };
 
   useEffect(() => {
+    setTargetProjectId(projectId);
     setRepositoryId(repositories[0]?.id ?? '');
     void load();
   }, [projectId, repositories[0]?.id]);
 
   useEffect(() => {
-    if (!selected || !['chatgpt_dispatched', 'codex_running'].includes(selected.status)) return;
+    const timer = window.setInterval(() => {
+      void Promise.all([
+        window.contextBridgeDesktop.discoverPilotChatGpt(),
+        window.contextBridgeDesktop.listPilotCodexTargets(),
+      ]).then(([discovered, targets]) => {
+        if (discovered.ok) setChatCatalog(discovered.value);
+        if (targets.ok) setCodexTargets(targets.value);
+      });
+    }, 15_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (activeItems.length === 0) return;
     const timer = window.setInterval(() => {
       void (async () => {
-        const response =
-          selected.status === 'chatgpt_dispatched'
-            ? await window.contextBridgeDesktop.capturePilotChatGpt(selected.id)
-            : await window.contextBridgeDesktop.refreshPilot(selected.id);
-        if (response.ok) {
-          replace(response.value);
-          setNotice(
-            response.value.status === 'codex_ready'
-              ? 'Structured response đã được xác thực. Hãy duyệt Codex prompt.'
-              : response.value.status === 'codex_completed'
-                ? 'Codex đã hoàn tất. Kết quả đã được lưu để khôi phục sau restart.'
-                : 'Đang chờ tiến trình hoàn tất.',
-          );
-        } else if (
-          !['CHATGPT_NOT_READY', 'CHATGPT_CONFIRMATION_REQUIRED'].includes(response.error.code)
-        ) {
-          setNotice(errorText(response));
+        for (const item of activeItems) {
+          const response =
+            item.status === 'chatgpt_dispatched'
+              ? await window.contextBridgeDesktop.capturePilotChatGpt(item.id)
+              : await window.contextBridgeDesktop.refreshPilot(item.id);
+          if (response.ok) {
+            merge(response.value);
+            if (response.value.status === 'codex_ready') {
+              setNotice('Structured response đã được xác thực. Hãy duyệt Codex prompt.');
+            } else if (response.value.status === 'codex_completed') {
+              setNotice('Codex đã hoàn tất. Báo cáo và ZIP đã được lưu nếu vượt kiểm tra an toàn.');
+            }
+          } else if (
+            !['CHATGPT_NOT_READY', 'CHATGPT_CONFIRMATION_REQUIRED'].includes(response.error.code)
+          ) {
+            setNotice(errorText(response));
+          }
         }
       })();
     }, 2_000);
     return () => window.clearInterval(timer);
-  }, [selected?.id, selected?.status]);
+  }, [activeKey]);
 
   useEffect(() => {
     if (selected?.destination.mode !== 'existing') return;
@@ -171,22 +228,63 @@ export function LiveProjectPilot({
   };
 
   const create = async (): Promise<void> => {
-    if (!repositoryId || !objective.trim()) return;
+    if (!targetProjectId || !repositoryId || !objective.trim()) return;
     await run(
       () =>
         window.contextBridgeDesktop.createPilot({
-          projectId,
+          projectId: targetProjectId,
           repositoryId,
           objective,
           destination:
             destinationMode === 'current'
               ? { mode: 'current' }
               : destinationMode === 'existing'
-                ? { mode: 'existing', conversationId: conversationId.trim() }
+                ? {
+                    mode: 'existing',
+                    conversationId: conversationId.trim(),
+                    ...(conversationPath ? { conversationPath } : {}),
+                  }
                 : { mode: 'new' },
+          codexDestination: threadMappingId
+            ? { mode: 'existing-thread', threadMappingId }
+            : { mode: 'new-thread', repositoryId },
         }),
       'Pilot đã được tạo trong SQLite. Chưa gửi ChatGPT hoặc Codex.',
     );
+  };
+
+  const selectConversation = (
+    conversation: ChatGptRenderedCatalog['conversations'][number],
+  ): void => {
+    setDestinationMode('existing');
+    setConversationId(conversation.conversationId);
+    setConversationPath(conversation.conversationPath);
+  };
+
+  const selectCodexProject = (selectedProjectId: string): void => {
+    const target = codexTargets.projects.find((item) => item.projectId === selectedProjectId);
+    if (!target) return;
+    setTargetProjectId(target.projectId);
+    setRepositoryId(target.repositories[0]?.id ?? '');
+    setThreadMappingId('');
+    setExpandedProjects((current) => {
+      const next = new Set(current);
+      if (next.has(target.projectId)) next.delete(target.projectId);
+      else next.add(target.projectId);
+      return next;
+    });
+  };
+
+  const selectCodexThread = (selectedProjectId: string, mappingId: string): void => {
+    const target = codexTargets.projects.find((item) => item.projectId === selectedProjectId);
+    const thread = target?.threads.find((item) => item.mappingId === mappingId);
+    const repository = target?.repositories.find(
+      (item) => item.fingerprint === thread?.repositoryFingerprint,
+    );
+    if (!target || !thread || !repository) return;
+    setTargetProjectId(target.projectId);
+    setRepositoryId(repository.id);
+    setThreadMappingId(thread.mappingId);
   };
 
   const exportHistory = async (): Promise<void> => {
@@ -228,21 +326,76 @@ export function LiveProjectPilot({
           <dl className="pilot-facts">
             <div>
               <dt>Project</dt>
-              <dd>{projectName}</dd>
+              <dd>{selectedTargetProject?.projectName ?? projectName}</dd>
             </div>
             <div>
               <dt>Repository</dt>
               <dd>{selectedRepository?.branch ?? 'branch chưa ghi nhận'}</dd>
             </div>
           </dl>
+          <div className="pilot-target-browser" aria-label="Danh sách dự án và đoạn chat Codex">
+            <div className="pilot-card-heading">
+              <span>CODEX TARGET</span>
+              <strong>{threadMappingId ? 'Tiếp tục đoạn chat' : 'Đoạn chat mới'}</strong>
+            </div>
+            {codexTargets.projects.map((target) => {
+              const expanded = expandedProjects.has(target.projectId);
+              const limit = threadLimits[target.projectId] ?? 5;
+              return (
+                <div className="pilot-target-project" key={target.projectId}>
+                  <button
+                    type="button"
+                    className={target.projectId === targetProjectId ? 'active' : ''}
+                    onClick={() => selectCodexProject(target.projectId)}
+                  >
+                    <span>{expanded ? '−' : '+'}</span>
+                    <strong>{target.projectName}</strong>
+                    <small>{target.threads.length} đoạn chat</small>
+                  </button>
+                  {expanded && (
+                    <div className="pilot-target-threads">
+                      {target.threads.slice(0, limit).map((thread) => (
+                        <button
+                          type="button"
+                          className={thread.mappingId === threadMappingId ? 'active' : ''}
+                          key={thread.mappingId}
+                          onClick={() => selectCodexThread(target.projectId, thread.mappingId)}
+                        >
+                          <span>{thread.externalThreadId.slice(0, 18)}</span>
+                          <small>{new Date(thread.updatedAt).toLocaleString('vi-VN')}</small>
+                        </button>
+                      ))}
+                      {target.threads.length > limit && (
+                        <button
+                          type="button"
+                          className="show-more"
+                          onClick={() =>
+                            setThreadLimits((current) => ({
+                              ...current,
+                              [target.projectId]: limit + 5,
+                            }))
+                          }
+                        >
+                          Hiện thêm 5 đoạn chat
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
           <label className="pilot-field">
             <span>Repository đích</span>
             <select
               aria-label="Repository đích cho Live Project Pilot"
               value={repositoryId}
-              onChange={(event) => setRepositoryId(event.target.value)}
+              onChange={(event) => {
+                setRepositoryId(event.target.value);
+                setThreadMappingId('');
+              }}
             >
-              {repositories.map((repository) => (
+              {targetRepositories.map((repository) => (
                 <option key={repository.id} value={repository.id}>
                   {repository.canonicalRoot}
                 </option>
@@ -267,13 +420,45 @@ export function LiveProjectPilot({
           </div>
           <fieldset className="pilot-destination">
             <legend>ChatGPT destination</legend>
+            <div className="pilot-chat-catalog" aria-label="Danh sách đoạn chat ChatGPT đã render">
+              <div className="pilot-card-heading">
+                <span>CHATGPT SIDEBAR</span>
+                <strong>{chatCatalog?.conversations.length ?? 0} đoạn chat nhận diện được</strong>
+              </div>
+              {chatCatalog?.conversations.slice(0, chatLimit).map((conversation) => (
+                <button
+                  type="button"
+                  className={conversation.conversationId === conversationId ? 'active' : ''}
+                  key={conversation.conversationPath}
+                  onClick={() => selectConversation(conversation)}
+                >
+                  <strong>{conversation.title}</strong>
+                  <small>{conversation.projectName ?? 'Chat độc lập'}</small>
+                </button>
+              ))}
+              {(chatCatalog?.conversations.length ?? 0) > chatLimit && (
+                <button
+                  type="button"
+                  className="show-more"
+                  onClick={() => setChatLimit(chatLimit + 5)}
+                >
+                  Hiện thêm 5 đoạn chat
+                </button>
+              )}
+              {chatCatalog?.truncated && (
+                <small>Sidebar có hơn 200 mục; hãy thu gọn hoặc tìm đúng dự án trên ChatGPT.</small>
+              )}
+            </div>
             <label>
               <input
                 aria-label="Dùng conversation ChatGPT đang mở"
                 type="radio"
                 name="pilot-destination"
                 checked={destinationMode === 'current'}
-                onChange={() => setDestinationMode('current')}
+                onChange={() => {
+                  setDestinationMode('current');
+                  setConversationPath('');
+                }}
               />
               Conversation đang mở
             </label>
@@ -282,7 +467,10 @@ export function LiveProjectPilot({
                 type="radio"
                 name="pilot-destination"
                 checked={destinationMode === 'new'}
-                onChange={() => setDestinationMode('new')}
+                onChange={() => {
+                  setDestinationMode('new');
+                  setConversationPath('');
+                }}
               />
               New chat an toàn
             </label>
@@ -299,7 +487,10 @@ export function LiveProjectPilot({
               <input
                 aria-label="Conversation ID ChatGPT"
                 value={conversationId}
-                onChange={(event) => setConversationId(event.target.value)}
+                onChange={(event) => {
+                  setConversationId(event.target.value);
+                  setConversationPath('');
+                }}
                 placeholder="Conversation ID"
               />
             )}
@@ -532,6 +723,46 @@ export function LiveProjectPilot({
                       <span>Final response</span>
                       <strong>{selected.finalResponse ?? 'Đang chờ…'}</strong>
                     </p>
+                    {selected.codexBundle && (
+                      <div className="pilot-bundle">
+                        <p>
+                          <span>ZIP an toàn</span>
+                          <code>{selected.codexBundle.zipPath}</code>
+                        </p>
+                        <p>
+                          <span>File thay đổi / đã đóng gói</span>
+                          <b>
+                            {selected.codexBundle.changedFiles.length} /{' '}
+                            {selected.codexBundle.includedFiles.length}
+                          </b>
+                        </p>
+                        <p>
+                          <span>File bị chặn</span>
+                          <b>{selected.codexBundle.blockedFiles.length}</b>
+                        </p>
+                        <p>
+                          <span>SHA-256</span>
+                          <code>{shortHash(selected.codexBundle.sha256)}</code>
+                        </p>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() =>
+                            void run(
+                              () => window.contextBridgeDesktop.revealPilotCodexBundle(selected.id),
+                              'Đã mở vị trí ZIP để bạn kiểm tra và đính kèm vào ChatGPT.',
+                            )
+                          }
+                        >
+                          Mở vị trí ZIP
+                        </button>
+                      </div>
+                    )}
+                    {selected.codexBundleErrorCode && (
+                      <p className="pilot-empty">
+                        Không thể tạo ZIP: {selected.codexBundleErrorCode}
+                      </p>
+                    )}
                     <button
                       type="button"
                       disabled={busy}

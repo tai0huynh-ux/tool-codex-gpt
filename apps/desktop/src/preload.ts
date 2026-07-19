@@ -5,6 +5,8 @@ import {
   desktopIpcChannels,
   projectIpcChannels,
   pilotIpcChannels,
+  chatGptDiscoveryResponseSchema,
+  codexTargetCatalogResponseSchema,
   chatHistoryExportResponseSchema,
   pilotListResponseSchema,
   pilotViewResponseSchema,
@@ -18,6 +20,8 @@ import {
   workflowViewResponseSchema,
   type ChooseRootResponse,
   type ChatHistoryExportResponse,
+  type ChatGptDiscoveryResponse,
+  type CodexTargetCatalogResponse,
   type ProjectListResponse,
   type ProjectViewResponse,
   type PilotCreateInput,
@@ -47,6 +51,8 @@ export interface ContextBridgeDesktopApi {
   startWorkflow(projectId: string): Promise<WorkflowViewResponse>;
   cancelWorkflow(workflowRunId: string): Promise<WorkflowViewResponse>;
   listPilots(projectId?: string): Promise<PilotListResponse>;
+  discoverPilotChatGpt(): Promise<ChatGptDiscoveryResponse>;
+  listPilotCodexTargets(): Promise<CodexTargetCatalogResponse>;
   createPilot(input: PilotCreateInput): Promise<PilotViewResponse>;
   inspectPilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
   preparePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
@@ -55,6 +61,7 @@ export interface ContextBridgeDesktopApi {
   syncPilotChatHistory(pilotId: string): Promise<PilotViewResponse>;
   exportPilotChatHistory(pilotId: string): Promise<ChatHistoryExportResponse>;
   approvePilotCodex(pilotId: string): Promise<PilotViewResponse>;
+  revealPilotCodexBundle(pilotId: string): Promise<PilotViewResponse>;
   refreshPilot(pilotId: string): Promise<PilotViewResponse>;
   verifyPilotWebsite(pilotId: string): Promise<PilotViewResponse>;
   openPilotPreview(pilotId: string): Promise<PilotViewResponse>;
@@ -122,6 +129,14 @@ const api: ContextBridgeDesktopApi = {
         ...(projectId ? { projectId } : {}),
       })) as unknown,
     ),
+  discoverPilotChatGpt: async () =>
+    chatGptDiscoveryResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.discoverChatGpt)) as unknown,
+    ),
+  listPilotCodexTargets: async () =>
+    codexTargetCatalogResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.listCodexTargets)) as unknown,
+    ),
   createPilot: async (input) =>
     pilotViewResponseSchema.parse(
       (await ipcRenderer.invoke(pilotIpcChannels.create, input)) as unknown,
@@ -165,6 +180,10 @@ const api: ContextBridgeDesktopApi = {
   approvePilotCodex: async (pilotId) =>
     pilotViewResponseSchema.parse(
       (await ipcRenderer.invoke(pilotIpcChannels.approveCodex, { pilotId })) as unknown,
+    ),
+  revealPilotCodexBundle: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.revealCodexBundle, { pilotId })) as unknown,
     ),
 };
 

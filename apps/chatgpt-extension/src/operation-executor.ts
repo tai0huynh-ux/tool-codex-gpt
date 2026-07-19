@@ -83,6 +83,8 @@ function selectTab(tabs: BrowserTab[], destination?: ChatGptDestination): Browse
 
 function messageFor(operation: LocalTransportOperation): unknown {
   switch (operation.type) {
+    case 'conversation.discover':
+      return { type: 'discover-conversations' };
     case 'conversation.capture':
       return { type: 'capture-conversation' };
     case 'composer.insert':
@@ -125,6 +127,11 @@ function messageFor(operation: LocalTransportOperation): unknown {
 
 function resultFor(operation: LocalTransportOperation, response: unknown): LocalTransportResult {
   switch (operation.type) {
+    case 'conversation.discover':
+      return localTransportResultSchema.parse({
+        type: 'conversation.discover.result',
+        catalog: response,
+      });
     case 'conversation.capture':
       return localTransportResultSchema.parse({
         type: 'conversation.capture.result',

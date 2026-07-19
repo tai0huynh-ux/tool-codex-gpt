@@ -13,6 +13,10 @@ The extension has only `storage`, `activeTab`, `scripting`, and the explicitly a
 cookies, tokens, authorization headers, browser history, passwords, or unpublished endpoints. DOM selectors
 are isolated because they are inherently unstable.
 
+Conversation discovery is limited to at most 200 canonical conversation links currently rendered in the
+user-opened ChatGPT sidebar. It preserves project routes, deduplicates paths, and reports truncation. It does
+not enumerate the account through private APIs, browser history, profiles, storage, or authentication data.
+
 Assisted composer actions require an effect ID and approved payload hash. They fill but never submit, validate the active conversation destination, and clear text only when the current composer hash still matches. Clipboard fallback is explicit rather than automatic. A manual send is acknowledged only from rendered conversation capture after streaming stops.
 
 Existing-conversation routing binds the conversation ID to the canonical rendered pathname when available, including ChatGPT Project paths. Inspect, streaming, capture, reload, submit, and response checks target that exact destination. A redirect to the home/new-chat page fails closed as `CHATGPT_CONVERSATION_UNAVAILABLE`; Windows screen state, focus, and window titles are never accepted as routing evidence.
@@ -25,6 +29,12 @@ Ingestion resolves both repository roots and candidate files to canonical paths,
 symlink resolution, blocks traversal, applies exclusions and size limits, scans content for secrets, hashes
 with SHA-256, deduplicates, then writes an audit event. `.env`, keys, credentials, generated output, Git
 metadata, and dependencies are excluded by default.
+
+Codex result bundles capture a Git HEAD and dirty-file fingerprint baseline before the approved run. After
+completion they compare committed and working-tree changes, validate every candidate with the same canonical
+path, symlink, exclusion, size, binary, and secret checks, and write an audited ZIP containing the complete
+Codex report, a manifest, and only accepted files. Deleted and blocked files remain manifest-only. The app may
+reveal the ZIP for explicit review and attachment; it does not silently upload a local file into ChatGPT.
 
 ## Handoffs and routing
 

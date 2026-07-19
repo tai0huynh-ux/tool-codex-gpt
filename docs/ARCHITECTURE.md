@@ -25,6 +25,17 @@ runner, while the mock adapter remains available only for deterministic fixtures
 - `packages/codex-adapter`: typed ordered run lifecycle boundary, a production bundled-binary JSONL runner, and an explicitly fixture-only mock; replay, terminal guards, cancellation, failure redaction, isolated runtime cleanup, and the explicit repository-bound `workspace_write_no_network` profile are contract-tested.
 - `packages/local-transport`: authenticated Native Messaging protocol guard, bounded stdio framing, replay/rate controls, and reconnect policy.
 
+The Live Project Pilot workspace treats each persisted pilot as an independent connection tab. A bounded
+rendered-DOM catalog supplies ChatGPT conversation choices, while the main-process project registry supplies
+Codex projects, repositories, and verified thread mappings. Selecting a project creates a new Codex thread;
+selecting a persisted mapping resumes only that exact thread and repository fingerprint. Active pilots keep
+their own status, approvals, destinations, recovery state, and polling lifecycle.
+
+Before an approved write-capable Codex dispatch, the main process records a Git change baseline outside the
+renderer projection. Terminal completion produces an audited ZIP in app data by comparing the baseline with
+new commits and working-tree state, then reusing the file safety boundary. The renderer receives only bundle
+metadata and a reveal action; browser upload remains a separate explicit boundary.
+
 ## Local transport boundary
 
 ADR-0001 selects Native Messaging for the production extension boundary. The browser-owned native port is protected by exact `allowed_origins`; the packaged native host authenticates desktop-originated operations over a per-user named pipe with an ephemeral application capability before forwarding a capability-free request into the extension. Requests are versioned, operation-specific, short-lived, replay-protected, size-bounded, rate-limited, and audited without payload or capability logging.

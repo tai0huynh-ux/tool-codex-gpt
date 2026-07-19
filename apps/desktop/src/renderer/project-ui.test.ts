@@ -73,6 +73,11 @@ describe('project mapping renderer', () => {
       startWorkflow: vi.fn(),
       cancelWorkflow: vi.fn(),
       listPilots: vi.fn().mockResolvedValue({ ok: true, value: [] }),
+      discoverPilotChatGpt: vi.fn().mockResolvedValue({
+        ok: true,
+        value: { conversations: [], capturedAt: timestamp, truncated: false },
+      }),
+      listPilotCodexTargets: vi.fn().mockResolvedValue({ ok: true, value: { projects: [] } }),
       createPilot: vi.fn(),
       refreshPilot: vi.fn(),
       verifyPilotWebsite: vi.fn(),
@@ -84,6 +89,7 @@ describe('project mapping renderer', () => {
       syncPilotChatHistory: vi.fn(),
       exportPilotChatHistory: vi.fn(),
       approvePilotCodex: vi.fn(),
+      revealPilotCodexBundle: vi.fn(),
     };
     Object.defineProperty(window, 'contextBridgeDesktop', { configurable: true, value: api });
     await act(async () => {
