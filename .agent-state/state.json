@@ -63,15 +63,16 @@
     "P18 ChatGPT submit targeted regression set passed 46 tests, including concurrent effect idempotency and deterministic rejection retry",
     "P18 Codex profile targeted adapter and response-router tests passed 31 cases, including root/fingerprint/profile fail-closed checks",
     "P18 pilot checkpoint passed 191 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, all workspace builds, shared strict contracts, website verifier, sandboxed preview boundary, and the full project-pilot fixture",
-    "P18 packaged restart checkpoint passed 195 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, 46-test internal-beta UAT, live read-only Codex spike, all workspace builds, Windows packaging, packaged smoke, and fixture-only packaged close/reopen recovery with zero renderer runtime errors"
+    "P18 packaged restart checkpoint passed 195 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, 46-test internal-beta UAT, live read-only Codex spike, all workspace builds, Windows packaging, packaged smoke, and fixture-only packaged close/reopen recovery with zero renderer runtime errors",
+    "P18 current-conversation checkpoint passed 197 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, Windows packaging, packaged smoke, packaged restart acceptance, installed ChatGPT no-submit readiness, and preparation of an unsent reviewed live payload"
   ],
   "knownFailures": [],
   "activeBlockers": [],
   "nextActions": [
-    "Confirm a safe user-opened ChatGPT destination with an empty composer is available for authenticated pilot acceptance.",
-    "If available, run one bounded temporary-repository ChatGPT to Codex live flow with explicit approvals and redacted evidence.",
-    "If unavailable, record the exact external blocker without substituting fixture or packaged restart evidence."
+    "Obtain action-time user confirmation for reviewed ChatGPT payload 75cae5042832…428bae39.",
+    "After confirmation, submit exactly once and require rendered acknowledgement plus a valid structured response.",
+    "Stop again for the separate repository-bound Codex workspace-write approval before any file changes."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-19T14:36:00.000+07:00"
+  "updatedAt": "2026-07-19T14:56:00.000+07:00"
 }

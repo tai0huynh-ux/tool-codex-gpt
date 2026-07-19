@@ -45,13 +45,18 @@ export const pilotDestinationSchema = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('existing'), conversationId: pilotIdSchema }).strict(),
 ]);
 
+export const pilotCreateDestinationSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('current') }).strict(),
+  ...pilotDestinationSchema.options,
+]);
+
 export const pilotListInputSchema = z.object({ projectId: pilotIdSchema.optional() }).strict();
 export const pilotCreateInputSchema = z
   .object({
     projectId: pilotIdSchema,
     repositoryId: pilotIdSchema,
     objective: z.string().trim().min(1).max(20_000),
-    destination: pilotDestinationSchema,
+    destination: pilotCreateDestinationSchema,
   })
   .strict();
 export const pilotIdInputSchema = z.object({ pilotId: pilotIdSchema }).strict();

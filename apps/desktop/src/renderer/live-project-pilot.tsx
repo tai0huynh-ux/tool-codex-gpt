@@ -52,7 +52,7 @@ export function LiveProjectPilot({
   const [selectedId, setSelectedId] = useState('');
   const [repositoryId, setRepositoryId] = useState(repositories[0]?.id ?? '');
   const [objective, setObjective] = useState('');
-  const [destinationMode, setDestinationMode] = useState<'new' | 'existing'>('new');
+  const [destinationMode, setDestinationMode] = useState<'current' | 'new' | 'existing'>('new');
   const [conversationId, setConversationId] = useState('');
   const [transport, setTransport] = useState('Chưa kiểm tra');
   const [notice, setNotice] = useState('Chưa có dữ liệu nào được gửi.');
@@ -145,9 +145,11 @@ export function LiveProjectPilot({
           repositoryId,
           objective,
           destination:
-            destinationMode === 'existing'
-              ? { mode: 'existing', conversationId: conversationId.trim() }
-              : { mode: 'new' },
+            destinationMode === 'current'
+              ? { mode: 'current' }
+              : destinationMode === 'existing'
+                ? { mode: 'existing', conversationId: conversationId.trim() }
+                : { mode: 'new' },
         }),
       'Pilot đã được tạo trong SQLite. Chưa gửi ChatGPT hoặc Codex.',
     );
@@ -215,6 +217,16 @@ export function LiveProjectPilot({
           </div>
           <fieldset className="pilot-destination">
             <legend>ChatGPT destination</legend>
+            <label>
+              <input
+                aria-label="Dùng conversation ChatGPT đang mở"
+                type="radio"
+                name="pilot-destination"
+                checked={destinationMode === 'current'}
+                onChange={() => setDestinationMode('current')}
+              />
+              Conversation đang mở
+            </label>
             <label>
               <input
                 type="radio"

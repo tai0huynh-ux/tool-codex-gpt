@@ -56,11 +56,11 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected known-good baseline: formatting, lint, strict type-check, 195 or more Vitest tests after the packaged restart checkpoint, two Chromium fixture E2E tests, the 46-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires package, packaged smoke, native relay, unsigned status, and generated staging checksums.
+Expected known-good baseline: formatting, lint, strict type-check, 197 or more Vitest tests after current-conversation selection, two Chromium fixture E2E tests, the 46-test internal-beta UAT selection, and all workspace builds pass. Windows release acceptance additionally requires package, packaged smoke, native relay, unsigned status, and generated staging checksums.
 
 ## Exact next task
 
-P18-CODEX-001 is published at `c3ec3a7`; pilot implementation and fixture checkpoints are published at `13ddbd4` and `960e566`. Packaged restart acceptance now passes against isolated app data; next attempt one bounded authenticated live pilot only if a safe user-opened ChatGPT destination is available. Do not claim a live ChatGPT submit, structured response, writable Codex run, or generated website from fixture-only packaged restart evidence. The new restart evidence is under `artifacts/pilot-restart-acceptance/2026-07-19T07-34-45-337Z/`.
+P18-CODEX-001 is published at `c3ec3a7`; pilot implementation, fixture, and packaged restart checkpoints are published through `849812b`. The installed ChatGPT no-submit smoke now confirms a safe existing conversation with an empty composer, and a reviewed live payload is persisted at hash `75cae5042832…428bae39`. The exact next action is action-time user confirmation before the representational ChatGPT submit. Do not click submit or infer approval from the prepared preview.
 
 ## Expected files to modify
 
@@ -106,6 +106,7 @@ pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=p
 - `workspace_write_no_network` is not a global adapter mode: bind it into the approval destination, require the registry validator, canonical non-symlink root, exact project/fingerprint, and pass no additional writable roots.
 - Packaged native executables resolved through dependencies may point inside `app.asar`; production execution must translate them to the matching `app.asar.unpacked` path and packaging tests must prove the pinned platform package is present.
 - Adapter run handles are process-local. Persisted terminal pilot views must restore from SQLite after restart instead of querying a newly constructed adapter for an old run ID.
+- Current-conversation selection must resolve through the validated main-process Native Messaging boundary. Never infer a conversation ID from renderer text, browser profile data, history, or an unverified URL.
 - Keep mock evidence labeled fixture-only; rerun the separate live Codex spike before claiming production acceptance in a new environment.
 
 ## Blockers and safe alternatives

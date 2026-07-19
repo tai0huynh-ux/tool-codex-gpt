@@ -18,6 +18,7 @@ import {
   type ChooseRootResponse,
   type ProjectListResponse,
   type ProjectViewResponse,
+  type PilotCreateInput,
   type PilotListResponse,
   type PilotViewResponse,
   type RepositoryInput,
@@ -44,12 +45,7 @@ export interface ContextBridgeDesktopApi {
   startWorkflow(projectId: string): Promise<WorkflowViewResponse>;
   cancelWorkflow(workflowRunId: string): Promise<WorkflowViewResponse>;
   listPilots(projectId?: string): Promise<PilotListResponse>;
-  createPilot(input: {
-    projectId: string;
-    repositoryId: string;
-    objective: string;
-    destination: { mode: 'new' } | { mode: 'existing'; conversationId: string };
-  }): Promise<PilotViewResponse>;
+  createPilot(input: PilotCreateInput): Promise<PilotViewResponse>;
   inspectPilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
   preparePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
   approvePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;

@@ -2,23 +2,23 @@
 
 ## Current status
 
-`PACKAGED RESTART ACCEPTED - LIVE EXECUTION NOT CLAIMED`
+`LIVE DESTINATION READY - SUBMIT NOT YET APPROVED`
 
-The desktop orchestration, explicit approval controls, repository-bound Codex profile, local website verifier, and sandboxed preview boundary are published. A fixture-only packaged restart now proves that a terminal Codex report survives a full application close/reopen without relying on an adapter-local run handle. Authenticated ChatGPT and writable Codex execution remain separately gated.
+The desktop now resolves the user-opened existing ChatGPT conversation through connected Native Messaging without requiring manual ID entry. A reviewed payload is persisted for a temporary Git repository, but the representational ChatGPT submit remains blocked until action-time user confirmation.
 
 ## Current evidence
 
-- Tested commit: current packaged restart checkpoint; resolve after publication with `git log -1 --grep "fix(pilot): complete packaged restart recovery"`
-- Project ID: `09b7dc55` in the redacted screenshot; full temporary ID is not published
-- Temporary repository: isolated temporary Git repository removed after acceptance
-- ChatGPT destination type: contract supports new or exact existing conversation
-- ChatGPT message acknowledgement: not run yet
+- Tested baseline: `849812b`; current-conversation changes are awaiting publication
+- Project ID: temporary live-pilot project persisted locally; full identifier is not published
+- Temporary repository: isolated temporary Git repository under the Windows temporary directory
+- ChatGPT destination type: exact existing conversation resolved through Native Messaging
+- ChatGPT message acknowledgement: not run; submit has not been approved
 - Structured response validation: covered by existing response-router tests; live receipt not run
 - Codex adapter: production `SdkCodexAdapter`, `workspace_write_no_network` profile
 - Codex run ID: fixture-only persisted missing-handle marker; no production Codex turn was executed
 - Changed files: none in the temporary repository during restart acceptance
 - Website verification: local verifier implemented and tested; generated artifact not run yet
-- Preview result: sandboxed BrowserWindow implemented; packaged preview not run yet
+- Preview result: reviewed ChatGPT handoff prepared with hash `75cae5042832…428bae39`; website preview not run yet
 - Restart recovery: passed in packaged Electron; terminal status and final response restored from SQLite after close/reopen with zero renderer runtime errors
 - Duplicate prevention: existing workflow/effect/receipt guards plus pilot IPC tests
 - No-outside-app interaction: implementation keeps sends behind in-app explicit approvals; acceptance not run yet
@@ -29,4 +29,4 @@ No cookies, tokens, authorization headers, browser history, browser profiles, cr
 
 ## Next gate
 
-Attempt one bounded authenticated live run only if the user has a safe open ChatGPT destination with an empty composer. If that external condition is unavailable, report `LIVE PROJECT PILOT PACKAGED RESTART ACCEPTED - LIVE EXECUTION BLOCKED` and record the exact condition instead of using fixture evidence as a live claim.
+Request action-time user confirmation for the reviewed payload hash `75cae5042832…428bae39`. After confirmation, submit exactly once and require rendered acknowledgement plus a valid structured response before preparing the separate Codex approval.

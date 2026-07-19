@@ -164,4 +164,24 @@ describe('Live Project Pilot renderer', () => {
     });
     expect(container.textContent).toContain('Pilot đã được tạo trong SQLite');
   });
+
+  it('can bind a new pilot to the currently open ChatGPT conversation', async () => {
+    const current = container.querySelector(
+      'input[aria-label="Dùng conversation ChatGPT đang mở"]',
+    );
+    if (!(current instanceof HTMLInputElement)) throw new Error('Current conversation not found.');
+    act(() => current.click());
+    act(() => button(container, 'Dùng yêu cầu mẫu').click());
+    await act(async () => {
+      button(container, 'Tạo Live Project Pilot').click();
+      await Promise.resolve();
+    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.createPilot).toHaveBeenLastCalledWith({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: SAMPLE_PILOT_OBJECTIVE,
+      destination: { mode: 'current' },
+    });
+  });
 });

@@ -194,6 +194,7 @@ export {
   pilotIpcChannels,
   pilotListResponseSchema,
   pilotViewResponseSchema,
+  type PilotCreateInput,
   type PilotListResponse,
   type PilotView,
   type PilotViewResponse,

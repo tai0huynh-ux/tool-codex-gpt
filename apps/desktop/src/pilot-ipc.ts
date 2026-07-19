@@ -245,12 +245,35 @@ export function createPilotDesktopService(input: {
         .filter((view) => !projectId || view.projectId === projectId);
       return Promise.all(views.map((view) => refresh(view)));
     },
-    create: ({ projectId, repositoryId, objective, destination }) => {
+    create: async ({ projectId, repositoryId, objective, destination }) => {
       const project = input.projects.get(projectId);
       const repository = input.projects.getRepository(repositoryId);
       if (!project || project.archivedAt) throw new Error('PROJECT_NOT_FOUND');
       if (repository?.projectId !== projectId || repository.archivedAt) {
         throw new Error('REPOSITORY_NOT_FOUND');
+      }
+      let resolvedDestination: PilotView['destination'];
+      let chatGptInspection: PilotView['chatGptInspection'];
+      if (destination.mode === 'current') {
+        const transport = await input.bridge.getStatus();
+        if (transport.state !== 'connected') throw new Error('TRANSPORT_DISCONNECTED');
+        const inspection = await chatGpt.inspect();
+        const streaming = await chatGpt.isStreaming();
+        if (inspection.page.mode !== 'existing') throw new Error('CHATGPT_NOT_READY');
+        resolvedDestination = {
+          mode: 'existing',
+          conversationId: inspection.page.conversationId,
+        };
+        chatGptInspection = {
+          pageMode: inspection.page.mode,
+          conversationId: inspection.page.conversationId,
+          composerAvailable: inspection.composer.available,
+          composerReadOnly: inspection.composer.readOnly,
+          hasDraft: Boolean(inspection.composer.textHash),
+          streaming,
+        };
+      } else {
+        resolvedDestination = destination;
       }
       const id = randomUUID();
       const workflow = input.workflows.create({
@@ -274,21 +297,20 @@ export function createPilotDesktopService(input: {
         actor: 'pilot.service',
       });
       const createdAt = now();
-      return Promise.resolve(
-        save({
-          id,
-          projectId,
-          repositoryId,
-          repositoryRoot: repository.canonicalRoot,
-          repositoryFingerprint: repository.fingerprint,
-          objective: objective.trim(),
-          destination,
-          workflowRunId: workflow.id,
-          status: 'draft',
-          createdAt,
-          updatedAt: createdAt,
-        }),
-      );
+      return save({
+        id,
+        projectId,
+        repositoryId,
+        repositoryRoot: repository.canonicalRoot,
+        repositoryFingerprint: repository.fingerprint,
+        objective: objective.trim(),
+        destination: resolvedDestination,
+        workflowRunId: workflow.id,
+        status: 'draft',
+        ...(chatGptInspection ? { chatGptInspection } : {}),
+        createdAt,
+        updatedAt: createdAt,
+      });
     },
     refresh: async (pilotId) => refresh(get(pilotId)),
     inspectChatGpt: async (pilotId) => {

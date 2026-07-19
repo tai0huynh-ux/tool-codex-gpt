@@ -1345,3 +1345,25 @@ The acceptance used temporary app data and a temporary Git repository, did not c
 ### Next action
 
 Confirm whether a safe user-opened authenticated ChatGPT destination with an empty composer is available. If it is, run one bounded temporary-repository live pilot with explicit approvals; otherwise record the external blocker without substituting fixture evidence.
+
+## 2026-07-19 14:56 +07:00 - P18-PILOT-001 current-conversation checkpoint
+
+### Goal
+
+Remove manual ChatGPT conversation-ID entry from the live pilot while preserving exact destination identity and the explicit approval boundary.
+
+### Changes
+
+Added a create-only `current` destination mode. The main process now requires connected Native Messaging, inspects the user-opened page, accepts only an identified existing conversation, records composer/streaming state, and persists the resolved exact existing-thread destination. The renderer exposes `Conversation đang mở`; persisted pilot views continue to allow only `new` or exact `existing` destinations.
+
+### Verification
+
+Targeted pilot IPC/UI tests passed 9 cases. `pnpm.cmd run verify` passed formatting, lint, strict type-check, 197 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, and all workspace builds. Windows packaging, packaged smoke, and packaged restart acceptance passed. The installed ChatGPT no-submit smoke returned `health: ready`, `pageMode: existing`, two hashed captured messages, `composerSent: false`, and exact composer cleanup. A reviewed handoff was prepared for a temporary repository with payload hash `75cae5042832…428bae39`.
+
+### Security and limitations
+
+No browser profile, cookies, tokens, authorization headers, history, credentials, or private API was read. Conversation identity crossed only the validated Native Messaging/main-process boundary. The prepared payload was not submitted; action-time confirmation is still mandatory before representational communication to ChatGPT.
+
+### Next action
+
+After publication, ask the user to confirm sending reviewed payload `75cae5042832…428bae39`. Submit exactly once only after confirmation, wait for rendered acknowledgement and a schema-valid structured response, then stop again for the separate Codex workspace-write approval.

@@ -191,6 +191,67 @@ describe('pilot IPC boundary', () => {
 });
 
 describe('pilot desktop persistence', () => {
+  it('resolves the current open ChatGPT conversation before persisting the pilot', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-19T08:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, {
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const codex = new FixtureCodexAdapter();
+    const currentBridge: DesktopBridgeService = {
+      ...bridge,
+      execute: (operation) => {
+        if (operation.type === 'page.inspect') {
+          return Promise.resolve({
+            type: 'page.inspect.result',
+            inspection: {
+              page: { mode: 'existing', conversationId: 'conversation-current' },
+              composer: { available: true, readOnly: false },
+            },
+          });
+        }
+        if (operation.type === 'page.status') {
+          return Promise.resolve({
+            type: 'page.status.result',
+            streaming: false,
+            structuredResponse: {
+              ok: false,
+              error: { code: 'MARKER_NOT_FOUND', message: 'Not found.' },
+            },
+          });
+        }
+        return Promise.reject(new Error('NOT_USED'));
+      },
+    };
+    const created = await createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge: currentBridge,
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+    }).create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Use the current conversation.',
+      destination: { mode: 'current' },
+    });
+
+    expect(created.destination).toEqual({
+      mode: 'existing',
+      conversationId: 'conversation-current',
+    });
+    expect(created.chatGptInspection).toMatchObject({
+      pageMode: 'existing',
+      conversationId: 'conversation-current',
+      hasDraft: false,
+      streaming: false,
+    });
+    database.close();
+  });
+
   it('persists a repository-bound pilot and restores it after reopening SQLite', async () => {
     const directory = mkdtempSync(path.join(tmpdir(), 'context-bridge-pilot-'));
     const databasePath = path.join(directory, 'context-bridge.sqlite');

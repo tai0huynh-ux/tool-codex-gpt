@@ -6,7 +6,7 @@
 - Accepted limitations: unsigned Windows artifacts, unpacked internal extension distribution, no automatic ChatGPT submission, no public GitHub Release, and no store publication.
 - Environment-limited reruns: destructive clean-install and live Edge smoke were not rerun because the installed app, native host, and user browser session are active; prior acceptance remains recorded separately.
 - Desktop UI acceptance: resolved in P17-BETA-002. The packaged renderer was non-blank and all seven available non-destructive acceptance checks passed against isolated fixtures.
-- Live Project Pilot: implementation and fixture checkpoints `13ddbd4` and `960e566` are published; packaged restart recovery now passes against isolated app data with zero renderer runtime errors. No authenticated live ChatGPT -> Codex run has been attempted or claimed. Remaining gate is a safe user-opened authenticated destination and one bounded temporary-repository live flow.
+- Live Project Pilot: implementation, fixture, and packaged restart checkpoints are published through `849812b`. Installed ChatGPT no-submit readiness passes and the current existing conversation is resolved through Native Messaging. The workflow is paused at the mandatory action-time approval for reviewed payload `75cae5042832…428bae39`; no authenticated submit or writable Codex run is claimed.
 
 ## CODEX-SDK-001
 
