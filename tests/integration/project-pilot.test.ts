@@ -33,6 +33,8 @@ function fixtureBridge(): DesktopBridgeService {
             composer: { available: true, readOnly: false },
           },
         };
+      case 'page.reload':
+        return { type: 'page.reload.result', reloaded: true };
       case 'page.status':
         return {
           type: 'page.status.result',

@@ -10,7 +10,7 @@
   "lastCheckpoint": {
     "id": "P18-PILOT-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-19T13:47:00.000Z"
+    "completedAt": "2026-07-19T16:11:00.000Z"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -64,7 +64,9 @@
     "P18 Codex profile targeted adapter and response-router tests passed 31 cases, including root/fingerprint/profile fail-closed checks",
     "P18 pilot checkpoint passed 191 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, all workspace builds, shared strict contracts, website verifier, sandboxed preview boundary, and the full project-pilot fixture",
     "P18 packaged restart checkpoint passed 195 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, 46-test internal-beta UAT, live read-only Codex spike, all workspace builds, Windows packaging, packaged smoke, and fixture-only packaged close/reopen recovery with zero renderer runtime errors",
-    "P18 current-conversation checkpoint passed 197 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, Windows packaging, packaged smoke, packaged restart acceptance, installed ChatGPT no-submit readiness, and preparation of an unsent reviewed live payload"
+    "P18 current-conversation checkpoint passed 197 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, Windows packaging, packaged smoke, packaged restart acceptance, installed ChatGPT no-submit readiness, and preparation of an unsent reviewed live payload",
+    "P18 startup recovery checkpoint passed 36 targeted recovery/extension/contract/pilot tests, isolated Windows packaging, packaged/native-host smoke, artifact hash synchronization, workspace packaged smoke, and real app-data renderer confirmation-required recovery for pilot 8ec5d3b7 without resend",
+    "pnpm.cmd run verify passed with migration parity, formatting, lint, strict type-check, 206 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, and all 15 workspace builds"
   ],
   "knownFailures": [],
   "activeBlockers": [],
@@ -74,5 +76,5 @@
     "Stop again for the separate repository-bound Codex workspace-write approval before any file changes."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-19T14:56:00.000+07:00"
+  "updatedAt": "2026-07-19T16:11:00.000+07:00"
 }

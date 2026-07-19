@@ -1367,3 +1367,25 @@ No browser profile, cookies, tokens, authorization headers, history, credentials
 ### Next action
 
 After publication, ask the user to confirm sending reviewed payload `75cae5042832…428bae39`. Submit exactly once only after confirmation, wait for rendered acknowledgement and a schema-valid structured response, then stop again for the separate Codex workspace-write approval.
+
+## 2026-07-19 16:11 +07:00 - P18-PILOT-001 ChatGPT startup recovery checkpoint
+
+### Goal
+
+Open or recover the persisted ChatGPT destination when the desktop starts without repeating an ambiguous external send.
+
+### Changes
+
+Added a strict `page.reload` contract and MV3 content-script acknowledgement that schedules `location.reload()` only after the service worker selects the exact ChatGPT destination. Added bounded main-process recovery that inspects, reloads once, opens only an allowlisted ChatGPT URL, retries with delays, and audits redacted action outcomes. Pilot inspection and approval recover the page before approval consumption. Persisted orphaned `dispatching` effects now restore as `chatgpt_confirmation_required` and are never resent.
+
+### Verification
+
+Targeted recovery/extension/contracts/pilot/integration tests passed: 36 tests. The source package was rebuilt in an isolated worktree because the current Codex runtime held the Node SQLite binary lock; `pnpm.cmd run package:win` and `pnpm.cmd run smoke:packaged:win` passed there, the resulting artifacts were hash-verified after synchronization, and the workspace packaged/native-host smoke passed. Launching the rebuilt artifact against normal app data displayed pilot `8ec5d3b7` as `Cần xác nhận lần gửi` through the renderer, with no resend or submit. `pnpm.cmd run verify` then passed migration parity, formatting, lint, strict type-check, 206 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, and all workspace builds.
+
+### Security and limitations
+
+Recovery reads only rendered page inspection through the validated Native Messaging boundary. It does not read cookies, tokens, authorization headers, history, browser storage, or conversation content for routing. Startup never submits a message. The reviewed payload remains ambiguous and requires action-time user confirmation before any representational ChatGPT send.
+
+### Next action
+
+Publish this checkpoint, then ask for action-time confirmation before resolving the existing ambiguous ChatGPT effect.

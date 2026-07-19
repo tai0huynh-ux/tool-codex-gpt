@@ -191,6 +191,12 @@ export const localTransportOperationSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('page.inspect') }).strict(),
   z
     .object({
+      type: z.literal('page.reload'),
+      destination: chatGptDestinationSchema,
+    })
+    .strict(),
+  z
+    .object({
       type: z.literal('composer.clear'),
       effectId: z.string().min(1),
       expectedTextHash: z.string().regex(/^[a-f0-9]{64}$/),
@@ -320,6 +326,12 @@ export const localTransportResultSchema = z.discriminatedUnion('type', [
     .object({
       type: z.literal('page.inspect.result'),
       inspection: chatGptPageInspectionSchema,
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal('page.reload.result'),
+      reloaded: z.boolean(),
     })
     .strict(),
   z

@@ -93,6 +93,8 @@ function messageFor(operation: LocalTransportOperation): unknown {
       };
     case 'page.inspect':
       return { type: 'inspect-page' };
+    case 'page.reload':
+      return { type: 'reload-page' };
     case 'composer.clear':
       return {
         type: 'clear-composer-text',
@@ -135,6 +137,11 @@ function resultFor(operation: LocalTransportOperation, response: unknown): Local
         type: 'page.inspect.result',
         inspection: response,
       });
+    case 'page.reload':
+      return localTransportResultSchema.parse({
+        type: 'page.reload.result',
+        ...(response as object),
+      });
     case 'composer.clear':
       return localTransportResultSchema.parse({
         type: 'composer.clear.result',
@@ -164,7 +171,9 @@ export function createExtensionOperationExecutor(tabs: BrowserTabs): {
         });
       }
       const destination =
-        operation.type === 'composer.insert' || operation.type === 'composer.submit'
+        operation.type === 'composer.insert' ||
+        operation.type === 'composer.submit' ||
+        operation.type === 'page.reload'
           ? operation.destination
           : undefined;
       const tab = selectTab(availableTabs, destination);

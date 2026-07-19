@@ -83,6 +83,7 @@ pnpm.cmd run package:win
 pnpm.cmd run smoke:packaged:win
 pnpm.cmd run test:pilot-packaged-restart
 pnpm.cmd run smoke:installed-native-host:win
+pnpm.cmd run smoke:packaged:win
 pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=pass --native-relay=pass
 ```
 
@@ -101,6 +102,8 @@ pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=p
 - Only approved memories may enter retrieval or bootstrap output; candidate content must never be auto-approved.
 - Workflow send effects must be recoverable around acknowledgement boundaries and must never be repeated from projection state alone.
 - A `dispatching` effect is ambiguous after interruption; require confirmation or downstream idempotency evidence and never auto-resend it.
+- ChatGPT page recovery is bounded: inspect the exact persisted destination, reload it once, then open only `https://chatgpt.com/` or the encoded exact conversation URL; never auto-submit.
+- A `dispatching` ChatGPT effect is ambiguous after restart; restore it as confirmation-required and do not consume a new approval or resend it.
 - Composer insertion is not a send acknowledgement. Keep `sent: false` until rendered capture proves the approved user payload was submitted and streaming completed.
 - ChatGPT submission is a distinct approved effect. Reserve its effect ID before asynchronous checks; retain the reservation on ambiguous errors and release it only for deterministic pre-click rejection.
 - `workspace_write_no_network` is not a global adapter mode: bind it into the approval destination, require the registry validator, canonical non-symlink root, exact project/fingerprint, and pass no additional writable roots.

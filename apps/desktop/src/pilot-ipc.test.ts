@@ -9,6 +9,7 @@ import type {
   StartThreadInput,
 } from '@codex-context-bridge/codex-adapter';
 import { openDatabase } from '@codex-context-bridge/database';
+import { AssistedChatGptService } from '@codex-context-bridge/assisted-chatgpt';
 import { ProjectRegistry } from '@codex-context-bridge/project-registry';
 import { ResponseRouter } from '@codex-context-bridge/response-router';
 import { WorkflowEngine } from '@codex-context-bridge/workflow-engine';
@@ -191,6 +192,94 @@ describe('pilot IPC boundary', () => {
 });
 
 describe('pilot desktop persistence', () => {
+  it('restores an orphaned dispatching ChatGPT effect as confirmation-required', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-19T08:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, {
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const codex = new FixtureCodexAdapter();
+    const router = new ResponseRouter(database, workflows, projects, codex);
+    const firstService = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge,
+      codex,
+      router,
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const created = await firstService.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Create a static site.',
+      destination: { mode: 'new' },
+    });
+    const prepared = await firstService.prepareChatGpt(created.id);
+    if (!prepared.chatGptPreview) throw new Error('FIXTURE_PREVIEW_MISSING');
+    const assisted = new AssistedChatGptService(workflows, {
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const approval = assisted.approve(prepared.chatGptPreview, 5 * 60_000);
+    const effect = assisted.prepare(
+      prepared.chatGptPreview,
+      { id: approval.approval.id, token: approval.token },
+      `pilot:${created.id}:chatgpt`,
+    ).effect;
+    workflows.beginDispatch(effect.id);
+
+    const restored = await firstService.list('project-1');
+    expect(restored).toMatchObject([
+      {
+        id: created.id,
+        status: 'chatgpt_confirmation_required',
+        chatGptEffectId: effect.id,
+      },
+    ]);
+    database.close();
+  });
+
+  it('recovers the ChatGPT page before consuming approval or preparing an effect', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-19T08:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, {
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const codex = new FixtureCodexAdapter();
+    const ensureChatGptPage = vi.fn(() => Promise.reject(new Error('TRANSPORT_DISCONNECTED')));
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge,
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+      ensureChatGptPage,
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const created = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Create a static site.',
+      destination: { mode: 'new' },
+    });
+    await service.prepareChatGpt(created.id);
+
+    await expect(service.approveChatGpt(created.id)).rejects.toThrow('TRANSPORT_DISCONNECTED');
+    expect(ensureChatGptPage).toHaveBeenCalledWith({ mode: 'new' });
+    expect(database.prepare('SELECT COUNT(*) AS count FROM user_approvals').get()).toEqual({
+      count: 0,
+    });
+    expect(database.prepare('SELECT COUNT(*) AS count FROM workflow_effects').get()).toEqual({
+      count: 0,
+    });
+    database.close();
+  });
+
   it('resolves the current open ChatGPT conversation before persisting the pilot', async () => {
     const database = openDatabase(':memory:');
     const projects = new ProjectRegistry(database, () => '2026-07-19T08:00:00.000Z');

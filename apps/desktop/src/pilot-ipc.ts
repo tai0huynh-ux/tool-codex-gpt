@@ -92,6 +92,11 @@ class NativeChatGptAdapter implements AssistedChatGptAdapter {
   }
 }
 
+interface ChatGptEffectRow {
+  id: string;
+  status: 'prepared' | 'dispatching' | 'acknowledged' | 'failed';
+}
+
 export interface PilotDesktopService {
   list(projectId?: string): Promise<PilotView[]>;
   create(input: PilotCreateInput): Promise<PilotView>;
@@ -113,6 +118,7 @@ export function createPilotDesktopService(input: {
   router: ResponseRouter;
   codex: CodexAdapter;
   openPreview?: (repositoryRoot: string) => Promise<void>;
+  ensureChatGptPage?: (destination: ChatGptDestination) => Promise<void>;
   now?: () => string;
 }): PilotDesktopService {
   const now = input.now ?? (() => new Date().toISOString());
@@ -137,7 +143,44 @@ export function createPilotDesktopService(input: {
     return pilotViewSchema.parse(JSON.parse(row.value_json) as unknown);
   };
 
+  const recoverChatGptEffect = (view: PilotView): PilotView => {
+    if (view.chatGptEffectId) return view;
+    if (
+      !['chatgpt_ready', 'chatgpt_dispatched', 'chatgpt_confirmation_required'].includes(
+        view.status,
+      )
+    ) {
+      return view;
+    }
+    const effect = input.database
+      .prepare(
+        `SELECT id, status FROM workflow_effects
+         WHERE workflow_run_id = ? AND operation = 'send_chatgpt'
+         ORDER BY prepared_at DESC LIMIT 1`,
+      )
+      .get(view.workflowRunId) as ChatGptEffectRow | undefined;
+    if (!effect) return view;
+    if (effect.status === 'prepared') return save({ ...view, chatGptEffectId: effect.id });
+    if (effect.status === 'dispatching') {
+      return save({
+        ...view,
+        chatGptEffectId: effect.id,
+        status: 'chatgpt_confirmation_required',
+      });
+    }
+    if (effect.status === 'acknowledged') {
+      return save({ ...view, chatGptEffectId: effect.id, status: 'chatgpt_dispatched' });
+    }
+    return save({
+      ...view,
+      chatGptEffectId: effect.id,
+      status: 'failed',
+      errorCode: 'CHATGPT_TRANSFER_FAILED',
+    });
+  };
+
   const refresh = async (view: PilotView): Promise<PilotView> => {
+    view = recoverChatGptEffect(view);
     const workflow = input.workflows.getRun(view.workflowRunId);
     if (!workflow) throw new Error('PILOT_STATE_INVALID');
     if (!view.codexRunId) return view;
@@ -315,6 +358,7 @@ export function createPilotDesktopService(input: {
     refresh: async (pilotId) => refresh(get(pilotId)),
     inspectChatGpt: async (pilotId) => {
       const view = get(pilotId);
+      await input.ensureChatGptPage?.(view.destination);
       const status = await input.bridge.getStatus();
       if (status.state !== 'connected') throw new Error('TRANSPORT_DISCONNECTED');
       const inspection = await chatGpt.inspect();
@@ -350,13 +394,38 @@ export function createPilotDesktopService(input: {
       if (view.status !== 'chatgpt_ready' || !view.chatGptPreview) {
         throw new Error('PILOT_STATE_INVALID');
       }
+      // Recover the exact ChatGPT page before consuming the approval capability.
+      await input.ensureChatGptPage?.(view.destination);
       const approval = assisted.approve(view.chatGptPreview, 5 * 60_000);
       const effect = assisted.prepare(
         view.chatGptPreview,
         { id: approval.approval.id, token: approval.token },
         `pilot:${view.id}:chatgpt`,
       ).effect;
-      await assisted.dispatch(view.chatGptPreview, effect.id, 'composer', chatGpt);
+      const dispatched = await assisted.dispatch(
+        view.chatGptPreview,
+        effect.id,
+        'composer',
+        chatGpt,
+      );
+      if (dispatched.status === 'confirmation_required') {
+        return save({
+          ...view,
+          chatGptEffectId: effect.id,
+          status: 'chatgpt_confirmation_required',
+        });
+      }
+      if (dispatched.status === 'acknowledged') {
+        return save({ ...view, chatGptEffectId: effect.id, status: 'chatgpt_dispatched' });
+      }
+      if (dispatched.status === 'failed') {
+        return save({
+          ...view,
+          chatGptEffectId: effect.id,
+          status: 'failed',
+          errorCode: dispatched.code,
+        });
+      }
       const submitted = await assisted.submitApproved(effect.id, view.destination, chatGpt);
       return save({
         ...view,

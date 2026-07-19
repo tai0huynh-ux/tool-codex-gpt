@@ -22,6 +22,9 @@ interface InsertRequest {
 interface InspectRequest {
   type: 'inspect-page';
 }
+interface ReloadRequest {
+  type: 'reload-page';
+}
 interface SubmitRequest {
   type: 'submit-composer';
   effectId: string;
@@ -40,7 +43,13 @@ interface StatusRequest {
   expectedProjectId?: string;
 }
 type ExtensionRequest =
-  CaptureRequest | InsertRequest | SubmitRequest | InspectRequest | ClearRequest | StatusRequest;
+  | CaptureRequest
+  | InsertRequest
+  | SubmitRequest
+  | InspectRequest
+  | ReloadRequest
+  | ClearRequest
+  | StatusRequest;
 
 type SubmitResult =
   | Awaited<ReturnType<typeof submitComposer>>
@@ -64,6 +73,14 @@ export function createSubmitEffectGuard(): (
     if (!result.submitted) reservedEffects.delete(effectId);
     return result;
   };
+}
+
+export function schedulePageReload(
+  schedule: (callback: () => void, delay: number) => unknown,
+  reload: () => void,
+): { reloaded: true } {
+  schedule(reload, 0);
+  return { reloaded: true };
 }
 
 const submitEffect = createSubmitEffectGuard();
@@ -93,6 +110,13 @@ if (location.origin === 'https://chatgpt.com' && typeof chrome !== 'undefined') 
     if (request.type === 'inspect-page') {
       void inspectChatGptPage(document, location).then(sendResponse);
       return true;
+    }
+
+    if (request.type === 'reload-page') {
+      sendResponse(
+        schedulePageReload(window.setTimeout.bind(window), () => window.location.reload()),
+      );
+      return false;
     }
 
     if (request.type === 'submit-composer') {

@@ -11,7 +11,7 @@ import { canonicalizeRepositoryRoot } from '@codex-context-bridge/project-detect
 import { ResponseRouter } from '@codex-context-bridge/response-router';
 import { SdkCodexAdapter } from '@codex-context-bridge/codex-adapter';
 import { WorkflowEngine } from '@codex-context-bridge/workflow-engine';
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import { registerDesktopIpc } from './ipc';
 import { backupDatabaseBeforeUpgrade } from './database-backup';
 import {
@@ -26,6 +26,7 @@ import {
 } from './project-ipc';
 import { createWorkflowDesktopService, registerWorkflowIpc } from './workflow-ipc';
 import { createPilotDesktopService, registerPilotIpc } from './pilot-ipc';
+import { ensureChatGptPageReadable } from './chatgpt-page-recovery';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const trustedRendererIds = new Set<number>();
@@ -139,6 +140,16 @@ async function startDesktop(): Promise<void> {
     },
   });
   const router = new ResponseRouter(projectDatabase, workflows, registry, codex);
+  const ensureChatGptPage = async (
+    destination: Parameters<typeof ensureChatGptPageReadable>[0]['destination'],
+  ): Promise<void> => {
+    await ensureChatGptPageReadable({
+      bridge,
+      destination,
+      openExternal: (url) => shell.openExternal(url),
+      audit: ({ action, outcome }) => auditDesktopTransfer(`chatgpt.recovery.${action}`, outcome),
+    });
+  };
   registerProjectIpc(
     ipcMain,
     createProjectDesktopService(
@@ -159,23 +170,35 @@ async function startDesktop(): Promise<void> {
   registerWorkflowIpc(ipcMain, createWorkflowDesktopService(projectDatabase, workflows), {
     validateSender: (event) => trustedRendererIds.has(event.sender.id),
   });
-  registerPilotIpc(
-    ipcMain,
-    createPilotDesktopService({
-      database: projectDatabase,
-      projects: registry,
-      workflows,
-      bridge,
-      router,
-      codex,
-      openPreview: openWebsitePreview,
-    }),
-    {
-      validateSender: (event) => trustedRendererIds.has(event.sender.id),
-      audit: ({ action, outcome }) => auditDesktopTransfer(action, outcome),
-    },
-  );
+  const pilotService = createPilotDesktopService({
+    database: projectDatabase,
+    projects: registry,
+    workflows,
+    bridge,
+    router,
+    codex,
+    openPreview: openWebsitePreview,
+    ensureChatGptPage,
+  });
+  registerPilotIpc(ipcMain, pilotService, {
+    validateSender: (event) => trustedRendererIds.has(event.sender.id),
+    audit: ({ action, outcome }) => auditDesktopTransfer(action, outcome),
+  });
   createWindow();
+  void pilotService
+    .list()
+    .then(async (pilots) => {
+      const chatGptPilot = pilots.find((pilot) =>
+        ['draft', 'chatgpt_ready', 'chatgpt_dispatched', 'chatgpt_confirmation_required'].includes(
+          pilot.status,
+        ),
+      );
+      if (chatGptPilot) await ensureChatGptPage(chatGptPilot.destination);
+    })
+    .catch((error: unknown) => {
+      const code = error instanceof Error ? error.message : 'CHATGPT_NOT_READY';
+      console.warn('CHATGPT_STARTUP_RECOVERY_FAILED', code);
+    });
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

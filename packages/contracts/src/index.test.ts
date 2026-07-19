@@ -305,6 +305,12 @@ describe('assisted page operations', () => {
     expect(localTransportOperationSchema.parse({ type: 'page.inspect' })).toEqual({
       type: 'page.inspect',
     });
+    expect(
+      localTransportOperationSchema.parse({
+        type: 'page.reload',
+        destination: { mode: 'existing', conversationId: 'conversation-1' },
+      }),
+    ).toMatchObject({ type: 'page.reload' });
   });
 
   it('rejects legacy approval-only insertion without effect identity', () => {

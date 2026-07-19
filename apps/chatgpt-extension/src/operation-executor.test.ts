@@ -54,6 +54,19 @@ describe('extension operation executor', () => {
     });
   });
 
+  it('reloads only the requested existing conversation tab', async () => {
+    const sendMessage = vi.fn(() => Promise.resolve({ reloaded: true }));
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+
+    await expect(
+      executor.execute({
+        type: 'page.reload',
+        destination: { mode: 'existing', conversationId: 'target' },
+      }),
+    ).resolves.toEqual({ type: 'page.reload.result', reloaded: true });
+    expect(sendMessage).toHaveBeenCalledWith(20, { type: 'reload-page' });
+  });
+
   it('injects the content script once when an existing tab has no receiver', async () => {
     const sendMessage = vi
       .fn<BrowserTabs['sendMessage']>()
