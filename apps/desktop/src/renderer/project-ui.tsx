@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type SyntheticEvent } from 'react';
 import type { ProjectView, RepositoryInput, RepositoryPreview } from '../project-ipc';
 import { WorkflowWorkspace } from './workflow-ui';
+import { LiveProjectPilot } from './live-project-pilot';
 
 const evidenceLabels: Record<string, string> = {
   'git-remote': 'Git remote',
@@ -217,6 +218,14 @@ export function App(): React.JSX.Element {
       <p className="notice" role="status">
         {notice}
       </p>
+
+      {selectedProject && (
+        <LiveProjectPilot
+          projectId={selectedProject.project.id}
+          projectName={selectedProject.project.name}
+          repositories={selectedProject.repositories}
+        />
+      )}
 
       {selectedProject && <WorkflowWorkspace projectId={selectedProject.project.id} />}
 

@@ -11,11 +11,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@codex-context-bridge/assisted-chatgpt": "workspace:*",
+    "@codex-context-bridge/codex-adapter": "workspace:*",
     "@codex-context-bridge/contracts": "workspace:*",
     "@codex-context-bridge/database": "workspace:*",
     "@codex-context-bridge/local-transport": "workspace:*",
     "@codex-context-bridge/project-detector": "workspace:*",
     "@codex-context-bridge/project-registry": "workspace:*",
+    "@codex-context-bridge/response-router": "workspace:*",
     "@codex-context-bridge/workflow-engine": "workspace:*",
     "@vitejs/plugin-react": "^5.0.0",
     "better-sqlite3": "12.11.1",

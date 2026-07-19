@@ -4,6 +4,9 @@ import {
   chooseRootResponseSchema,
   desktopIpcChannels,
   projectIpcChannels,
+  pilotIpcChannels,
+  pilotListResponseSchema,
+  pilotViewResponseSchema,
   projectListResponseSchema,
   projectViewResponseSchema,
   repositoryPreviewResponseSchema,
@@ -15,6 +18,8 @@ import {
   type ChooseRootResponse,
   type ProjectListResponse,
   type ProjectViewResponse,
+  type PilotListResponse,
+  type PilotViewResponse,
   type RepositoryInput,
   type RepositoryPreviewResponse,
   type TransportOperationResponse,
@@ -38,6 +43,21 @@ export interface ContextBridgeDesktopApi {
   listWorkflows(projectId?: string): Promise<WorkflowListResponse>;
   startWorkflow(projectId: string): Promise<WorkflowViewResponse>;
   cancelWorkflow(workflowRunId: string): Promise<WorkflowViewResponse>;
+  listPilots(projectId?: string): Promise<PilotListResponse>;
+  createPilot(input: {
+    projectId: string;
+    repositoryId: string;
+    objective: string;
+    destination: { mode: 'new' } | { mode: 'existing'; conversationId: string };
+  }): Promise<PilotViewResponse>;
+  inspectPilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
+  preparePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
+  approvePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
+  capturePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
+  approvePilotCodex(pilotId: string): Promise<PilotViewResponse>;
+  refreshPilot(pilotId: string): Promise<PilotViewResponse>;
+  verifyPilotWebsite(pilotId: string): Promise<PilotViewResponse>;
+  openPilotPreview(pilotId: string): Promise<PilotViewResponse>;
 }
 
 const api: ContextBridgeDesktopApi = {
@@ -95,6 +115,48 @@ const api: ContextBridgeDesktopApi = {
   cancelWorkflow: async (workflowRunId) =>
     workflowViewResponseSchema.parse(
       (await ipcRenderer.invoke(workflowIpcChannels.cancel, { workflowRunId })) as unknown,
+    ),
+  listPilots: async (projectId) =>
+    pilotListResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.list, {
+        ...(projectId ? { projectId } : {}),
+      })) as unknown,
+    ),
+  createPilot: async (input) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.create, input)) as unknown,
+    ),
+  refreshPilot: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.refresh, { pilotId })) as unknown,
+    ),
+  verifyPilotWebsite: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.verifyWebsite, { pilotId })) as unknown,
+    ),
+  openPilotPreview: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.openPreview, { pilotId })) as unknown,
+    ),
+  inspectPilotChatGpt: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.inspectChatGpt, { pilotId })) as unknown,
+    ),
+  preparePilotChatGpt: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.prepareChatGpt, { pilotId })) as unknown,
+    ),
+  approvePilotChatGpt: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.approveChatGpt, { pilotId })) as unknown,
+    ),
+  capturePilotChatGpt: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.captureChatGpt, { pilotId })) as unknown,
+    ),
+  approvePilotCodex: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.approveCodex, { pilotId })) as unknown,
     ),
 };
 

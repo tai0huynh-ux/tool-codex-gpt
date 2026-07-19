@@ -190,3 +190,11 @@ export type RepositoryPreviewResponse = z.infer<typeof repositoryPreviewResponse
 export type ChooseRootResponse = z.infer<typeof chooseRootResponseSchema>;
 export type WorkflowListResponse = z.infer<typeof workflowListResponseSchema>;
 export type WorkflowViewResponse = z.infer<typeof workflowViewResponseSchema>;
+export {
+  pilotIpcChannels,
+  pilotListResponseSchema,
+  pilotViewResponseSchema,
+  type PilotListResponse,
+  type PilotView,
+  type PilotViewResponse,
+} from './pilot-contracts';

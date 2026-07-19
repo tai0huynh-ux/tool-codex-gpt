@@ -56,7 +56,10 @@ describe('guided workflow renderer', () => {
     root = createRoot(container);
     cancelWorkflow = vi.fn().mockResolvedValue({ ok: true, value: dashboard('cancelled') });
     api = {
-      getTransportStatus: vi.fn(),
+      getTransportStatus: vi.fn().mockResolvedValue({
+        ok: true,
+        value: { transport: 'native_messaging', state: 'disconnected', permissionActive: true },
+      }),
       executeTransportOperation: vi.fn(),
       listProjects: vi.fn(),
       createProject: vi.fn(),
@@ -68,6 +71,16 @@ describe('guided workflow renderer', () => {
       listWorkflows: vi.fn().mockResolvedValue({ ok: true, value: [dashboard()] }),
       startWorkflow: vi.fn().mockResolvedValue({ ok: true, value: dashboard() }),
       cancelWorkflow,
+      listPilots: vi.fn().mockResolvedValue({ ok: true, value: [] }),
+      createPilot: vi.fn(),
+      refreshPilot: vi.fn(),
+      verifyPilotWebsite: vi.fn(),
+      openPilotPreview: vi.fn(),
+      inspectPilotChatGpt: vi.fn(),
+      preparePilotChatGpt: vi.fn(),
+      approvePilotChatGpt: vi.fn(),
+      capturePilotChatGpt: vi.fn(),
+      approvePilotCodex: vi.fn(),
     };
     Object.defineProperty(window, 'contextBridgeDesktop', { configurable: true, value: api });
     await act(async () => {

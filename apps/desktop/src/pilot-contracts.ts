@@ -1,0 +1,142 @@
+import {
+  assistedChatGptPreviewSchema,
+  codexRoutePreviewSchema,
+  contextBridgeResponseSchema,
+} from '@codex-context-bridge/contracts';
+import { z } from 'zod';
+
+const websiteVerificationSchema = z
+  .object({
+    status: z.enum(['passed', 'failed']),
+    root: z.string().min(1).max(32_768),
+    files: z.array(z.string().min(1).max(512)).max(32),
+    checks: z
+      .array(
+        z
+          .object({
+            name: z.string().min(1).max(128),
+            passed: z.boolean(),
+            detail: z.string().min(1).max(2_000),
+          })
+          .strict(),
+      )
+      .max(64),
+    verifiedAt: z.iso.datetime(),
+  })
+  .strict();
+
+export const pilotIpcChannels = {
+  list: 'pilot:list',
+  create: 'pilot:create',
+  refresh: 'pilot:refresh',
+  inspectChatGpt: 'pilot:inspect-chatgpt',
+  prepareChatGpt: 'pilot:prepare-chatgpt',
+  approveChatGpt: 'pilot:approve-chatgpt',
+  captureChatGpt: 'pilot:capture-chatgpt',
+  approveCodex: 'pilot:approve-codex',
+  verifyWebsite: 'pilot:verify-website',
+  openPreview: 'pilot:open-preview',
+} as const;
+
+export const pilotIdSchema = z.string().min(1).max(256);
+
+export const pilotDestinationSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('new') }).strict(),
+  z.object({ mode: z.literal('existing'), conversationId: pilotIdSchema }).strict(),
+]);
+
+export const pilotListInputSchema = z.object({ projectId: pilotIdSchema.optional() }).strict();
+export const pilotCreateInputSchema = z
+  .object({
+    projectId: pilotIdSchema,
+    repositoryId: pilotIdSchema,
+    objective: z.string().trim().min(1).max(20_000),
+    destination: pilotDestinationSchema,
+  })
+  .strict();
+export const pilotIdInputSchema = z.object({ pilotId: pilotIdSchema }).strict();
+
+export const pilotStatusSchema = z.enum([
+  'draft',
+  'chatgpt_ready',
+  'chatgpt_dispatched',
+  'chatgpt_confirmation_required',
+  'codex_ready',
+  'codex_running',
+  'codex_completed',
+  'failed',
+]);
+
+export const pilotViewSchema = z
+  .object({
+    id: pilotIdSchema,
+    projectId: pilotIdSchema,
+    repositoryId: pilotIdSchema,
+    repositoryRoot: z.string().min(1).max(32_768),
+    repositoryFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+    objective: z.string().min(1).max(20_000),
+    destination: pilotDestinationSchema,
+    workflowRunId: pilotIdSchema,
+    status: pilotStatusSchema,
+    chatGptInspection: z
+      .object({
+        pageMode: z.enum(['new', 'existing', 'unsupported']),
+        conversationId: pilotIdSchema.optional(),
+        composerAvailable: z.boolean(),
+        composerReadOnly: z.boolean(),
+        hasDraft: z.boolean(),
+        streaming: z.boolean(),
+      })
+      .strict()
+      .optional(),
+    chatGptPreview: assistedChatGptPreviewSchema.optional(),
+    chatGptEffectId: pilotIdSchema.optional(),
+    response: contextBridgeResponseSchema.optional(),
+    codexPreview: codexRoutePreviewSchema.optional(),
+    codexEffectId: pilotIdSchema.optional(),
+    codexThreadId: pilotIdSchema.optional(),
+    codexRunId: pilotIdSchema.optional(),
+    finalResponse: z.string().max(100_000).optional(),
+    errorCode: z.string().min(1).max(256).optional(),
+    websiteVerification: websiteVerificationSchema.optional(),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+  })
+  .strict();
+
+export const pilotErrorCodeSchema = z.enum([
+  'IPC_SENDER_REJECTED',
+  'IPC_SCHEMA_INVALID',
+  'IPC_TIMEOUT',
+  'PILOT_NOT_FOUND',
+  'PILOT_STATE_INVALID',
+  'PROJECT_NOT_FOUND',
+  'REPOSITORY_NOT_FOUND',
+  'TRANSPORT_DISCONNECTED',
+  'CHATGPT_NOT_READY',
+  'CHATGPT_CONFIRMATION_REQUIRED',
+  'CODEX_CONFIRMATION_REQUIRED',
+  'INTERNAL_ERROR',
+]);
+
+const pilotFailureSchema = z
+  .object({
+    ok: z.literal(false),
+    error: z.object({ code: pilotErrorCodeSchema, message: z.string().min(1) }).strict(),
+  })
+  .strict();
+const pilotSuccessSchema = z.object({ ok: z.literal(true), value: pilotViewSchema }).strict();
+
+export const pilotViewResponseSchema = z.discriminatedUnion('ok', [
+  pilotSuccessSchema,
+  pilotFailureSchema,
+]);
+export const pilotListResponseSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), value: z.array(pilotViewSchema) }).strict(),
+  pilotFailureSchema,
+]);
+
+export type PilotCreateInput = z.infer<typeof pilotCreateInputSchema>;
+export type PilotView = z.infer<typeof pilotViewSchema>;
+export type PilotViewResponse = z.infer<typeof pilotViewResponseSchema>;
+export type PilotListResponse = z.infer<typeof pilotListResponseSchema>;

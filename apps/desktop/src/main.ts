@@ -1,12 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   appendAuditEvent,
   openDatabase,
   type SqliteDatabase,
 } from '@codex-context-bridge/database';
 import { ProjectRegistry } from '@codex-context-bridge/project-registry';
+import { canonicalizeRepositoryRoot } from '@codex-context-bridge/project-detector';
+import { ResponseRouter } from '@codex-context-bridge/response-router';
+import { SdkCodexAdapter } from '@codex-context-bridge/codex-adapter';
 import { WorkflowEngine } from '@codex-context-bridge/workflow-engine';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import { registerDesktopIpc } from './ipc';
@@ -22,6 +25,7 @@ import {
   validateGitRepositoryInput,
 } from './project-ipc';
 import { createWorkflowDesktopService, registerWorkflowIpc } from './workflow-ipc';
+import { createPilotDesktopService, registerPilotIpc } from './pilot-ipc';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const trustedRendererIds = new Set<number>();
@@ -48,6 +52,32 @@ function createWindow(): void {
   void window.loadFile(path.join(currentDirectory, '../renderer/index.html'));
 }
 
+async function openWebsitePreview(repositoryRoot: string): Promise<void> {
+  const indexPath = path.join(repositoryRoot, 'index.html');
+  const allowedUrl = pathToFileURL(indexPath).href;
+  const preview = new BrowserWindow({
+    width: 960,
+    height: 720,
+    title: 'Context Bridge Website Preview',
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      javascript: false,
+      partition: `pilot-preview-${randomUUID()}`,
+    },
+  });
+  preview.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  preview.webContents.on('will-navigate', (event, targetUrl) => {
+    if (targetUrl !== allowedUrl) event.preventDefault();
+  });
+  preview.webContents.session.setPermissionRequestHandler((_webContents, _permission, callback) =>
+    callback(false),
+  );
+  preview.webContents.session.on('will-download', (event) => event.preventDefault());
+  await preview.loadFile(indexPath);
+}
+
 function auditDesktopTransfer(operation: string, outcome: 'allowed' | 'blocked' | 'failed'): void {
   if (!projectDatabase) return;
   appendAuditEvent(projectDatabase, {
@@ -65,20 +95,50 @@ async function startDesktop(): Promise<void> {
   projectDatabase = openDatabase(databasePath);
   const transportPaths = nativeTransportPaths(app.getPath('appData'));
   ensureNativeCapability(transportPaths.capabilityPath);
-  registerDesktopIpc(
-    ipcMain,
-    createNativeDesktopBridgeService({
-      ...transportPaths,
-      permissionActive: true,
-    }),
-    {
-      validateSender: (event) => trustedRendererIds.has(event.sender.id),
-      audit: ({ operation, outcome }) =>
-        auditDesktopTransfer(operation, outcome === 'accepted' ? 'allowed' : 'blocked'),
-    },
-  );
+  const bridge = createNativeDesktopBridgeService({
+    ...transportPaths,
+    permissionActive: true,
+  });
+  registerDesktopIpc(ipcMain, bridge, {
+    validateSender: (event) => trustedRendererIds.has(event.sender.id),
+    audit: ({ operation, outcome }) =>
+      auditDesktopTransfer(operation, outcome === 'accepted' ? 'allowed' : 'blocked'),
+  });
   const registry = new ProjectRegistry(projectDatabase);
   const workflows = new WorkflowEngine(projectDatabase);
+  const codex = new SdkCodexAdapter({
+    resolveThread: (externalThreadId) => {
+      for (const project of registry.list()) {
+        const mapping = registry
+          .listCodexThreads(project.id)
+          .find((candidate) => candidate.externalThreadId === externalThreadId);
+        if (!mapping) continue;
+        const repository = registry
+          .listRepositories(project.id)
+          .find((candidate) => candidate.fingerprint === mapping.repositoryFingerprint);
+        if (!repository) return undefined;
+        return {
+          projectId: project.id,
+          repositoryFingerprint: repository.fingerprint,
+          workingDirectory: repository.worktreeRoot ?? repository.canonicalRoot,
+        };
+      }
+      return undefined;
+    },
+    validateWorkspaceWrite: ({ projectId, repositoryFingerprint, canonicalRoot }) => {
+      const repository = registry
+        .listRepositories(projectId)
+        .find((candidate) => candidate.fingerprint === repositoryFingerprint);
+      if (
+        !repository ||
+        canonicalizeRepositoryRoot(canonicalRoot) !==
+          canonicalizeRepositoryRoot(repository.worktreeRoot ?? repository.canonicalRoot)
+      ) {
+        throw new Error('CODEX_WORKSPACE_IDENTITY_MISMATCH');
+      }
+    },
+  });
+  const router = new ResponseRouter(projectDatabase, workflows, registry, codex);
   registerProjectIpc(
     ipcMain,
     createProjectDesktopService(
@@ -99,11 +159,28 @@ async function startDesktop(): Promise<void> {
   registerWorkflowIpc(ipcMain, createWorkflowDesktopService(projectDatabase, workflows), {
     validateSender: (event) => trustedRendererIds.has(event.sender.id),
   });
+  registerPilotIpc(
+    ipcMain,
+    createPilotDesktopService({
+      database: projectDatabase,
+      projects: registry,
+      workflows,
+      bridge,
+      router,
+      codex,
+      openPreview: openWebsitePreview,
+    }),
+    {
+      validateSender: (event) => trustedRendererIds.has(event.sender.id),
+      audit: ({ action, outcome }) => auditDesktopTransfer(action, outcome),
+    },
+  );
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
   app.on('before-quit', () => {
+    void codex.dispose();
     projectDatabase?.close();
     projectDatabase = undefined;
   });

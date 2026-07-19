@@ -133,7 +133,13 @@ export interface PrepareSendInput {
 
 const transitions: Record<WorkflowState, readonly WorkflowState[]> = {
   idle: ['project_resolving', 'cancelled'],
-  project_resolving: ['project_confirmation_required', 'codex_running', 'failed', 'cancelled'],
+  project_resolving: [
+    'project_confirmation_required',
+    'codex_running',
+    'building_context',
+    'failed',
+    'cancelled',
+  ],
   project_confirmation_required: ['codex_running', 'cancelled'],
   codex_running: ['codex_completed', 'codex_failed', 'cancelled'],
   codex_failed: ['codex_running', 'failed', 'cancelled'],

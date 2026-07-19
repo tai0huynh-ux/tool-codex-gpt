@@ -81,6 +81,12 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@codex-context-bridge/assisted-chatgpt':
+        specifier: workspace:*
+        version: link:../../packages/assisted-chatgpt
+      '@codex-context-bridge/codex-adapter':
+        specifier: workspace:*
+        version: link:../../packages/codex-adapter
       '@codex-context-bridge/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -96,6 +102,9 @@ importers:
       '@codex-context-bridge/project-registry':
         specifier: workspace:*
         version: link:../../packages/project-registry
+      '@codex-context-bridge/response-router':
+        specifier: workspace:*
+        version: link:../../packages/response-router
       '@codex-context-bridge/workflow-engine':
         specifier: workspace:*
         version: link:../../packages/workflow-engine

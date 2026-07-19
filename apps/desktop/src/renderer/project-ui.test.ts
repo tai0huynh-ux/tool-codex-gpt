@@ -40,7 +40,10 @@ describe('project mapping renderer', () => {
       .fn<ContextBridgeDesktopApi['confirmRepository']>()
       .mockResolvedValue({ ok: true, value: project('project-2', 'Hai') });
     api = {
-      getTransportStatus: vi.fn(),
+      getTransportStatus: vi.fn().mockResolvedValue({
+        ok: true,
+        value: { transport: 'native_messaging', state: 'disconnected', permissionActive: true },
+      }),
       executeTransportOperation: vi.fn(),
       listProjects: vi.fn().mockResolvedValue({
         ok: true,
@@ -69,6 +72,16 @@ describe('project mapping renderer', () => {
       listWorkflows: vi.fn().mockResolvedValue({ ok: true, value: [] }),
       startWorkflow: vi.fn(),
       cancelWorkflow: vi.fn(),
+      listPilots: vi.fn().mockResolvedValue({ ok: true, value: [] }),
+      createPilot: vi.fn(),
+      refreshPilot: vi.fn(),
+      verifyPilotWebsite: vi.fn(),
+      openPilotPreview: vi.fn(),
+      inspectPilotChatGpt: vi.fn(),
+      preparePilotChatGpt: vi.fn(),
+      approvePilotChatGpt: vi.fn(),
+      capturePilotChatGpt: vi.fn(),
+      approvePilotCodex: vi.fn(),
     };
     Object.defineProperty(window, 'contextBridgeDesktop', { configurable: true, value: api });
     await act(async () => {

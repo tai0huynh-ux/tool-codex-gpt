@@ -24,7 +24,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 button {
@@ -101,6 +103,274 @@ h1 {
     600 0.78rem/1.4 ui-monospace,
     'Cascadia Code',
     monospace;
+}
+
+.pilot-deck {
+  margin-bottom: 1.5rem;
+  border: 1px solid #10231a;
+  background: #f6c64f;
+  box-shadow: 12px 14px 0 rgba(35, 76, 57, 0.18);
+}
+.pilot-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: clamp(1.2rem, 2.5vw, 2rem);
+  border-bottom: 1px solid #10231a;
+}
+.pilot-header h2 {
+  max-width: 18ch;
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(2rem, 4vw, 4.4rem);
+  font-weight: 500;
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+}
+.pilot-status {
+  display: grid;
+  gap: 0.25rem;
+  max-width: 23rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #10231a;
+  background: #fff7dc;
+}
+.pilot-status span,
+.pilot-field > span,
+.pilot-preview span,
+.pilot-metadata span,
+.pilot-result span {
+  font-size: 0.67rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pilot-status small {
+  color: #526159;
+}
+.pilot-grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.72fr) minmax(32rem, 1.55fr);
+  background: #10231a;
+  color: #f8f2e5;
+}
+.pilot-compose,
+.pilot-review {
+  padding: clamp(1rem, 2.4vw, 1.8rem);
+}
+.pilot-compose {
+  border-right: 1px solid rgba(248, 242, 229, 0.25);
+}
+.section-heading.light h2 {
+  color: #f8f2e5;
+}
+.pilot-facts {
+  margin-bottom: 1rem;
+  border-color: rgba(248, 242, 229, 0.25);
+}
+.pilot-facts dd {
+  overflow-wrap: anywhere;
+  color: #f8f2e5;
+  font-size: 1rem;
+}
+.pilot-facts dt {
+  color: #aeb9b1;
+}
+.pilot-field {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+.pilot-field select,
+.pilot-field textarea,
+.pilot-destination input[type='text'],
+.pilot-destination > input {
+  width: 100%;
+  border: 1px solid rgba(248, 242, 229, 0.35);
+  background: #172f24;
+  color: #f8f2e5;
+  padding: 0.75rem;
+}
+.pilot-field textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+.pilot-inline,
+.pilot-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.pilot-inline button,
+.pilot-actions button,
+.pilot-result button {
+  border: 1px solid rgba(248, 242, 229, 0.45);
+  background: transparent;
+  color: #f8f2e5;
+  padding: 0.65rem 0.75rem;
+}
+.pilot-inline span {
+  color: #aeb9b1;
+  font-size: 0.72rem;
+}
+.pilot-destination {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0;
+  border: 1px solid rgba(248, 242, 229, 0.25);
+}
+.pilot-destination label {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+.pilot-destination input[type='radio'] {
+  width: auto;
+}
+.pilot-primary,
+.pilot-approve {
+  width: 100%;
+  border: 0;
+  background: #f6c64f;
+  color: #10231a;
+  padding: 0.9rem 1rem;
+  font-weight: 800;
+  box-shadow: 5px 5px 0 #7f5c00;
+}
+.pilot-run-tabs {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.8rem;
+}
+.pilot-run-tabs button {
+  display: grid;
+  min-width: 9rem;
+  border: 1px solid rgba(248, 242, 229, 0.25);
+  background: transparent;
+  color: #f8f2e5;
+  padding: 0.65rem;
+  text-align: left;
+}
+.pilot-run-tabs button.active {
+  border-color: #f6c64f;
+  background: rgba(246, 198, 79, 0.12);
+}
+.pilot-run-tabs small {
+  color: #aeb9b1;
+}
+.pilot-flow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid rgba(248, 242, 229, 0.25);
+}
+.pilot-flow > article {
+  min-width: 0;
+  padding: 1rem;
+}
+.pilot-flow > article + article {
+  border-left: 1px solid rgba(248, 242, 229, 0.25);
+}
+.pilot-card-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid rgba(248, 242, 229, 0.2);
+}
+.pilot-card-heading span {
+  color: #f6c64f;
+  font:
+    800 0.7rem ui-monospace,
+    monospace;
+  letter-spacing: 0.14em;
+}
+.pilot-card-heading strong {
+  font-size: 0.72rem;
+}
+.pilot-metadata,
+.pilot-result {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.8rem 0;
+}
+.pilot-metadata p,
+.pilot-preview p,
+.pilot-result p {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+}
+.pilot-metadata code,
+.pilot-preview code,
+.pilot-result code {
+  overflow-wrap: anywhere;
+  color: #c9d4cb;
+  font-size: 0.7rem;
+}
+.pilot-preview,
+.pilot-response,
+.pilot-result,
+.pilot-website {
+  margin-top: 0.9rem;
+  padding: 0.8rem;
+  background: rgba(248, 242, 229, 0.07);
+}
+.pilot-website {
+  margin-top: 0.9rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(246, 198, 79, 0.55);
+}
+.pilot-checks {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.pilot-checks li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.1rem 0.55rem;
+  padding: 0.45rem;
+  border-left: 3px solid #83d89f;
+  background: rgba(131, 216, 159, 0.07);
+}
+.pilot-checks li.failed {
+  border-color: #ee7d68;
+  background: rgba(238, 125, 104, 0.08);
+}
+.pilot-checks li span {
+  grid-row: 1 / 3;
+  color: #83d89f;
+  font:
+    800 0.63rem ui-monospace,
+    monospace;
+}
+.pilot-checks li.failed span {
+  color: #ee7d68;
+}
+.pilot-checks small {
+  color: #aeb9b1;
+}
+.pilot-preview pre {
+  max-height: 18rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #f8f2e5;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+.pilot-response strong {
+  color: #83d89f;
+}
+.pilot-empty {
+  color: #aeb9b1;
+  font-family: Georgia, serif;
+  font-style: italic;
 }
 
 .workflow-deck {
