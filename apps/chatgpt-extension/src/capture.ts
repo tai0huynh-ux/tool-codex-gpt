@@ -148,23 +148,28 @@ export async function captureLongConversation(
   const maxPasses = options.maxPasses ?? 100;
   const settleMs = options.settleMs ?? 100;
   let unchangedPasses = 0;
-  scrollContainer.scrollTo({ top: 0, behavior: 'auto' });
+  const originalScrollTop = scrollContainer.scrollTop;
+  try {
+    scrollContainer.scrollTo({ top: 0, behavior: 'auto' });
 
-  for (let pass = 0; pass < maxPasses; pass += 1) {
-    throwIfAborted(options.signal);
-    if (settleMs > 0) await delay(settleMs, options.signal);
-    unchangedPasses = accumulateRenderedMessages(document, messages) ? 0 : unchangedPasses + 1;
+    for (let pass = 0; pass < maxPasses; pass += 1) {
+      throwIfAborted(options.signal);
+      if (settleMs > 0) await delay(settleMs, options.signal);
+      unchangedPasses = accumulateRenderedMessages(document, messages) ? 0 : unchangedPasses + 1;
 
-    const maximumTop = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight);
-    const currentTop = scrollContainer.scrollTop;
-    if (currentTop >= maximumTop && unchangedPasses >= 2) break;
-    const step = Math.max(1, Math.floor(scrollContainer.clientHeight * 0.8));
-    scrollContainer.scrollTo({ top: Math.min(maximumTop, currentTop + step), behavior: 'auto' });
+      const maximumTop = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight);
+      const currentTop = scrollContainer.scrollTop;
+      if (currentTop >= maximumTop && unchangedPasses >= 2) break;
+      const step = Math.max(1, Math.floor(scrollContainer.clientHeight * 0.8));
+      scrollContainer.scrollTo({ top: Math.min(maximumTop, currentTop + step), behavior: 'auto' });
+    }
+
+    if (messages.size === 0) throw new Error('CHAT_CAPTURE_MESSAGES_NOT_FOUND');
+    const ordered = [...messages.values()]
+      .sort((left, right) => left.ordinal - right.ordinal)
+      .map(({ role, text }) => ({ role, text }));
+    return await buildSnapshot(document, ordered);
+  } finally {
+    scrollContainer.scrollTo({ top: originalScrollTop, behavior: 'auto' });
   }
-
-  if (messages.size === 0) throw new Error('CHAT_CAPTURE_MESSAGES_NOT_FOUND');
-  const ordered = [...messages.values()]
-    .sort((left, right) => left.ordinal - right.ordinal)
-    .map(({ role, text }) => ({ role, text }));
-  return buildSnapshot(document, ordered);
 }

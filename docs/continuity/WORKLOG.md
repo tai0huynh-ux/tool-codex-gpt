@@ -1389,3 +1389,11 @@ Recovery reads only rendered page inspection through the validated Native Messag
 ### Next action
 
 Publish this checkpoint, then ask for action-time confirmation before resolving the existing ambiguous ChatGPT effect.
+
+## 2026-07-19 - Chat history archive MVP checkpoint
+
+Implemented exact rendered ChatGPT conversation archiving for the selected Live Project Pilot. The extension now routes `conversation.capture` to an optional exact destination and long capture restores the user's original scroll position. The desktop main process recomputes content hashes, persists immutable revisions and ordered messages in the existing SQLite archive tables, rejects unsafe bounds, auto-syncs exact existing conversations every 30 seconds, and exports all selected-project revisions as lossless JSON through the main-process save dialog. Renderer responses contain archive summaries only.
+
+Verification: `pnpm.cmd run format:check`, `pnpm.cmd run lint`, `pnpm.cmd run typecheck`, `pnpm.cmd run test` (214 tests), `pnpm.cmd run test:e2e` (2 Chromium tests), `pnpm.cmd run test:internal-beta-uat` (46 tests + 2 Chromium tests), `pnpm.cmd run build`, `pnpm.cmd run package:win`, `pnpm.cmd run smoke:packaged:win`, and `pnpm.cmd run test:pilot-packaged-restart` passed. Targeted archive/capture/pilot tests passed 32 cases.
+
+Security: no cookies, tokens, authorization headers, browser history, browser storage, private APIs, or raw filesystem/database handles cross into the renderer. Auto-sync is bounded and best-effort; new-chat destinations and streaming pages are not archived automatically. Authenticated ChatGPT submission and writable Codex execution remain separately approval-gated.

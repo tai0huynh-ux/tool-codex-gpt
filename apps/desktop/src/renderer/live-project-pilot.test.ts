@@ -91,6 +91,19 @@ function baseApi(): ContextBridgeDesktopApi {
     capturePilotChatGpt: vi
       .fn()
       .mockResolvedValue({ ok: true, value: pilot({ status: 'codex_ready' }) }),
+    syncPilotChatHistory: vi
+      .fn()
+      .mockResolvedValue({ ok: true, value: pilot({ status: 'chatgpt_ready' }) }),
+    exportPilotChatHistory: vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        canceled: false,
+        filePath: 'C:/history.json',
+        conversationCount: 1,
+        revisionCount: 1,
+        exportedAt: timestamp,
+      },
+    }),
     approvePilotCodex: vi
       .fn()
       .mockResolvedValue({ ok: true, value: pilot({ status: 'codex_running' }) }),
@@ -183,5 +196,42 @@ describe('Live Project Pilot renderer', () => {
       objective: SAMPLE_PILOT_OBJECTIVE,
       destination: { mode: 'current' },
     });
+  });
+
+  it('auto-syncs an exact existing conversation and exposes history actions', async () => {
+    const existing = pilot({
+      destination: { mode: 'existing', conversationId: 'conversation-1' },
+      chatArchive: {
+        sourceId: 'source-1',
+        conversationId: 'conversation-1',
+        revisionCount: 1,
+        latestMessageCount: 2,
+        latestContentHash: 'a'.repeat(64),
+        lastSyncedAt: timestamp,
+      },
+    });
+    api.listPilots = vi.fn().mockResolvedValue({ ok: true, value: [existing] });
+    api.syncPilotChatHistory = vi.fn().mockResolvedValue({ ok: true, value: existing });
+    await act(async () => {
+      root.render(
+        createElement(LiveProjectPilot, {
+          projectId: 'project-2',
+          projectName: 'AI Website Pilot',
+          repositories: [repository],
+        }),
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.syncPilotChatHistory).toHaveBeenCalledWith('pilot-1');
+    expect(container.textContent).toContain('Tự động lưu mỗi 30 giây');
+    expect(container.textContent).toContain('Xuất toàn bộ lịch sử (.json)');
+    await act(async () => {
+      button(container, 'Xuất toàn bộ lịch sử (.json)').click();
+      await Promise.resolve();
+    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.exportPilotChatHistory).toHaveBeenCalledWith('pilot-1');
   });
 });

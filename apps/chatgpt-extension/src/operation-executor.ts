@@ -171,9 +171,11 @@ export function createExtensionOperationExecutor(tabs: BrowserTabs): {
         });
       }
       const destination =
+        operation.type === 'conversation.capture' ||
         operation.type === 'composer.insert' ||
         operation.type === 'composer.submit' ||
-        operation.type === 'page.reload'
+        operation.type === 'page.reload' ||
+        operation.type === 'page.status'
           ? operation.destination
           : undefined;
       const tab = selectTab(availableTabs, destination);

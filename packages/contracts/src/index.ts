@@ -170,7 +170,12 @@ export const chatGptPageInspectionSchema = z
 
 export const localTransportOperationSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('bridge.health') }).strict(),
-  z.object({ type: z.literal('conversation.capture') }).strict(),
+  z
+    .object({
+      type: z.literal('conversation.capture'),
+      destination: chatGptDestinationSchema.optional(),
+    })
+    .strict(),
   z
     .object({
       type: z.literal('composer.insert'),
@@ -205,6 +210,7 @@ export const localTransportOperationSchema = z.discriminatedUnion('type', [
   z
     .object({
       type: z.literal('page.status'),
+      destination: chatGptDestinationSchema.optional(),
       expectedHandoffId: z.string().min(1).optional(),
       expectedCorrelationId: z.string().min(1).optional(),
       expectedProjectId: z.string().min(1).optional(),

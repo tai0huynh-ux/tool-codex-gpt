@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PilotView, PilotViewResponse } from '../pilot-contracts';
 import type { ProjectView } from '../project-ipc';
 
@@ -57,6 +57,7 @@ export function LiveProjectPilot({
   const [transport, setTransport] = useState('Chưa kiểm tra');
   const [notice, setNotice] = useState('Chưa có dữ liệu nào được gửi.');
   const [busy, setBusy] = useState(false);
+  const archiveSyncing = useRef(false);
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? items[0],
@@ -121,6 +122,29 @@ export function LiveProjectPilot({
     return () => window.clearInterval(timer);
   }, [selected?.id, selected?.status]);
 
+  useEffect(() => {
+    if (selected?.destination.mode !== 'existing') return;
+    let active = true;
+    const sync = async (): Promise<void> => {
+      if (archiveSyncing.current) return;
+      archiveSyncing.current = true;
+      try {
+        const response = await window.contextBridgeDesktop.syncPilotChatHistory(selected.id);
+        if (active && response.ok) replace(response.value);
+      } catch {
+        // Automatic sync is best-effort; the manual action surfaces actionable errors.
+      } finally {
+        archiveSyncing.current = false;
+      }
+    };
+    void sync();
+    const timer = window.setInterval(() => void sync(), 30_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [selected?.id, selected?.destination.mode]);
+
   const run = async (
     action: () => Promise<PilotViewResponse>,
     successMessage: string,
@@ -152,6 +176,22 @@ export function LiveProjectPilot({
                 : { mode: 'new' },
         }),
       'Pilot đã được tạo trong SQLite. Chưa gửi ChatGPT hoặc Codex.',
+    );
+  };
+
+  const exportHistory = async (): Promise<void> => {
+    if (!selected) return;
+    setBusy(true);
+    const response = await window.contextBridgeDesktop.exportPilotChatHistory(selected.id);
+    setBusy(false);
+    if (!response.ok) {
+      setNotice(`${response.error.code}: ${response.error.message}`);
+      return;
+    }
+    setNotice(
+      response.value.canceled
+        ? 'Đã hủy xuất lịch sử; dữ liệu lưu trong SQLite không thay đổi.'
+        : `Đã xuất ${String(response.value.conversationCount)} cuộc chat, ${String(response.value.revisionCount)} phiên bản vào ${response.value.filePath ?? ''}.`,
     );
   };
 
@@ -341,6 +381,55 @@ export function LiveProjectPilot({
                   >
                     Chuẩn bị ChatGPT handoff
                   </button>
+                </div>
+                <div className="pilot-archive" aria-label="Lưu trữ lịch sử ChatGPT">
+                  <div className="pilot-card-heading">
+                    <span>LỊCH SỬ</span>
+                    <strong>
+                      {selected.destination.mode === 'existing'
+                        ? 'Tự động lưu mỗi 30 giây'
+                        : 'Cần conversation hiện có'}
+                    </strong>
+                  </div>
+                  <div className="pilot-metadata">
+                    <p>
+                      <span>Phiên bản đã lưu</span>
+                      <b>{selected.chatArchive?.revisionCount ?? 0}</b>
+                    </p>
+                    <p>
+                      <span>Tin nhắn mới nhất</span>
+                      <b>{selected.chatArchive?.latestMessageCount ?? 0}</b>
+                    </p>
+                    <p>
+                      <span>Đồng bộ gần nhất</span>
+                      <b>
+                        {selected.chatArchive
+                          ? new Date(selected.chatArchive.lastSyncedAt).toLocaleString('vi-VN')
+                          : 'Chưa đồng bộ'}
+                      </b>
+                    </p>
+                    <p>
+                      <span>Snapshot hash</span>
+                      <code>{shortHash(selected.chatArchive?.latestContentHash)}</code>
+                    </p>
+                  </div>
+                  <div className="pilot-actions">
+                    <button
+                      type="button"
+                      disabled={busy || selected.destination.mode !== 'existing'}
+                      onClick={() =>
+                        void run(
+                          () => window.contextBridgeDesktop.syncPilotChatHistory(selected.id),
+                          'Đã đồng bộ toàn bộ nội dung được render của conversation vào SQLite.',
+                        )
+                      }
+                    >
+                      Đồng bộ lịch sử ngay
+                    </button>
+                    <button type="button" disabled={busy} onClick={() => void exportHistory()}>
+                      Xuất toàn bộ lịch sử (.json)
+                    </button>
+                  </div>
                 </div>
                 {selected.chatGptPreview && (
                   <div className="pilot-preview">

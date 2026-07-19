@@ -43,7 +43,7 @@ describe('ChatGPT capture spike', () => {
   it('accumulates ordered messages while a virtualized fixture replaces rendered nodes', async () => {
     document.body.innerHTML = '<h1>Virtualized</h1><main id="messages"></main>';
     const container = document.createElement('div');
-    let scrollTop = 0;
+    let scrollTop = 150;
     const messages = ['one', 'two', 'three', 'four'];
     const render = () => {
       const start = Math.min(2, Math.floor(scrollTop / 100));
@@ -70,6 +70,7 @@ describe('ChatGPT capture spike', () => {
 
     const snapshot = await captureLongConversation(document, container, { settleMs: 0 });
     expect(snapshot.messages.map((message) => message.text)).toEqual(messages);
+    expect(scrollTop).toBe(150);
   });
 
   it('supports cancellation and reports selector failure', async () => {

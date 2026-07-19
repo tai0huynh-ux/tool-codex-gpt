@@ -55,3 +55,9 @@
 - Workarounds: no workaround remains necessary for the accepted path; opening an allowlisted ChatGPT tab now wakes the service worker and native host without browser-profile inspection
 - Independent work available: post-MVP maintenance only
 - Resolution condition: satisfied on 2026-07-19 by the installed Edge health/capture/insert/clear smoke
+
+## Chat archive MVP limitations
+
+- Status: implemented and locally verified.
+- The archive is intentionally limited to exact conversations explicitly bound to a project/pilot and to rendered DOM capture. It does not enumerate the ChatGPT account sidebar/history or read browser storage.
+- A capture is rejected when the bounded Native Messaging payload, message count, role, or character budget is exceeded; this preserves the 256 KiB transport safety limit rather than truncating silently.

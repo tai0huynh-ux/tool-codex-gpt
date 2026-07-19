@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
@@ -179,6 +180,16 @@ async function startDesktop(): Promise<void> {
     codex,
     openPreview: openWebsitePreview,
     ensureChatGptPage,
+    saveChatHistory: async ({ suggestedFileName, content }) => {
+      const selection = await dialog.showSaveDialog({
+        title: 'Xuất toàn bộ lịch sử ChatGPT đã lưu',
+        defaultPath: path.join(app.getPath('documents'), suggestedFileName),
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (selection.canceled || !selection.filePath) return null;
+      await writeFile(selection.filePath, content, 'utf8');
+      return selection.filePath;
+    },
   });
   registerPilotIpc(ipcMain, pilotService, {
     validateSender: (event) => trustedRendererIds.has(event.sender.id),

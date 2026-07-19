@@ -54,6 +54,41 @@ describe('extension operation executor', () => {
     });
   });
 
+  it('captures only the exact existing conversation tab', async () => {
+    const sendMessage = vi.fn(() =>
+      Promise.resolve({
+        title: 'Target',
+        messages: [{ role: 'user', text: 'hello' }],
+        contentHash: 'a'.repeat(64),
+        capturedAt: '2026-07-19T08:00:00.000Z',
+      }),
+    );
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+    await executor.execute({
+      type: 'conversation.capture',
+      destination: { mode: 'existing', conversationId: 'target' },
+    });
+    expect(sendMessage).toHaveBeenCalledWith(20, { type: 'capture-conversation' });
+  });
+
+  it('checks streaming status on the exact existing conversation tab', async () => {
+    const sendMessage = vi.fn(() =>
+      Promise.resolve({
+        streaming: false,
+        structuredResponse: {
+          ok: false,
+          error: { code: 'MARKER_NOT_FOUND', message: 'Not found.' },
+        },
+      }),
+    );
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+    await executor.execute({
+      type: 'page.status',
+      destination: { mode: 'existing', conversationId: 'target' },
+    });
+    expect(sendMessage).toHaveBeenCalledWith(20, { type: 'page-status' });
+  });
+
   it('reloads only the requested existing conversation tab', async () => {
     const sendMessage = vi.fn(() => Promise.resolve({ reloaded: true }));
     const executor = createExtensionOperationExecutor(tabs({ sendMessage }));

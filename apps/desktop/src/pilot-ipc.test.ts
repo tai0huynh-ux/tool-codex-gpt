@@ -109,6 +109,15 @@ function stubService(overrides: Partial<PilotDesktopService> = {}): PilotDesktop
     prepareChatGpt: () => Promise.resolve(view()),
     approveChatGpt: () => Promise.resolve(view()),
     captureChatGpt: () => Promise.resolve(view()),
+    syncChatHistory: () => Promise.resolve(view()),
+    exportChatHistory: () =>
+      Promise.resolve({
+        canceled: false,
+        filePath: 'C:/history.json',
+        conversationCount: 1,
+        revisionCount: 1,
+        exportedAt: '2026-07-19T08:00:00.000Z',
+      }),
     approveCodex: () => Promise.resolve(view()),
     verifyWebsite: () => Promise.resolve(view()),
     openPreview: () => Promise.resolve(view()),
@@ -338,6 +347,75 @@ describe('pilot desktop persistence', () => {
       hasDraft: false,
       streaming: false,
     });
+    database.close();
+  });
+
+  it('syncs the exact existing conversation into SQLite and exports all revisions', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-19T08:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, { now: () => '2026-07-19T08:00:00.000Z' });
+    const snapshot = {
+      title: 'Archive target',
+      projectName: 'Pilot',
+      messages: [
+        { role: 'user', text: 'first' },
+        { role: 'assistant', text: 'answer' },
+      ],
+      contentHash: 'a'.repeat(64),
+      capturedAt: '2026-07-19T08:00:00.000Z',
+    };
+    const archiveBridge: DesktopBridgeService = {
+      ...bridge,
+      execute: (operation) => {
+        if (operation.type === 'page.status') {
+          return Promise.resolve({
+            type: 'page.status.result',
+            streaming: false,
+            structuredResponse: {
+              ok: false,
+              error: { code: 'MARKER_NOT_FOUND', message: 'Not found.' },
+            },
+          });
+        }
+        if (operation.type === 'conversation.capture') {
+          return Promise.resolve({ type: 'conversation.capture.result', snapshot });
+        }
+        return Promise.reject(new Error('NOT_USED'));
+      },
+    };
+    let exportedContent = '';
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge: archiveBridge,
+      codex: new FixtureCodexAdapter(),
+      router: new ResponseRouter(database, workflows, projects, new FixtureCodexAdapter()),
+      ensureChatGptPage: vi.fn(() => Promise.resolve()),
+      saveChatHistory: ({ content }) => {
+        exportedContent = content;
+        return Promise.resolve('C:/history.json');
+      },
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const created = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Archive this conversation.',
+      destination: { mode: 'existing', conversationId: 'conversation-1' },
+    });
+    const synced = await service.syncChatHistory(created.id);
+    expect(synced.chatArchive).toMatchObject({
+      conversationId: 'conversation-1',
+      revisionCount: 1,
+      latestMessageCount: 2,
+    });
+    const exported = await service.exportChatHistory(created.id);
+    expect(exported).toMatchObject({ canceled: false, conversationCount: 1, revisionCount: 1 });
+    expect(exportedContent).toContain('first');
+    expect(exportedContent).toContain('answer');
     database.close();
   });
 

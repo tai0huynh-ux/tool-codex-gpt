@@ -19,6 +19,7 @@ import type { z } from 'zod';
 import type { DesktopBridgeService, IpcInvokeEventLike, IpcMainLike } from './ipc';
 import {
   pilotCreateInputSchema,
+  chatHistoryExportResponseSchema,
   pilotErrorCodeSchema,
   pilotIdInputSchema,
   pilotIpcChannels,
@@ -27,8 +28,10 @@ import {
   pilotViewResponseSchema,
   pilotViewSchema,
   type PilotCreateInput,
+  type ChatHistoryExportResult,
   type PilotView,
 } from './pilot-contracts';
+import { ChatArchiveStore } from './chat-archive';
 import { verifyStaticWebsite } from './website-verifier';
 
 const PILOT_PREFIX = 'live-project-pilot:';
@@ -86,9 +89,25 @@ class NativeChatGptAdapter implements AssistedChatGptAdapter {
     return (await this.execute({ type: 'page.status' }, 'page.status.result')).streaming;
   }
 
-  public async capture(): Promise<ConversationSnapshot> {
-    return (await this.execute({ type: 'conversation.capture' }, 'conversation.capture.result'))
-      .snapshot;
+  public async isConversationStreaming(destination: ChatGptDestination): Promise<boolean> {
+    return (await this.execute({ type: 'page.status', destination }, 'page.status.result'))
+      .streaming;
+  }
+
+  public async capture(_signal?: AbortSignal): Promise<ConversationSnapshot> {
+    void _signal;
+    return this.captureConversation();
+  }
+
+  public async captureConversation(
+    destination?: ChatGptDestination,
+  ): Promise<ConversationSnapshot> {
+    return (
+      await this.execute(
+        { type: 'conversation.capture', ...(destination ? { destination } : {}) },
+        'conversation.capture.result',
+      )
+    ).snapshot;
   }
 }
 
@@ -105,6 +124,8 @@ export interface PilotDesktopService {
   prepareChatGpt(pilotId: string): Promise<PilotView>;
   approveChatGpt(pilotId: string): Promise<PilotView>;
   captureChatGpt(pilotId: string): Promise<PilotView>;
+  syncChatHistory(pilotId: string): Promise<PilotView>;
+  exportChatHistory(pilotId: string): Promise<ChatHistoryExportResult>;
   approveCodex(pilotId: string): Promise<PilotView>;
   verifyWebsite(pilotId: string): Promise<PilotView>;
   openPreview(pilotId: string): Promise<PilotView>;
@@ -119,11 +140,16 @@ export function createPilotDesktopService(input: {
   codex: CodexAdapter;
   openPreview?: (repositoryRoot: string) => Promise<void>;
   ensureChatGptPage?: (destination: ChatGptDestination) => Promise<void>;
+  saveChatHistory?: (input: {
+    suggestedFileName: string;
+    content: string;
+  }) => Promise<string | null>;
   now?: () => string;
 }): PilotDesktopService {
   const now = input.now ?? (() => new Date().toISOString());
   const assisted = new AssistedChatGptService(input.workflows, { now });
   const chatGpt = new NativeChatGptAdapter(input.bridge);
+  const archive = new ChatArchiveStore(input.database, now);
 
   const save = (view: PilotView): PilotView => {
     const value = pilotViewSchema.parse({ ...view, updatedAt: now() });
@@ -469,6 +495,54 @@ export function createPilotDesktopService(input: {
       });
       return save({ ...view, status: 'codex_ready', response, codexPreview });
     },
+    syncChatHistory: async (pilotId) => {
+      const view = get(pilotId);
+      if (view.destination.mode !== 'existing') {
+        throw new Error('CHAT_ARCHIVE_DESTINATION_REQUIRED');
+      }
+      await input.ensureChatGptPage?.(view.destination);
+      const transport = await input.bridge.getStatus();
+      if (transport.state !== 'connected') throw new Error('TRANSPORT_DISCONNECTED');
+      if (await chatGpt.isConversationStreaming(view.destination)) {
+        throw new Error('CHATGPT_NOT_READY');
+      }
+      const snapshot = await chatGpt.captureConversation(view.destination);
+      const summary = archive.archive({
+        projectId: view.projectId,
+        conversationId: view.destination.conversationId,
+        snapshot,
+      });
+      return save({ ...get(pilotId), chatArchive: summary });
+    },
+    exportChatHistory: async (pilotId) => {
+      const view = get(pilotId);
+      const history = archive.exportProject(view.projectId);
+      const revisionCount = history.conversations.reduce(
+        (total, conversation) => total + conversation.revisions.length,
+        0,
+      );
+      if (history.conversations.length === 0 || revisionCount === 0) {
+        throw new Error('CHAT_ARCHIVE_EMPTY');
+      }
+      if (!input.saveChatHistory) throw new Error('CHAT_ARCHIVE_EXPORT_FAILED');
+      const compactTimestamp = history.exportedAt.replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+      let filePath: string | null;
+      try {
+        filePath = await input.saveChatHistory({
+          suggestedFileName: `chatgpt-history-${compactTimestamp}.json`,
+          content: `${JSON.stringify(history, null, 2)}\n`,
+        });
+      } catch {
+        throw new Error('CHAT_ARCHIVE_EXPORT_FAILED');
+      }
+      return {
+        canceled: filePath === null,
+        ...(filePath ? { filePath } : {}),
+        conversationCount: history.conversations.length,
+        revisionCount,
+        exportedAt: history.exportedAt,
+      };
+    },
     approveCodex: async (pilotId) => {
       const view = get(pilotId);
       if (view.status !== 'codex_ready' || !view.codexPreview) {
@@ -613,6 +687,20 @@ export function registerPilotIpc(
     pilotIdInputSchema,
     pilotViewResponseSchema,
     (value) => service.captureChatGpt((value as { pilotId: string }).pilotId),
+  );
+  register(
+    pilotIpcChannels.syncChatHistory,
+    'pilot.sync-chat-history',
+    pilotIdInputSchema,
+    pilotViewResponseSchema,
+    (value) => service.syncChatHistory((value as { pilotId: string }).pilotId),
+  );
+  register(
+    pilotIpcChannels.exportChatHistory,
+    'pilot.export-chat-history',
+    pilotIdInputSchema,
+    chatHistoryExportResponseSchema,
+    (value) => service.exportChatHistory((value as { pilotId: string }).pilotId),
   );
   register(
     pilotIpcChannels.approveCodex,

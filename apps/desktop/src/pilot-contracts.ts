@@ -33,6 +33,8 @@ export const pilotIpcChannels = {
   prepareChatGpt: 'pilot:prepare-chatgpt',
   approveChatGpt: 'pilot:approve-chatgpt',
   captureChatGpt: 'pilot:capture-chatgpt',
+  syncChatHistory: 'pilot:sync-chat-history',
+  exportChatHistory: 'pilot:export-chat-history',
   approveCodex: 'pilot:approve-codex',
   verifyWebsite: 'pilot:verify-website',
   openPreview: 'pilot:open-preview',
@@ -72,6 +74,17 @@ export const pilotStatusSchema = z.enum([
   'failed',
 ]);
 
+export const chatArchiveSummarySchema = z
+  .object({
+    sourceId: pilotIdSchema,
+    conversationId: pilotIdSchema,
+    revisionCount: z.number().int().positive(),
+    latestMessageCount: z.number().int().positive().max(5_000),
+    latestContentHash: z.string().regex(/^[a-f0-9]{64}$/),
+    lastSyncedAt: z.iso.datetime(),
+  })
+  .strict();
+
 export const pilotViewSchema = z
   .object({
     id: pilotIdSchema,
@@ -96,6 +109,7 @@ export const pilotViewSchema = z
       .optional(),
     chatGptPreview: assistedChatGptPreviewSchema.optional(),
     chatGptEffectId: pilotIdSchema.optional(),
+    chatArchive: chatArchiveSummarySchema.optional(),
     response: contextBridgeResponseSchema.optional(),
     codexPreview: codexRoutePreviewSchema.optional(),
     codexEffectId: pilotIdSchema.optional(),
@@ -120,6 +134,12 @@ export const pilotErrorCodeSchema = z.enum([
   'TRANSPORT_DISCONNECTED',
   'CHATGPT_NOT_READY',
   'CHATGPT_CONFIRMATION_REQUIRED',
+  'CHAT_ARCHIVE_DESTINATION_REQUIRED',
+  'CHAT_ARCHIVE_EMPTY',
+  'CHAT_ARCHIVE_TOO_LARGE',
+  'CHAT_ARCHIVE_INVALID',
+  'CHAT_ARCHIVE_WRITE_FAILED',
+  'CHAT_ARCHIVE_EXPORT_FAILED',
   'CODEX_CONFIRMATION_REQUIRED',
   'INTERNAL_ERROR',
 ]);
@@ -141,7 +161,28 @@ export const pilotListResponseSchema = z.discriminatedUnion('ok', [
   pilotFailureSchema,
 ]);
 
+export const chatHistoryExportResultSchema = z
+  .object({
+    canceled: z.boolean(),
+    filePath: z.string().min(1).max(32_768).optional(),
+    conversationCount: z.number().int().nonnegative(),
+    revisionCount: z.number().int().nonnegative(),
+    exportedAt: z.iso.datetime(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.canceled === Boolean(value.filePath)) {
+      context.addIssue({ code: 'custom', message: 'Saved exports require exactly one file path.' });
+    }
+  });
+export const chatHistoryExportResponseSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), value: chatHistoryExportResultSchema }).strict(),
+  pilotFailureSchema,
+]);
+
 export type PilotCreateInput = z.infer<typeof pilotCreateInputSchema>;
 export type PilotView = z.infer<typeof pilotViewSchema>;
 export type PilotViewResponse = z.infer<typeof pilotViewResponseSchema>;
 export type PilotListResponse = z.infer<typeof pilotListResponseSchema>;
+export type ChatHistoryExportResult = z.infer<typeof chatHistoryExportResultSchema>;
+export type ChatHistoryExportResponse = z.infer<typeof chatHistoryExportResponseSchema>;

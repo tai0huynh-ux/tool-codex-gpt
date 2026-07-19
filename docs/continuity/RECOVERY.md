@@ -60,7 +60,7 @@ Expected known-good baseline: formatting, lint, strict type-check, 197 or more V
 
 ## Exact next task
 
-P18-CODEX-001 is published at `c3ec3a7`; pilot implementation, fixture, and packaged restart checkpoints are published through `849812b`. The installed ChatGPT no-submit smoke now confirms a safe existing conversation with an empty composer, and a reviewed live payload is persisted at hash `75cae5042832…428bae39`. The exact next action is action-time user confirmation before the representational ChatGPT submit. Do not click submit or infer approval from the prepared preview.
+The chat-history archive MVP is implemented in the current working checkpoint and must be published after the required gates. It archives only exact existing conversations selected through the validated Native Messaging path, stores immutable SQLite revisions, auto-syncs while the app is open, and exports lossless project JSON. After publication, the separate live workflow remains paused at action-time user confirmation for reviewed payload `75cae5042832…428bae39`; do not click submit or infer approval from the prepared preview.
 
 ## Expected files to modify
 

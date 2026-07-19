@@ -5,6 +5,7 @@ import {
   desktopIpcChannels,
   projectIpcChannels,
   pilotIpcChannels,
+  chatHistoryExportResponseSchema,
   pilotListResponseSchema,
   pilotViewResponseSchema,
   projectListResponseSchema,
@@ -16,6 +17,7 @@ import {
   workflowListResponseSchema,
   workflowViewResponseSchema,
   type ChooseRootResponse,
+  type ChatHistoryExportResponse,
   type ProjectListResponse,
   type ProjectViewResponse,
   type PilotCreateInput,
@@ -50,6 +52,8 @@ export interface ContextBridgeDesktopApi {
   preparePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
   approvePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
   capturePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
+  syncPilotChatHistory(pilotId: string): Promise<PilotViewResponse>;
+  exportPilotChatHistory(pilotId: string): Promise<ChatHistoryExportResponse>;
   approvePilotCodex(pilotId: string): Promise<PilotViewResponse>;
   refreshPilot(pilotId: string): Promise<PilotViewResponse>;
   verifyPilotWebsite(pilotId: string): Promise<PilotViewResponse>;
@@ -149,6 +153,14 @@ const api: ContextBridgeDesktopApi = {
   capturePilotChatGpt: async (pilotId) =>
     pilotViewResponseSchema.parse(
       (await ipcRenderer.invoke(pilotIpcChannels.captureChatGpt, { pilotId })) as unknown,
+    ),
+  syncPilotChatHistory: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.syncChatHistory, { pilotId })) as unknown,
+    ),
+  exportPilotChatHistory: async (pilotId) =>
+    chatHistoryExportResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.exportChatHistory, { pilotId })) as unknown,
     ),
   approvePilotCodex: async (pilotId) =>
     pilotViewResponseSchema.parse(

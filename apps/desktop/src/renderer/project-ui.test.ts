@@ -81,6 +81,8 @@ describe('project mapping renderer', () => {
       preparePilotChatGpt: vi.fn(),
       approvePilotChatGpt: vi.fn(),
       capturePilotChatGpt: vi.fn(),
+      syncPilotChatHistory: vi.fn(),
+      exportPilotChatHistory: vi.fn(),
       approvePilotCodex: vi.fn(),
     };
     Object.defineProperty(window, 'contextBridgeDesktop', { configurable: true, value: api });
