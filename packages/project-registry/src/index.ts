@@ -52,6 +52,7 @@ export interface CodexThreadMapping {
   projectId: string;
   repositoryFingerprint: string;
   externalThreadId: string;
+  title?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -98,6 +99,7 @@ interface CodexThreadRow {
   project_id: string;
   repository_fingerprint: string;
   external_thread_id: string;
+  title: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -151,6 +153,7 @@ function mapCodexThread(row: CodexThreadRow): CodexThreadMapping {
     projectId: row.project_id,
     repositoryFingerprint: row.repository_fingerprint,
     externalThreadId: row.external_thread_id,
+    ...(row.title ? { title: row.title } : {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -434,6 +437,7 @@ export class ProjectRegistry {
     projectId: string;
     repositoryFingerprint: string;
     externalThreadId: string;
+    title?: string;
     id?: string;
   }): string {
     const id = input.id ?? randomUUID();
@@ -441,18 +445,29 @@ export class ProjectRegistry {
     this.database
       .prepare(
         `INSERT INTO codex_threads (
-          id, project_id, repository_fingerprint, external_thread_id, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?)`,
+          id, project_id, repository_fingerprint, external_thread_id, title, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         id,
         input.projectId,
         requireText(input.repositoryFingerprint, 'REPOSITORY_FINGERPRINT_REQUIRED'),
         requireText(input.externalThreadId, 'CODEX_THREAD_ID_REQUIRED'),
+        optionalText(input.title),
         now,
         now,
       );
     return id;
+  }
+
+  public updateCodexThreadTitle(externalThreadId: string, title: string): void {
+    this.database
+      .prepare('UPDATE codex_threads SET title = ?, updated_at = ? WHERE external_thread_id = ?')
+      .run(
+        optionalText(title),
+        this.now(),
+        requireText(externalThreadId, 'CODEX_THREAD_ID_REQUIRED'),
+      );
   }
 
   public getCodexThread(id: string): CodexThreadMapping | undefined {

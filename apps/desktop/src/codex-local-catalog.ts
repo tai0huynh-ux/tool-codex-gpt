@@ -233,7 +233,14 @@ export function syncCodexLocalCatalog(
         ) {
           continue;
         }
-        if (threads.some((candidate) => candidate.externalThreadId === thread.externalThreadId)) {
+        const existingThread = threads.find(
+          (candidate) => candidate.externalThreadId === thread.externalThreadId,
+        );
+        if (existingThread) {
+          if (thread.title && existingThread.title !== thread.title) {
+            registry.updateCodexThreadTitle(thread.externalThreadId, thread.title);
+            existingThread.title = thread.title;
+          }
           continue;
         }
         try {
@@ -241,6 +248,7 @@ export function syncCodexLocalCatalog(
             projectId,
             repositoryFingerprint: repository.fingerprint,
             externalThreadId: thread.externalThreadId,
+            title: thread.title,
             id: stableId('codex-thread', thread.externalThreadId),
           });
         } catch {

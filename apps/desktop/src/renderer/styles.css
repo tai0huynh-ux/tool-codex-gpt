@@ -345,6 +345,13 @@ h1 {
   color: #15231b;
   font-weight: 800;
 }
+.pilot-chat-catalog > .pilot-card-heading > button {
+  align-self: center;
+  border-color: #f6c64f;
+  background: #f6c64f;
+  color: #15231b;
+  font-weight: 800;
+}
 .pilot-card-heading span {
   color: #f6c64f;
   font:

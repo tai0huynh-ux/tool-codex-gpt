@@ -42,8 +42,8 @@ Redirect-loop/local-catalog hardening is now included in this checkpoint: backgr
 - Codex runs expose replayable ordered start, progress, completion, failure, and cancellation events without allowing terminal-state overwrite.
 - The production Codex adapter uses the SDK-bundled binary and a temporary bundled catalog, preserves external configuration, forces read-only/approval-never/network-disabled execution, owns structured JSONL lifecycle and exact cancellation, and cleans temporary runtime state.
 - Long conversation capture accumulates virtualized windows, preserves duplicate messages with stable IDs, updates streaming text, and supports abort.
-- Rendered ChatGPT sidebar discovery preserves `/g/.../c/...` paths, caps output at 200 conversations, reports truncation, and never reads account APIs, browser profiles, storage, history, cookies, or tokens.
-- The pilot workspace lists Codex projects with collapsible verified thread mappings, shows five threads initially, reveals five more per action, and lets each persisted pilot bind an exact ChatGPT conversation to either a new or existing Codex thread.
+- Rendered ChatGPT sidebar discovery preserves `/g/.../c/...` paths, queries all eligible open ChatGPT tabs, merges by canonical path, caps output at 200 conversations, reports truncation, and never reads account APIs, browser profiles, storage, history, cookies, or tokens.
+- The pilot workspace lists Codex projects with collapsible verified thread mappings, shows five threads initially, reveals five more per action, displays persisted Codex thread titles, and lets each persisted pilot bind an exact ChatGPT conversation to either a new or existing Codex thread.
 - Multiple active pilots poll terminal state independently; startup recovery opens up to eight unique persisted ChatGPT destinations without using Windows screen state as identity.
 - Approved Codex runs capture a main-process Git baseline and terminal completion creates an audited ZIP containing the full report, manifest, and only path/symlink/exclusion/size/binary/secret-safe changed files. Deleted and blocked files remain manifest-only.
 - Packaged smoke now preflights the ZIP runtime inside `app.asar`; the regression caught and removed an `archiver` transitive-dependency packaging failure before acceptance.
@@ -89,6 +89,7 @@ Redirect-loop/local-catalog hardening is now included in this checkpoint: backgr
 - Streaming responses defer acknowledgement; capture advances the workflow only after streaming stops and the latest rendered user message matches the approved payload.
 - Polling cancellation preserves recovery state, while explicit transfer cancellation clears composer text only when its hash still matches before marking the effect failed.
 - SQLite migration v5 persists one response receipt per handoff and workflow/hash, so duplicate ChatGPT responses remain blocked after restart.
+- SQLite migration v6 persists bounded Codex thread display titles without changing thread identity or routing fields.
 - Response routing revalidates schema, handoff, correlation, project, workflow state, prompt hash, receipt hash, destination repository, and thread identity before dispatch.
 - Existing Codex threads resume only through persisted project/fingerprint mappings; new threads persist their mapping; new-worktree routes require an explicit provider.
 - Codex prompt approval and preparation use P10 single-use capabilities and iteration limits; ambiguous adapter failures remain `dispatching` and are never retried automatically.

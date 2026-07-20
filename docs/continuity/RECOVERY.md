@@ -113,6 +113,8 @@ pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=p
 - Current-conversation selection must resolve through the validated main-process Native Messaging boundary. Never infer a conversation ID from renderer text, browser profile data, history, or an unverified URL.
 - Background ChatGPT archive sync must call page recovery with `allowOpenExternal: false`; a failed timer refresh may reload/inspect but must never open a browser tab. Startup recovery is separately capped to one unique persisted destination.
 - Codex project discovery reads only the bounded local metadata catalog and must revalidate every root through `validateGitRepositoryInput` before projecting a project/thread mapping into SQLite.
+- Codex display titles come from bounded `thread_name` metadata; never use a title as a thread routing key.
+- ChatGPT discovery must query and merge all eligible open `chatgpt.com` tabs; an active new-chat tab may legitimately have an empty sidebar while another tab contains the rendered catalog.
 - Keep mock evidence labeled fixture-only; rerun the separate live Codex spike before claiming production acceptance in a new environment.
 
 ## Blockers and safe alternatives

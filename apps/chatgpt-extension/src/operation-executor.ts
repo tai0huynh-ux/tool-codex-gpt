@@ -1,8 +1,10 @@
 import {
   chatGptConversationIdFromPath,
+  chatGptRenderedCatalogSchema,
   localTransportOperationSchema,
   localTransportResultSchema,
   type ChatGptDestination,
+  type ChatGptRenderedCatalog,
   type LocalTransportOperation,
   type LocalTransportResult,
 } from '@codex-context-bridge/contracts';
@@ -172,6 +174,59 @@ function resultFor(operation: LocalTransportOperation, response: unknown): Local
   }
 }
 
+async function discoverAcrossTabs(
+  tabs: BrowserTabs,
+  availableTabs: BrowserTab[],
+): Promise<LocalTransportResult> {
+  type TabWithId = Omit<BrowserTab, 'id'> & { id: number };
+  const eligible = availableTabs.filter(
+    (tab): tab is TabWithId =>
+      typeof tab.id === 'number' && tab.url?.startsWith('https://chatgpt.com/') === true,
+  );
+  if (eligible.length === 0) throw new Error('CHATGPT_TAB_NOT_FOUND');
+
+  const catalogs: ChatGptRenderedCatalog[] = [];
+  let lastError: unknown;
+  for (const tab of rankTabs(eligible) as TabWithId[]) {
+    try {
+      const response = await sendToTab(tabs, tab.id, {
+        type: 'discover-conversations',
+      });
+      catalogs.push(chatGptRenderedCatalogSchema.parse(response));
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (catalogs.length === 0) {
+    throw lastError instanceof Error ? lastError : new Error('CHATGPT_DISCOVERY_FAILED');
+  }
+
+  const merged = new Map<string, (typeof catalogs)[number]['conversations'][number]>();
+  for (const catalog of catalogs) {
+    for (const conversation of catalog.conversations) {
+      const current = merged.get(conversation.conversationPath);
+      merged.set(
+        conversation.conversationPath,
+        current
+          ? {
+              ...current,
+              ...(conversation.projectName ? { projectName: conversation.projectName } : {}),
+              current: current.current || conversation.current,
+            }
+          : conversation,
+      );
+    }
+  }
+  return localTransportResultSchema.parse({
+    type: 'conversation.discover.result',
+    catalog: {
+      conversations: [...merged.values()].slice(0, 200),
+      capturedAt: new Date().toISOString(),
+      truncated: catalogs.some((catalog) => catalog.truncated) || merged.size > 200,
+    },
+  });
+}
+
 export function createExtensionOperationExecutor(tabs: BrowserTabs): {
   execute(operation: unknown): Promise<LocalTransportResult>;
 } {
@@ -184,6 +239,9 @@ export function createExtensionOperationExecutor(tabs: BrowserTabs): {
           type: 'bridge.health.result',
           status: availableTabs.some((tab) => tab.id !== undefined) ? 'ready' : 'degraded',
         });
+      }
+      if (operation.type === 'conversation.discover') {
+        return discoverAcrossTabs(tabs, availableTabs);
       }
       const destination =
         operation.type === 'conversation.capture' ||

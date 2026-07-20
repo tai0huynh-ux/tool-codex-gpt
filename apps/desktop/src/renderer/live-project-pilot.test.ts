@@ -210,7 +210,7 @@ describe('Live Project Pilot renderer', () => {
   });
 
   it('lists rendered ChatGPT chats and limits each expanded Codex project to five threads', async () => {
-    api.discoverPilotChatGpt = vi.fn().mockResolvedValue({
+    const discoverChatGpt = vi.fn().mockResolvedValue({
       ok: true,
       value: {
         conversations: [
@@ -227,6 +227,7 @@ describe('Live Project Pilot renderer', () => {
         truncated: false,
       },
     });
+    api.discoverPilotChatGpt = discoverChatGpt;
     const listCodexTargets = vi.fn().mockResolvedValue({
       ok: true,
       value: {
@@ -238,6 +239,7 @@ describe('Live Project Pilot renderer', () => {
             threads: Array.from({ length: 7 }, (_, index) => ({
               mappingId: `mapping-${String(index + 1)}`,
               externalThreadId: `thread-${String(index + 1)}`,
+              title: `Codex task ${String(index + 1)}`,
               repositoryFingerprint: repository.fingerprint,
               updatedAt: timestamp,
             })),
@@ -260,8 +262,14 @@ describe('Live Project Pilot renderer', () => {
     });
 
     expect(container.textContent).toContain('MVP planning');
-    expect(container.textContent).toContain('thread-5');
-    expect(container.textContent).not.toContain('thread-6');
+    expect(container.textContent).toContain('Codex task 5');
+    expect(container.textContent).not.toContain('Codex task 6');
+    await act(async () => {
+      button(container, 'Đồng bộ đoạn chat ChatGPT').click();
+      await Promise.resolve();
+    });
+    expect(discoverChatGpt).toHaveBeenCalledTimes(2);
+    expect(container.textContent).toContain('Đã đọc 1 đoạn chat từ các tab ChatGPT đang mở');
     await act(async () => {
       button(container, 'Đồng bộ project Codex').click();
       await Promise.resolve();
@@ -272,7 +280,7 @@ describe('Live Project Pilot renderer', () => {
       button(container, 'Hiện thêm 5 đoạn chat').click();
       await Promise.resolve();
     });
-    expect(container.textContent).toContain('thread-7');
+    expect(container.textContent).toContain('Codex task 7');
   });
 
   it('explains how to recover when the persisted conversation is unavailable', async () => {

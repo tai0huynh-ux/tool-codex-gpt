@@ -72,7 +72,9 @@
     "Multi-connection catalog and safe ZIP checkpoint passed 228 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, 46-test internal-beta UAT, all workspace builds, Windows packaging, packaged ZIP-runtime and native-host smoke, and fixture-only packaged restart acceptance",
     "Installed native-host smoke was intentionally not rerun because an existing user Registry64 registration was detected and the non-destructive gate stopped before modification",
     "Redirect-loop and Codex local catalog targeted recovery/IPC/renderer suite passed 30 tests",
-    "Codex local catalog reads only bounded allowlisted metadata and imports validated Git roots without manual project entry"
+    "Codex local catalog reads only bounded allowlisted metadata and imports validated Git roots without manual project entry",
+    "Catalog correctness focused suite passed 46 tests; full verification passed 233 Vitest tests with migration v6, multi-tab ChatGPT discovery, and Codex display titles",
+    "Windows package and packaged smoke passed after catalog correctness changes"
   ],
   "knownFailures": [],
   "activeBlockers": [],
@@ -81,7 +83,7 @@
     "After confirmation, submit exactly once and require rendered acknowledgement plus a valid structured response.",
     "Stop again for the separate repository-bound Codex workspace-write approval before any file changes.",
     "Keep ZIP attachment explicit until a separate safe production browser file-upload boundary is implemented and accepted.",
-    "Publish the redirect-loop and automatic Codex project discovery checkpoint after full verification and packaged gates."
+    "Publish the redirect-loop, Codex title, and multi-tab ChatGPT discovery checkpoint after remote ancestry verification."
   ],
   "workingTreeExpectedClean": true,
   "updatedAt": "2026-07-20T01:54:48.854+07:00"

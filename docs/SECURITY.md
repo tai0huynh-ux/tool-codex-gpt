@@ -73,7 +73,9 @@ The desktop project picker may import only bounded Codex local metadata from the
 regular non-symlink file inside the canonical Codex directory and stay within its byte limit. The importer reads
 project names, Git roots, thread IDs, titles, timestamps, and working directories only; it never reads prompt bodies,
 `auth.json`, cookies, browser storage, tokens, or credentials. Roots are revalidated by the registry Git detector
-before a selectable mapping is created, and mismatched or duplicate thread assignments are ignored.
+before a selectable mapping is created, and mismatched or duplicate thread assignments are ignored. Display titles
+are bounded metadata only and are never used as routing identity; Codex thread IDs and repository fingerprints
+remain the identity fields.
 
 ## Threat model highlights
 

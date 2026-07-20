@@ -26,6 +26,11 @@ export const migrations = [
     name: 'response_routing',
     sql: "CREATE TABLE chatgpt_response_receipts (\n  id TEXT PRIMARY KEY,\n  workflow_run_id TEXT NOT NULL REFERENCES workflow_runs(id) ON DELETE CASCADE,\n  handoff_id TEXT NOT NULL UNIQUE,\n  correlation_id TEXT NOT NULL,\n  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE RESTRICT,\n  response_hash TEXT NOT NULL,\n  response_json TEXT NOT NULL,\n  status TEXT NOT NULL CHECK(status IN ('captured', 'routed')),\n  created_at TEXT NOT NULL,\n  routed_at TEXT,\n  UNIQUE(workflow_run_id, response_hash)\n);\n\nCREATE INDEX chatgpt_response_receipts_workflow_idx\n  ON chatgpt_response_receipts(workflow_run_id, status, created_at);\n",
   },
+  {
+    version: 6,
+    name: 'codex_thread_titles',
+    sql: "ALTER TABLE codex_threads ADD COLUMN title TEXT;\n\nUPDATE codex_threads SET title = NULL WHERE title IS NOT NULL AND trim(title) = '';\n",
+  },
 ] as const;
 
 export const initialMigration = migrations[0].sql;

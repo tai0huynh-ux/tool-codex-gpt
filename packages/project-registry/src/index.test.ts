@@ -120,8 +120,12 @@ describe('ProjectRegistry', () => {
         projectId: 'project-2',
         repositoryFingerprint: 'fingerprint-1',
         externalThreadId: 'external-thread-1',
+        title: 'Initial title',
       }),
     ).toBe('thread-1');
+    expect(registry.getCodexThread('thread-1')?.title).toBe('Initial title');
+    registry.updateCodexThreadTitle('external-thread-1', 'Updated title');
+    expect(registry.getCodexThread('thread-1')?.title).toBe('Updated title');
     expect(database.prepare('SELECT COUNT(*) AS count FROM chat_sources').get()).toEqual({
       count: 1,
     });

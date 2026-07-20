@@ -270,6 +270,7 @@ describe('pilot desktop persistence', () => {
       projectId: 'project-1',
       repositoryFingerprint: repository.fingerprint,
       externalThreadId: 'thread-1',
+      title: 'Fix homepage',
     });
     const workflows = new WorkflowEngine(database);
     const codex = new FixtureCodexAdapter();
@@ -321,7 +322,9 @@ describe('pilot desktop persistence', () => {
       projects: [
         {
           projectId: 'project-1',
-          threads: [{ mappingId: 'mapping-1', externalThreadId: 'thread-1' }],
+          threads: [
+            { mappingId: 'mapping-1', externalThreadId: 'thread-1', title: 'Fix homepage' },
+          ],
         },
       ],
     });

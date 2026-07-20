@@ -35,12 +35,17 @@ The Codex project catalog is refreshed from bounded local Codex metadata on dema
 seconds. The main process validates discovered Git roots and projects them into the registry; the renderer only
 receives the typed project/thread tree. Projects are collapsed by default, show five threads initially, and reveal
 five more per action. No manual project-name entry is required, and missing or malformed local metadata fails closed
-to an empty catalog.
+to an empty catalog. Codex `thread_name` is persisted as a bounded display title in migration v6, so the UI does
+not substitute an opaque external thread ID when a real name is available.
 
 ChatGPT history synchronization uses the exact persisted destination but passes a no-open policy to recovery. A
 background refresh may inspect or reload the existing tab once, then returns a deterministic unavailable status;
 it cannot call `shell.openExternal` and therefore cannot create an unbounded tab loop after a redirect to
 `chatgpt.com`. Startup recovery remains separately bounded to one destination.
+
+ChatGPT sidebar discovery queries every eligible open `chatgpt.com` tab, not only the active tab. It validates and
+merges rendered catalogs by canonical conversation path, which prevents a blank new-chat tab from hiding history
+rendered in another tab.
 
 Before an approved write-capable Codex dispatch, the main process records a Git change baseline outside the
 renderer projection. Terminal completion produces an audited ZIP in app data by comparing the baseline with

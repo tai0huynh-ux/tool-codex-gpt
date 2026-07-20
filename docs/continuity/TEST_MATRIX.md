@@ -74,6 +74,9 @@
 | Codex local catalog | bounded metadata, symlink, Git-root import | `pnpm.cmd exec vitest run apps/desktop/src/codex-local-catalog.test.ts` | temporary Codex state/temp Git repository | 3 tests pass | current checkpoint |
 | Codex picker refresh | typed IPC and primary UI action | `pnpm.cmd exec vitest run apps/desktop/src/pilot-ipc.test.ts apps/desktop/src/renderer/live-project-pilot.test.ts` | SQLite/jsdom/fake catalog | included in 30 targeted tests | current checkpoint |
 
+| Codex thread titles | migration/registry/local catalog/UI display | `pnpm.cmd exec vitest run packages/database/src/index.test.ts packages/project-registry/src/index.test.ts apps/desktop/src/codex-local-catalog.test.ts apps/desktop/src/renderer/live-project-pilot.test.ts` | SQLite/temp Codex state/jsdom | covered by current full suite | current checkpoint |
+| Multi-tab ChatGPT discovery | merge all rendered tabs | `pnpm.cmd exec vitest run apps/chatgpt-extension/src/operation-executor.test.ts` | tab/content-script fixture | merge regression passes | current checkpoint |
+
 | Chat archive store | SQLite source/snapshot/message persistence, deduplication, project isolation, bounds | `pnpm.cmd exec vitest run apps/desktop/src/chat-archive.test.ts` | SQLite memory database | 4 tests pass | current checkpoint |
 | Chat archive pilot IPC | exact destination, streaming guard, auditable sync, save-dialog export | `pnpm.cmd exec vitest run apps/desktop/src/pilot-ipc.test.ts` | SQLite and fake Native Messaging bridge | 12 tests pass | current checkpoint |
 | Chat archive renderer | existing-thread auto-sync and manual sync/export controls | `pnpm.cmd exec vitest run apps/desktop/src/renderer/live-project-pilot.test.ts` | jsdom | 7 tests pass | current checkpoint |

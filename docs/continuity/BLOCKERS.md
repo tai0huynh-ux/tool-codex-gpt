@@ -98,3 +98,13 @@
 - Resolution: bounded reader imports only `.codex-global-state.json` and `session_index.jsonl`, validates Git roots through the registry, and refreshes the primary picker automatically with a manual `Đồng bộ project Codex` action
 - Evidence: three catalog safety/import tests plus renderer and IPC coverage; packaged UI displayed the local Codex project tree
 - Remaining limitation: projects not yet recorded by Codex or roots that are no longer valid Git repositories remain intentionally hidden
+
+## CATALOG-CORRECTNESS-001
+
+- Status: resolved locally; regression-covered
+- First observed: 2026-07-21
+- Reproduction: Codex picker displayed opaque external thread IDs; ChatGPT discovery returned zero while another open tab contained rendered sidebar links
+- Root cause: local thread titles were discarded before registry persistence, and discovery selected only the highest-ranked tab
+- Resolution: migration v6 persists bounded `thread_name` display titles; discovery sends the rendered-only operation to every eligible ChatGPT tab and merges canonical paths
+- Evidence: 46 focused tests, 233 full Vitest tests, build, Windows package, and packaged smoke passed
+- Remaining limitation: ChatGPT still requires an authenticated, user-opened tab with its sidebar rendered; private APIs and account history remain intentionally out of scope

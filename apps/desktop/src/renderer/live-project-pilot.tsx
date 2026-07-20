@@ -63,6 +63,7 @@ export function LiveProjectPilot({
   const [conversationPath, setConversationPath] = useState('');
   const [threadMappingId, setThreadMappingId] = useState('');
   const [chatCatalog, setChatCatalog] = useState<ChatGptRenderedCatalog>();
+  const [chatCatalogError, setChatCatalogError] = useState('');
   const [codexTargets, setCodexTargets] = useState<CodexTargetCatalog>({ projects: [] });
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(() => new Set([projectId]));
   const [threadLimits, setThreadLimits] = useState<Record<string, number>>({});
@@ -129,7 +130,12 @@ export function LiveProjectPilot({
         );
       }
     }
-    if (discovered.ok) setChatCatalog(discovered.value);
+    if (discovered.ok) {
+      setChatCatalog(discovered.value);
+      setChatCatalogError('');
+    } else {
+      setChatCatalogError(`${discovered.error.code}: ${discovered.error.message}`);
+    }
     setTransport(
       health.ok
         ? `${health.value.state} / nativeMessaging ${health.value.permissionActive ? 'active' : 'inactive'}`
@@ -149,7 +155,10 @@ export function LiveProjectPilot({
         window.contextBridgeDesktop.discoverPilotChatGpt(),
         window.contextBridgeDesktop.listPilotCodexTargets(),
       ]).then(([discovered, targets]) => {
-        if (discovered.ok) setChatCatalog(discovered.value);
+        if (discovered.ok) {
+          setChatCatalog(discovered.value);
+          setChatCatalogError('');
+        }
         if (targets.ok) setCodexTargets(targets.value);
       });
     }, 15_000);
@@ -245,6 +254,23 @@ export function LiveProjectPilot({
     }
     setNotice(
       `Đã đồng bộ ${String(response.value.projects.length)} project từ Codex Desktop và registry an toàn.`,
+    );
+  };
+
+  const refreshChatGptCatalog = async (): Promise<void> => {
+    setBusy(true);
+    const response = await window.contextBridgeDesktop.discoverPilotChatGpt();
+    setBusy(false);
+    if (!response.ok) {
+      const error = `${response.error.code}: ${response.error.message}`;
+      setChatCatalogError(error);
+      setNotice(error);
+      return;
+    }
+    setChatCatalog(response.value);
+    setChatCatalogError('');
+    setNotice(
+      `Đã đọc ${String(response.value.conversations.length)} đoạn chat từ các tab ChatGPT đang mở.`,
     );
   };
 
@@ -393,8 +419,13 @@ export function LiveProjectPilot({
                           key={thread.mappingId}
                           onClick={() => selectCodexThread(target.projectId, thread.mappingId)}
                         >
-                          <span>{thread.externalThreadId.slice(0, 18)}</span>
-                          <small>{new Date(thread.updatedAt).toLocaleString('vi-VN')}</small>
+                          <strong>
+                            {thread.title ?? `Codex thread ${thread.externalThreadId.slice(0, 12)}`}
+                          </strong>
+                          <small>
+                            {thread.externalThreadId.slice(0, 18)} ·{' '}
+                            {new Date(thread.updatedAt).toLocaleString('vi-VN')}
+                          </small>
                         </button>
                       ))}
                       {target.threads.length > limit && (
@@ -454,9 +485,21 @@ export function LiveProjectPilot({
             <legend>ChatGPT destination</legend>
             <div className="pilot-chat-catalog" aria-label="Danh sách đoạn chat ChatGPT đã render">
               <div className="pilot-card-heading">
-                <span>CHATGPT SIDEBAR</span>
-                <strong>{chatCatalog?.conversations.length ?? 0} đoạn chat nhận diện được</strong>
+                <div>
+                  <span>CHATGPT SIDEBAR</span>
+                  <strong>{chatCatalog?.conversations.length ?? 0} đoạn chat nhận diện được</strong>
+                </div>
+                <button type="button" disabled={busy} onClick={() => void refreshChatGptCatalog()}>
+                  Đồng bộ đoạn chat ChatGPT
+                </button>
               </div>
+              {chatCatalogError && <p className="pilot-empty">{chatCatalogError}</p>}
+              {!chatCatalogError && (chatCatalog?.conversations.length ?? 0) === 0 && (
+                <p className="pilot-empty">
+                  Chưa thấy đoạn chat trong các sidebar đang render. Hãy mở sidebar ChatGPT, mở đúng
+                  tài khoản/workspace rồi nhấn đồng bộ.
+                </p>
+              )}
               {chatCatalog?.conversations.slice(0, chatLimit).map((conversation) => (
                 <button
                   type="button"

@@ -253,6 +253,7 @@ export const codexTargetCatalogSchema = z
               .object({
                 mappingId: pilotIdSchema,
                 externalThreadId: pilotIdSchema,
+                title: z.string().min(1).max(300).optional(),
                 repositoryFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
                 updatedAt: z.iso.datetime(),
               })

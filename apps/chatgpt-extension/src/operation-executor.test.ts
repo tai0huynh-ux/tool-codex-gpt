@@ -45,6 +45,40 @@ describe('extension operation executor', () => {
     expect(sendMessage).toHaveBeenCalledWith(30, { type: 'discover-conversations' });
   });
 
+  it('merges rendered conversations across every open ChatGPT tab', async () => {
+    const sendMessage = vi.fn((tabId: number) =>
+      Promise.resolve({
+        conversations:
+          tabId === 30
+            ? []
+            : [
+                {
+                  conversationId: tabId === 20 ? 'target' : 'other',
+                  conversationPath: tabId === 20 ? '/g/project-1/c/target' : '/c/other',
+                  title: tabId === 20 ? 'Target chat' : 'Other chat',
+                  ...(tabId === 20 ? { projectId: 'project-1', projectName: 'Project One' } : {}),
+                  current: false,
+                },
+              ],
+        capturedAt: '2026-07-21T08:00:00.000Z',
+        truncated: false,
+      }),
+    );
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+
+    const result = await executor.execute({ type: 'conversation.discover' });
+    expect(result).toMatchObject({ type: 'conversation.discover.result' });
+    expect(
+      result.type === 'conversation.discover.result' ? result.catalog.conversations : [],
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ conversationId: 'target', title: 'Target chat' }),
+        expect.objectContaining({ conversationId: 'other', title: 'Other chat' }),
+      ]),
+    );
+    expect(sendMessage).toHaveBeenCalledTimes(3);
+  });
+
   it('reports degraded health without a rendered ChatGPT tab', async () => {
     const executor = createExtensionOperationExecutor(tabs({ query: () => Promise.resolve([]) }));
     await expect(executor.execute({ type: 'bridge.health' })).resolves.toEqual({

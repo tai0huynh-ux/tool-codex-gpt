@@ -117,9 +117,10 @@ describe('Codex local project catalog', () => {
       expect(repository?.canonicalRoot.replaceAll('\\', '/').toLowerCase()).toBe(
         root.replaceAll('\\', '/').toLowerCase(),
       );
-      expect(project ? registry.listCodexThreads(project.id)[0]?.externalThreadId : undefined).toBe(
-        'codex-thread-1',
-      );
+      expect(project ? registry.listCodexThreads(project.id)[0] : undefined).toMatchObject({
+        externalThreadId: 'codex-thread-1',
+        title: 'Fix page',
+      });
     } finally {
       database.close();
       await rm(root, { recursive: true, force: true });

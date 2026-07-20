@@ -437,6 +437,7 @@ export function createPilotDesktopService(input: {
           threads: input.projects.listCodexThreads(project.id).map((thread) => ({
             mappingId: thread.id,
             externalThreadId: thread.externalThreadId,
+            ...(thread.title ? { title: thread.title } : {}),
             repositoryFingerprint: thread.repositoryFingerprint,
             updatedAt: thread.updatedAt,
           })),

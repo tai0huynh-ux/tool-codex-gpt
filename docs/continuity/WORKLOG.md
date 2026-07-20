@@ -1464,6 +1464,26 @@ The targeted recovery/catalog/IPC/renderer suite passed 30 tests. `pnpm.cmd run 
 
 No browser profile, cookies, tokens, credentials, prompt bodies, or private APIs were read. Local Codex discovery is metadata-only and fails closed for invalid roots/files. Automatic browser ZIP upload remains unimplemented; ZIP reveal and attachment stay explicit.
 
+## 2026-07-21 - Catalog correctness fix
+
+### Goal
+
+Show the actual Codex conversation names and stop a blank active ChatGPT tab from hiding conversations rendered in another open tab.
+
+### Changes
+
+Added migration v6 and registry support for bounded Codex thread titles. The local catalog now persists `thread_name`, updates changed titles, and the renderer shows the title with the external ID only as secondary metadata.
+
+Changed `conversation.discover` to query every eligible open `chatgpt.com` tab, validate each rendered catalog, and merge by canonical path. Added a primary manual ChatGPT refresh button and visible discovery errors/guidance instead of silently showing an empty list.
+
+### Verification
+
+Focused catalog/registry/extension/UI tests passed 46 cases. Full `pnpm.cmd run verify` passed 233 Vitest tests, two workflow fixture tests, two Chromium fixture tests, and all workspace builds. Windows packaging and packaged smoke passed.
+
+### Limitation
+
+The live browser path still requires the user-authorized extension and an authenticated ChatGPT tab with the sidebar rendered. No cookies, tokens, browser profile, account API, or private history endpoint is used.
+
 ### Next action
 
 Publish this checkpoint. The separate live pilot remains paused for action-time confirmation of payload `75cae5042832…428bae39`; after any confirmed ChatGPT send, stop again for the independent Codex workspace-write approval.
