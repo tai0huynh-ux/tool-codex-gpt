@@ -169,6 +169,16 @@ Resolve current HEAD with `git rev-parse HEAD`; the state helper reports it with
 
 Resolve the published hash with `git rev-parse origin/main`; publication requires equality with HEAD.
 
+## Account transfer checkpoint - 2026-07-21
+
+The Live Project Pilot now supports an explicit account-switch transfer from locally archived rendered ChatGPT history. The action creates an audited ZIP, opens a new ChatGPT destination in the current account, renders a bounded inline bootstrap preview when safe, requires one action-time confirmation before sending, verifies the rendered user message, and rebinds the same persisted pilot/project/Codex target to the new conversation.
+
+Large archives remain complete in the local ZIP but stop at `manual_attachment_required`; the app does not claim a browser file upload. Secret-like content blocks transfer before any external send. Transfer effects are persisted and ambiguous dispatch is restored as confirmation-required.
+
+The Native Messaging health check now requires the shared content version handshake and a rendered content-script ping. A stale unpacked extension is reported as `EXTENSION_VERSION_MISMATCH`/degraded instead of false `ready`. New-chat confirmation can resolve the SPA transition from `/` to a concrete conversation without resending.
+
+Verification for this checkpoint: `pnpm.cmd run verify` passed 240 Vitest tests, two workflow fixture E2E tests, two Chromium fixture tests, all workspace builds, the 46-case internal-beta UAT, Windows packaging, packaged smoke, and fixture-only packaged restart acceptance with zero runtime errors. Focused account-transfer/health/UI coverage passed 84 tests. No authenticated external ChatGPT send or live Codex write is claimed by these fixture gates.
+
 ## Last updated
 
 2026-07-20 01:11 +07:00.

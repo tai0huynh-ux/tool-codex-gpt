@@ -117,6 +117,10 @@ function stubService(overrides: Partial<PilotDesktopService> = {}): PilotDesktop
     approveChatGpt: () => Promise.resolve(view()),
     captureChatGpt: () => Promise.resolve(view()),
     syncChatHistory: () => Promise.resolve(view()),
+    prepareAccountTransfer: () => Promise.resolve(view()),
+    approveAccountTransfer: () => Promise.resolve(view()),
+    captureAccountTransfer: () => Promise.resolve(view()),
+    revealAccountTransfer: () => Promise.resolve(view()),
     exportChatHistory: () =>
       Promise.resolve({
         canceled: false,
@@ -593,6 +597,153 @@ describe('pilot desktop persistence', () => {
     expect(exported).toMatchObject({ canceled: false, conversationCount: 1, revisionCount: 1 });
     expect(exportedContent).toContain('first');
     expect(exportedContent).toContain('answer');
+    database.close();
+  });
+
+  it('packages stored history, creates a new-account handoff, and rebinds the same Codex pilot', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-21T08:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, { now: () => '2026-07-21T08:00:00.000Z' });
+    const codex = new FixtureCodexAdapter();
+    let submitted = false;
+    let sentText = '';
+    const transferBridge: DesktopBridgeService = {
+      ...bridge,
+      execute: (operation) => {
+        if (operation.type === 'page.inspect') {
+          const existing = submitted || operation.destination?.mode === 'existing';
+          return Promise.resolve({
+            type: 'page.inspect.result',
+            inspection: {
+              page: existing
+                ? {
+                    mode: 'existing',
+                    conversationId: 'new-account-chat',
+                    conversationPath: '/c/new-account-chat',
+                  }
+                : { mode: 'new' },
+              composer: { available: true, readOnly: false },
+            },
+          });
+        }
+        if (operation.type === 'page.status') {
+          return Promise.resolve({
+            type: 'page.status.result',
+            streaming: false,
+            structuredResponse: {
+              ok: false,
+              error: { code: 'MARKER_NOT_FOUND', message: 'Not found.' },
+            },
+          });
+        }
+        if (operation.type === 'composer.insert') {
+          sentText = operation.text;
+          return Promise.resolve({
+            type: 'composer.insert.result',
+            inserted: true,
+            sent: false,
+            textHash: operation.payloadHash,
+          });
+        }
+        if (operation.type === 'composer.submit') {
+          submitted = true;
+          return Promise.resolve({
+            type: 'composer.submit.result',
+            submitted: true,
+            textHash: operation.expectedTextHash,
+          });
+        }
+        if (operation.type === 'conversation.capture') {
+          return Promise.resolve({
+            type: 'conversation.capture.result',
+            snapshot: {
+              title: 'New account chat',
+              messages: [{ role: 'user', text: sentText }],
+              contentHash: 'b'.repeat(64),
+              capturedAt: '2026-07-21T08:00:00.000Z',
+            },
+          });
+        }
+        return Promise.reject(new Error('NOT_USED'));
+      },
+    };
+    const createChatHistoryTransfer = vi.fn(() =>
+      Promise.resolve({
+        zipPath: 'C:/transfers/chat-history.zip',
+        sha256: 'c'.repeat(64),
+        payloadSha256: 'd'.repeat(64),
+        size: 1_024,
+        conversationCount: 1,
+        revisionCount: 1,
+        deliveryMode: 'inline' as const,
+        bootstrapContext: '{"messages":["old account context"]}',
+        createdAt: '2026-07-21T08:00:00.000Z',
+      }),
+    );
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge: transferBridge,
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+      ensureChatGptPage: vi.fn(() => Promise.resolve()),
+      createChatHistoryTransfer,
+      now: () => '2026-07-21T08:00:00.000Z',
+    });
+    const created = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Continue this project.',
+      destination: { mode: 'existing', conversationId: 'old-account-chat' },
+      codexDestination: { mode: 'new-thread', repositoryId: 'repository-1' },
+    });
+    new (await import('./chat-archive')).ChatArchiveStore(
+      database,
+      () => '2026-07-21T08:00:00.000Z',
+      () => crypto.randomUUID(),
+    ).archive({
+      projectId: 'project-1',
+      conversationId: 'old-account-chat',
+      snapshot: {
+        title: 'Old account chat',
+        messages: [{ role: 'user', text: 'old account context' }],
+        contentHash: 'a'.repeat(64),
+        capturedAt: '2026-07-21T08:00:00.000Z',
+      },
+    });
+
+    const prepared = await service.prepareAccountTransfer(created.id);
+    expect(prepared.accountTransfer).toMatchObject({
+      status: 'review_required',
+      sourceDestination: { mode: 'existing', conversationId: 'old-account-chat' },
+      targetDestination: { mode: 'new' },
+      artifact: { zipPath: 'C:/transfers/chat-history.zip', deliveryMode: 'inline' },
+    });
+    expect(prepared.codexDestination).toEqual(created.codexDestination);
+    expect(createChatHistoryTransfer).toHaveBeenCalledOnce();
+
+    const dispatched = await service.approveAccountTransfer(created.id);
+    expect(dispatched.accountTransfer?.status).toBe('dispatching');
+    expect(sentText).toContain('old account context');
+
+    const completed = await service.captureAccountTransfer(created.id);
+    expect(completed.destination).toEqual({
+      mode: 'existing',
+      conversationId: 'new-account-chat',
+      conversationPath: '/c/new-account-chat',
+    });
+    expect(completed.accountTransfer).toMatchObject({
+      status: 'completed',
+      targetDestination: {
+        mode: 'existing',
+        conversationId: 'new-account-chat',
+        conversationPath: '/c/new-account-chat',
+      },
+    });
+    expect(completed.codexDestination).toEqual(created.codexDestination);
     database.close();
   });
 

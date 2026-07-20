@@ -83,3 +83,8 @@
 | Capture position restore | virtualized capture restores original scroll position | `pnpm.cmd exec vitest run apps/chatgpt-extension/src/capture.test.ts` | jsdom | pass | current checkpoint |
 
 Fixture and mock results never count as live integration evidence.
+
+| Account transfer bundle | ZIP, hash, bounded inline payload, secret block | `pnpm.cmd exec vitest run apps/desktop/src/chat-history-transfer.test.ts` | temp Windows directory | 2 tests pass | account-transfer checkpoint |
+| Account transfer pilot | archive -> new chat preview -> one acknowledgement -> destination rebind | `pnpm.cmd exec vitest run apps/desktop/src/pilot-ipc.test.ts` | SQLite and fake Native Messaging bridge | included in focused suite | account-transfer checkpoint |
+| Account transfer renderer | staged status, duplicate-safe action, review and confirm controls | `pnpm.cmd exec vitest run apps/desktop/src/renderer/live-project-pilot.test.ts` | jsdom | 8 tests pass | account-transfer checkpoint |
+| Extension health handshake | rendered ping, stale content degradation, new-chat transition routing | `pnpm.cmd exec vitest run apps/chatgpt-extension/src/operation-executor.test.ts apps/desktop/src/native-transport.test.ts` | tab/native-host fixtures | covered by focused suite | account-transfer checkpoint |

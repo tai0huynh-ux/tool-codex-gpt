@@ -71,7 +71,11 @@ function rankTabs(tabs: BrowserTab[]): BrowserTab[] {
   );
 }
 
-function selectTab(tabs: BrowserTab[], destination?: ChatGptDestination): BrowserTab {
+function selectTab(
+  tabs: BrowserTab[],
+  destination?: ChatGptDestination,
+  allowNewConversationTransition = false,
+): BrowserTab {
   const eligible = tabs.filter(
     (tab) => tab.id !== undefined && tab.url?.startsWith('https://chatgpt.com/'),
   );
@@ -79,7 +83,12 @@ function selectTab(tabs: BrowserTab[], destination?: ChatGptDestination): Browse
     destination?.mode === 'existing'
       ? eligible.filter((tab) => conversationId(tab.url ?? '') === destination.conversationId)
       : destination?.mode === 'new'
-        ? eligible.filter((tab) => isNewChatUrl(tab.url ?? ''))
+        ? (() => {
+            const newChatTabs = eligible.filter((tab) => isNewChatUrl(tab.url ?? ''));
+            return newChatTabs.length > 0 || !allowNewConversationTransition
+              ? newChatTabs
+              : eligible;
+          })()
         : eligible;
   const selected = rankTabs(matching)[0];
   if (!selected) throw new Error('CHATGPT_TAB_NOT_FOUND');
@@ -241,6 +250,53 @@ async function discoverAcrossTabs(
   });
 }
 
+async function healthAcrossTabs(
+  tabs: BrowserTabs,
+  availableTabs: BrowserTab[],
+  contentVersion: string,
+): Promise<LocalTransportResult> {
+  const eligible = rankTabs(availableTabs)
+    .filter(
+      (tab): tab is BrowserTab & { id: number } =>
+        typeof tab.id === 'number' && tab.url?.startsWith('https://chatgpt.com/') === true,
+    )
+    .slice(0, MAX_DISCOVERY_TABS);
+  if (eligible.length === 0) {
+    return localTransportResultSchema.parse({
+      type: 'bridge.health.result',
+      status: 'degraded',
+    });
+  }
+  const ping = async (tabId: number): Promise<boolean> => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const response = await Promise.race([
+        sendToTab(tabs, tabId, {
+          type: 'bridge-ping',
+          contentVersion,
+        }),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error('CHATGPT_HEALTH_TAB_TIMEOUT')),
+            DISCOVERY_TAB_TIMEOUT_MS,
+          );
+        }),
+      ]);
+      const value = response as Record<string, unknown>;
+      return value.ready === true && value.contentVersion === contentVersion;
+    } catch {
+      return false;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  };
+  const results = await Promise.all(eligible.map((tab) => ping(tab.id)));
+  return localTransportResultSchema.parse({
+    type: 'bridge.health.result',
+    status: results.some(Boolean) ? 'ready' : 'degraded',
+  });
+}
+
 export function createExtensionOperationExecutor(tabs: BrowserTabs): {
   execute(operation: unknown): Promise<LocalTransportResult>;
 } {
@@ -249,10 +305,7 @@ export function createExtensionOperationExecutor(tabs: BrowserTabs): {
       const operation = localTransportOperationSchema.parse(input);
       const availableTabs = await tabs.query({ url: 'https://chatgpt.com/*' });
       if (operation.type === 'bridge.health') {
-        return localTransportResultSchema.parse({
-          type: 'bridge.health.result',
-          status: availableTabs.some((tab) => tab.id !== undefined) ? 'ready' : 'degraded',
-        });
+        return healthAcrossTabs(tabs, availableTabs, operation.contentVersion);
       }
       if (operation.type === 'conversation.discover') {
         return discoverAcrossTabs(tabs, availableTabs);
@@ -266,7 +319,14 @@ export function createExtensionOperationExecutor(tabs: BrowserTabs): {
         operation.type === 'page.status'
           ? operation.destination
           : undefined;
-      const tab = selectTab(availableTabs, destination);
+      const tab = selectTab(
+        availableTabs,
+        destination,
+        destination?.mode === 'new' &&
+          (operation.type === 'conversation.capture' ||
+            operation.type === 'page.inspect' ||
+            operation.type === 'page.status'),
+      );
       if (tab.id === undefined) throw new Error('CHATGPT_TAB_NOT_FOUND');
       const response = await sendToTab(tabs, tab.id, messageFor(operation));
       return resultFor(operation, response);

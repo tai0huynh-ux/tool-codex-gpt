@@ -59,7 +59,7 @@ describe('desktop typed IPC', () => {
       error: { code: 'IPC_SCHEMA_INVALID' },
     });
     await expect(
-      handler?.({ sender: { id: 7 } }, { type: 'bridge.health' }),
+      handler?.({ sender: { id: 7 } }, { type: 'bridge.health', contentVersion: '1.0' }),
     ).resolves.toMatchObject({
       ok: true,
     });
@@ -92,7 +92,7 @@ describe('desktop typed IPC', () => {
     await expect(
       disconnectedIpc.handlers.get(desktopIpcChannels.executeTransportOperation)?.(
         { sender: { id: 7 } },
-        { type: 'bridge.health' },
+        { type: 'bridge.health', contentVersion: '1.0' },
       ),
     ).resolves.toMatchObject({ error: { code: 'TRANSPORT_DISCONNECTED' } });
   });

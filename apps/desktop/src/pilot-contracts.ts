@@ -40,6 +40,10 @@ export const pilotIpcChannels = {
   captureChatGpt: 'pilot:capture-chatgpt',
   syncChatHistory: 'pilot:sync-chat-history',
   exportChatHistory: 'pilot:export-chat-history',
+  prepareAccountTransfer: 'pilot:prepare-account-transfer',
+  approveAccountTransfer: 'pilot:approve-account-transfer',
+  captureAccountTransfer: 'pilot:capture-account-transfer',
+  revealAccountTransfer: 'pilot:reveal-account-transfer',
   approveCodex: 'pilot:approve-codex',
   revealCodexBundle: 'pilot:reveal-codex-bundle',
   verifyWebsite: 'pilot:verify-website',
@@ -117,6 +121,41 @@ export const chatArchiveSummarySchema = z
   })
   .strict();
 
+const accountTransferArtifactSchema = z
+  .object({
+    zipPath: z.string().min(1).max(32_768),
+    sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    payloadSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    size: z.number().int().nonnegative(),
+    conversationCount: z.number().int().positive().max(200),
+    revisionCount: z.number().int().positive().max(10_000),
+    deliveryMode: z.enum(['inline', 'manual_attachment']),
+    createdAt: z.iso.datetime(),
+  })
+  .strict();
+
+const accountTransferSchema = z
+  .object({
+    status: z.enum([
+      'review_required',
+      'dispatching',
+      'confirmation_required',
+      'manual_attachment_required',
+      'completed',
+      'failed',
+    ]),
+    sourceDestination: pilotDestinationSchema,
+    targetDestination: pilotDestinationSchema,
+    artifact: accountTransferArtifactSchema,
+    preview: assistedChatGptPreviewSchema.optional(),
+    workflowRunId: pilotIdSchema.optional(),
+    effectId: pilotIdSchema.optional(),
+    errorCode: z.string().min(1).max(256).optional(),
+    preparedAt: z.iso.datetime(),
+    completedAt: z.iso.datetime().optional(),
+  })
+  .strict();
+
 export const pilotViewSchema = z
   .object({
     id: pilotIdSchema,
@@ -149,6 +188,7 @@ export const pilotViewSchema = z
     chatGptPreview: assistedChatGptPreviewSchema.optional(),
     chatGptEffectId: pilotIdSchema.optional(),
     chatArchive: chatArchiveSummarySchema.optional(),
+    accountTransfer: accountTransferSchema.optional(),
     response: contextBridgeResponseSchema.optional(),
     codexPreview: codexRoutePreviewSchema.optional(),
     codexEffectId: pilotIdSchema.optional(),
@@ -202,6 +242,11 @@ export const pilotErrorCodeSchema = z.enum([
   'CHAT_ARCHIVE_INVALID',
   'CHAT_ARCHIVE_WRITE_FAILED',
   'CHAT_ARCHIVE_EXPORT_FAILED',
+  'CHAT_TRANSFER_NOT_READY',
+  'CHAT_TRANSFER_SECRET_DETECTED',
+  'CHAT_TRANSFER_TOO_LARGE',
+  'CHAT_TRANSFER_FAILED',
+  'CHAT_TRANSFER_CONFIRMATION_REQUIRED',
   'CODEX_CONFIRMATION_REQUIRED',
   'CODEX_BASELINE_FAILED',
   'CODEX_BUNDLE_FAILED',

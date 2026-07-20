@@ -1,4 +1,5 @@
 import {
+  CHATGPT_CONTENT_VERSION,
   localTransportResponseSchema,
   type LocalTransportOperation,
   type LocalTransportResult,
@@ -218,19 +219,24 @@ export function createNativeDesktopBridgeService(
   return {
     async getStatus(): Promise<TransportStatus> {
       try {
-        const result = await execute({ type: 'bridge.health' });
+        const result = await execute({
+          type: 'bridge.health',
+          contentVersion: CHATGPT_CONTENT_VERSION,
+        });
         if (result.type !== 'bridge.health.result') throw new Error('TRANSPORT_DISCONNECTED');
         return {
           transport: 'native_messaging',
           state: result.status === 'ready' ? 'connected' : 'degraded',
           permissionActive: options.permissionActive,
+          ...(result.status === 'degraded' ? { lastErrorCode: 'CHATGPT_CONTENT_NOT_READY' } : {}),
         };
       } catch (error) {
+        const code = error instanceof Error ? error.message : 'TRANSPORT_DISCONNECTED';
         return {
           transport: 'native_messaging',
-          state: 'disconnected',
+          state: code === 'SCHEMA_INVALID' ? 'degraded' : 'disconnected',
           permissionActive: options.permissionActive,
-          lastErrorCode: error instanceof Error ? error.message : 'TRANSPORT_DISCONNECTED',
+          lastErrorCode: code === 'SCHEMA_INVALID' ? 'EXTENSION_VERSION_MISMATCH' : code,
         };
       }
     },

@@ -112,7 +112,37 @@ describe('extension operation executor', () => {
 
   it('reports degraded health without a rendered ChatGPT tab', async () => {
     const executor = createExtensionOperationExecutor(tabs({ query: () => Promise.resolve([]) }));
-    await expect(executor.execute({ type: 'bridge.health' })).resolves.toEqual({
+    await expect(
+      executor.execute({ type: 'bridge.health', contentVersion: '1.0' }),
+    ).resolves.toEqual({
+      type: 'bridge.health.result',
+      status: 'degraded',
+    });
+  });
+
+  it('reports ready health only when a rendered tab answers the content-version ping', async () => {
+    const sendMessage = vi.fn(() => Promise.resolve({ ready: true, contentVersion: '1.0' }));
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+
+    await expect(
+      executor.execute({ type: 'bridge.health', contentVersion: '1.0' }),
+    ).resolves.toEqual({
+      type: 'bridge.health.result',
+      status: 'ready',
+    });
+    expect(sendMessage).toHaveBeenCalledWith(30, {
+      type: 'bridge-ping',
+      contentVersion: '1.0',
+    });
+  });
+
+  it('degrades health when tabs exist but their content scripts are stale or unreachable', async () => {
+    const executor = createExtensionOperationExecutor(
+      tabs({ sendMessage: () => Promise.reject(new Error('REQUEST_TIMEOUT')) }),
+    );
+    await expect(
+      executor.execute({ type: 'bridge.health', contentVersion: '1.0' }),
+    ).resolves.toEqual({
       type: 'bridge.health.result',
       status: 'degraded',
     });

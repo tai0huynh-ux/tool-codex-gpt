@@ -75,7 +75,9 @@ describe('native host runtime', () => {
       timeoutMs: 1_000,
     });
 
-    await expect(desktop.execute({ type: 'bridge.health' })).resolves.toEqual({
+    await expect(
+      desktop.execute({ type: 'bridge.health', contentVersion: '1.0' }),
+    ).resolves.toEqual({
       type: 'bridge.health.result',
       status: 'ready',
     });

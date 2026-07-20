@@ -31,7 +31,7 @@ function request(): unknown {
     nonce: 'nonce-000000000001',
     sentAt: '2026-07-18T09:00:00.000Z',
     expiresAt: '2026-07-18T09:00:30.000Z',
-    operation: { type: 'bridge.health' },
+    operation: { type: 'bridge.health', contentVersion: '1.0' },
   };
 }
 
@@ -52,7 +52,7 @@ describe('native extension bridge', () => {
     port.onMessage.listener?.(request());
     await vi.waitFor(() => expect(port.messages).toHaveLength(1));
 
-    expect(execute).toHaveBeenCalledWith({ type: 'bridge.health' });
+    expect(execute).toHaveBeenCalledWith({ type: 'bridge.health', contentVersion: '1.0' });
     expect(JSON.stringify(execute.mock.calls)).not.toContain('capability');
     expect(port.messages[0]).toMatchObject({
       requestId: 'request-0000000001',

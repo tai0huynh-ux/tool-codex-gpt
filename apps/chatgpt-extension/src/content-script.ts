@@ -8,7 +8,7 @@ import {
   isStreaming,
   submitComposer,
 } from './page-actions';
-import type { ChatGptDestination } from '@codex-context-bridge/contracts';
+import { CHATGPT_CONTENT_VERSION, type ChatGptDestination } from '@codex-context-bridge/contracts';
 import { discoverRenderedConversations } from './conversation-discovery';
 
 interface CaptureRequest {
@@ -16,6 +16,10 @@ interface CaptureRequest {
 }
 interface DiscoverRequest {
   type: 'discover-conversations';
+}
+interface BridgePingRequest {
+  type: 'bridge-ping';
+  contentVersion: typeof CHATGPT_CONTENT_VERSION;
 }
 interface InsertRequest {
   type: 'insert-composer-text';
@@ -49,6 +53,7 @@ interface StatusRequest {
 type ExtensionRequest =
   | CaptureRequest
   | DiscoverRequest
+  | BridgePingRequest
   | InsertRequest
   | SubmitRequest
   | InspectRequest
@@ -94,6 +99,11 @@ if (location.origin === 'https://chatgpt.com' && typeof chrome !== 'undefined') 
   void chrome.runtime.sendMessage({ type: 'bridge-content-ready' }).catch(() => undefined);
 
   chrome.runtime.onMessage.addListener((request: ExtensionRequest, _sender, sendResponse) => {
+    if (request.type === 'bridge-ping') {
+      sendResponse({ ready: true, contentVersion: CHATGPT_CONTENT_VERSION });
+      return false;
+    }
+
     if (request.type === 'capture-conversation') {
       void captureConversationPage(document, location).then(sendResponse);
       return true;

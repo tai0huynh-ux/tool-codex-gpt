@@ -30,6 +30,7 @@ import { createPilotDesktopService, registerPilotIpc } from './pilot-ipc';
 import { ensureChatGptPageReadable } from './chatgpt-page-recovery';
 import { captureGitChangeBaseline, createCodexChangeBundle } from './codex-change-bundle';
 import { readCodexLocalCatalog, syncCodexLocalCatalog } from './codex-local-catalog';
+import { createChatHistoryTransferBundle } from './chat-history-transfer';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const trustedRendererIds = new Set<number>();
@@ -216,6 +217,18 @@ async function startDesktop(): Promise<void> {
       await writeFile(selection.filePath, content, 'utf8');
       return selection.filePath;
     },
+    createChatHistoryTransfer: ({ history, pilotId }) =>
+      createChatHistoryTransferBundle({
+        history,
+        pilotId,
+        outputDirectory: path.join(app.getPath('userData'), 'chat-history-transfers'),
+        audit: ({ action, outcome }) =>
+          auditDesktopTransfer(action, outcome === 'allowed' ? 'allowed' : 'blocked'),
+      }),
+    revealChatHistoryTransfer: (zipPath) => {
+      shell.showItemInFolder(zipPath);
+      return Promise.resolve();
+    },
   });
   registerPilotIpc(ipcMain, pilotService, {
     validateSender: (event) => trustedRendererIds.has(event.sender.id),
@@ -234,7 +247,14 @@ async function startDesktop(): Promise<void> {
             'chatgpt_confirmation_required',
           ].includes(pilot.status),
         )
-        .map((pilot) => pilot.destination)
+        .map((pilot) =>
+          pilot.accountTransfer &&
+          ['review_required', 'dispatching', 'confirmation_required'].includes(
+            pilot.accountTransfer.status,
+          )
+            ? pilot.accountTransfer.targetDestination
+            : pilot.destination,
+        )
         .filter(
           (destination, index, all) =>
             all.findIndex(

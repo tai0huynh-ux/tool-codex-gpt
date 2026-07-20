@@ -69,7 +69,20 @@ function baseApi(): ContextBridgeDesktopApi {
     cancelWorkflow: vi.fn(),
     listPilots: vi.fn().mockResolvedValue({
       ok: true,
-      value: [pilot({ status: 'chatgpt_ready', chatGptPreview })],
+      value: [
+        pilot({
+          status: 'chatgpt_ready',
+          chatGptPreview,
+          chatArchive: {
+            sourceId: 'source-1',
+            conversationId: 'old-chat',
+            revisionCount: 1,
+            latestMessageCount: 2,
+            latestContentHash: 'e'.repeat(64),
+            lastSyncedAt: timestamp,
+          },
+        }),
+      ],
     }),
     discoverPilotChatGpt: vi.fn().mockResolvedValue({
       ok: true,
@@ -109,6 +122,10 @@ function baseApi(): ContextBridgeDesktopApi {
         exportedAt: timestamp,
       },
     }),
+    preparePilotAccountTransfer: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
+    approvePilotAccountTransfer: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
+    capturePilotAccountTransfer: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
+    revealPilotAccountTransfer: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
     approvePilotCodex: vi
       .fn()
       .mockResolvedValue({ ok: true, value: pilot({ status: 'codex_running' }) }),
@@ -258,7 +275,6 @@ describe('Live Project Pilot renderer', () => {
         }),
       );
       await Promise.resolve();
-      await Promise.resolve();
     });
 
     expect(container.textContent).toContain('MVP planning');
@@ -369,5 +385,81 @@ describe('Live Project Pilot renderer', () => {
     });
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(api.exportPilotChatHistory).toHaveBeenCalledWith('pilot-1');
+  });
+
+  it('prepares and explicitly confirms an account-switch transfer without changing Codex target', async () => {
+    const existing = pilot({
+      destination: { mode: 'existing', conversationId: 'old-chat' },
+      codexDestination: { mode: 'new-thread', repositoryId: 'repository-1' },
+      chatArchive: {
+        sourceId: 'source-1',
+        conversationId: 'old-chat',
+        revisionCount: 2,
+        latestMessageCount: 8,
+        latestContentHash: 'e'.repeat(64),
+        lastSyncedAt: timestamp,
+      },
+    });
+    const transferred = pilot({
+      ...existing,
+      accountTransfer: {
+        status: 'review_required',
+        sourceDestination: existing.destination,
+        targetDestination: { mode: 'new' },
+        artifact: {
+          zipPath: 'C:/transfers/history.zip',
+          sha256: 'f'.repeat(64),
+          payloadSha256: '1'.repeat(64),
+          size: 2_048,
+          conversationCount: 1,
+          revisionCount: 2,
+          deliveryMode: 'inline',
+          createdAt: timestamp,
+        },
+        preview: { ...chatGptPreview, text: 'old account context', characterCount: 19 },
+        workflowRunId: 'transfer-workflow-1',
+        preparedAt: timestamp,
+      },
+    });
+    const preparePilotAccountTransfer = vi
+      .fn()
+      .mockResolvedValue({ ok: true as const, value: transferred });
+    api.preparePilotAccountTransfer = preparePilotAccountTransfer;
+    api.syncPilotChatHistory = vi.fn().mockResolvedValue({ ok: true, value: transferred });
+    const transferState = transferred.accountTransfer;
+    if (!transferState) throw new Error('FIXTURE_TRANSFER_MISSING');
+    const approvePilotAccountTransfer = vi.fn().mockResolvedValue({
+      ok: true,
+      value: pilot({
+        ...transferred,
+        accountTransfer: { ...transferState, status: 'dispatching' },
+      }),
+    });
+    api.approvePilotAccountTransfer = approvePilotAccountTransfer;
+
+    const transferButton = container.querySelector('.pilot-transfer-primary');
+    if (!(transferButton instanceof HTMLButtonElement)) {
+      throw new Error('Account transfer button not found.');
+    }
+    expect(transferButton.disabled).toBe(false);
+    act(() => {
+      transferButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await act(async () => {
+      await new Promise((resolve) => window.setTimeout(resolve, 20));
+    });
+
+    expect(preparePilotAccountTransfer).toHaveBeenCalledWith('pilot-1');
+    expect(container.textContent).toContain('Chờ xem trước và xác nhận');
+    expect(container.textContent).toContain('old account context');
+    expect(container.textContent).toContain('C:/transfers/history.zip');
+
+    act(() => {
+      button(container, 'Xác nhận và gửi sang chat mới').click();
+    });
+    await act(async () => {
+      await new Promise((resolve) => window.setTimeout(resolve, 20));
+    });
+    expect(approvePilotAccountTransfer).toHaveBeenCalledWith('pilot-1');
   });
 });

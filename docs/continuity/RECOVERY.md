@@ -60,7 +60,7 @@ Expected known-good baseline: formatting, lint, strict type-check, 228 or more V
 
 ## Exact next task
 
-Publish the rendered-catalog, verified Codex target tree, multi-connection pilot, and safe ZIP checkpoint after the required gates. After publication, the separate live workflow remains paused at action-time user confirmation for reviewed payload `75cae5042832…428bae39`; do not click submit, attach a ZIP, or infer approval from a prepared preview. Automatic browser file upload remains a separate unimplemented security boundary.
+Reload the rebuilt unpacked Edge extension and authenticated ChatGPT tabs so the content-version handshake is current. Then use the persisted pilot account-transfer action: local archive creation and new-chat opening are automatic, but the inline bootstrap send still requires action-time confirmation. ZIPs larger than the safe inline budget remain explicit manual attachments; never infer upload or send acknowledgement from a prepared preview. The existing live payload `75cae5042832…428bae39` remains separately confirmation-gated.
 
 ## Expected files to modify
 
@@ -116,6 +116,8 @@ pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=p
 - Codex display titles come from bounded `thread_name` metadata; never use a title as a thread routing key.
 - ChatGPT discovery must query and merge all eligible open `chatgpt.com` tabs with per-tab timeouts; an active new-chat tab may legitimately have an empty sidebar while another tab contains the rendered catalog, and one stale tab must not block the rest.
 - Keep mock evidence labeled fixture-only; rerun the separate live Codex spike before claiming production acceptance in a new environment.
+- Native health now requires the shared `CHATGPT_CONTENT_VERSION`; an old service worker is reported as `EXTENSION_VERSION_MISMATCH`/degraded and must be reloaded before discovery or account transfer.
+- Account transfer uses only locally stored rendered history, scans it for secret-like content before transfer, persists the effect, and never silently uploads a ZIP. A new-chat effect may transition to an existing SPA conversation only after rendered capture proves the matching approved user payload.
 
 ## Blockers and safe alternatives
 

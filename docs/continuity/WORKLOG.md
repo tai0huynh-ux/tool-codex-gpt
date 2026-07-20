@@ -20,6 +20,26 @@ Targeted adapter and response-router tests pass. Negative cases cover missing va
 
 No live writable Codex run was performed. The production main-process registry validator is still supplied by the upcoming desktop pilot orchestration; without it, workspace-write fails closed. Fixture results remain fixture-only.
 
+## 2026-07-21 - Account-switch transfer and extension health handshake
+
+### Goal
+
+Preserve a pilot when the user changes ChatGPT accounts: package old locally archived history, open a new current-account chat, send only after review, and keep the same Codex project/thread binding.
+
+### Changes
+
+Added an audited ZIP transfer builder with SHA-256 metadata, bounded inline bootstrap delivery, secret scanning, and a complete manual-attachment fallback for oversized archives. Added persisted account-transfer state and typed IPC/preload methods for prepare, approve, capture/acknowledge, and ZIP reveal. The renderer now exposes one dominant account-switch action with four visible stages and duplicate-safe pending/confirmation states. A new-chat effect can resolve its SPA conversation identity after rendered acknowledgement and rebinds the existing pilot destination.
+
+Hardened Native Messaging health with a required `CHATGPT_CONTENT_VERSION` handshake and content-script ping. Tabs without a current content receiver are degraded; an old worker that rejects the versioned health operation is surfaced as `EXTENSION_VERSION_MISMATCH`. New-chat read-after-send operations may inspect the active transitioned conversation, but identity still requires rendered capture and matching payload hash.
+
+### Verification
+
+`pnpm.cmd run verify` passed 240 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, and all workspace builds. The focused transfer/health/UI suite passed 84 tests. `pnpm.cmd run test:internal-beta-uat`, `pnpm.cmd run package:win`, `pnpm.cmd run smoke:packaged:win`, and `pnpm.cmd run test:pilot-packaged-restart` passed; packaged restart evidence reported zero renderer runtime errors.
+
+### Security and limitations
+
+No cookies, tokens, browser history, private APIs, or credentials are read. Full ZIP content is kept in app data and exposed only through a reveal action; automatic browser file upload is not implemented. Inline transfer is an explicit representational send and remains blocked until the user confirms at action time. No authenticated live ChatGPT send or writable live Codex run is claimed.
+
 ### Next action
 
 Run the full verification gate, publish the atomic Codex profile checkpoint, then wire the desktop pilot to supply the validator only after explicit approval.

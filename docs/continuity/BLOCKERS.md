@@ -109,3 +109,11 @@
 - Evidence: 47 focused catalog/timeout tests, 234 full Vitest tests, build, Windows package, and packaged smoke passed
 - Live rerun: the installed bridge reported `ready`, but discovery still reached the 15-second desktop timeout before Edge reloaded the rebuilt extension; Computer Use then stopped because it could not verify the current browser URL, so no UI retry or account interaction was attempted
 - Remaining limitation: reload the unpacked Edge extension and the open ChatGPT tabs before repeating the count-only live discovery check. ChatGPT still requires an authenticated, user-opened tab with its sidebar rendered; private APIs and account history remain intentionally out of scope
+
+## ACCOUNT-TRANSFER-001
+
+- Status: implemented locally; external send remains action-time gated.
+- Safe path: create audited ZIP -> open current-account new chat -> show bounded inline preview -> explicit confirmation -> rendered acknowledgement -> persist the new conversation destination.
+- Large archive path: the ZIP is complete and revealable, but automatic browser file upload is intentionally not claimed. The renderer stops at `manual_attachment_required`.
+- Secret path: detected private-key, token, authorization, or credential-like text blocks the transfer before any ChatGPT effect is approved.
+- Remaining external dependency: the rebuilt unpacked Edge extension and authenticated user-opened ChatGPT tab must be reloaded so the content-version handshake succeeds.

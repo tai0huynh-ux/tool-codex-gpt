@@ -60,6 +60,10 @@ export interface ContextBridgeDesktopApi {
   capturePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
   syncPilotChatHistory(pilotId: string): Promise<PilotViewResponse>;
   exportPilotChatHistory(pilotId: string): Promise<ChatHistoryExportResponse>;
+  preparePilotAccountTransfer(pilotId: string): Promise<PilotViewResponse>;
+  approvePilotAccountTransfer(pilotId: string): Promise<PilotViewResponse>;
+  capturePilotAccountTransfer(pilotId: string): Promise<PilotViewResponse>;
+  revealPilotAccountTransfer(pilotId: string): Promise<PilotViewResponse>;
   approvePilotCodex(pilotId: string): Promise<PilotViewResponse>;
   revealPilotCodexBundle(pilotId: string): Promise<PilotViewResponse>;
   refreshPilot(pilotId: string): Promise<PilotViewResponse>;
@@ -176,6 +180,22 @@ const api: ContextBridgeDesktopApi = {
   exportPilotChatHistory: async (pilotId) =>
     chatHistoryExportResponseSchema.parse(
       (await ipcRenderer.invoke(pilotIpcChannels.exportChatHistory, { pilotId })) as unknown,
+    ),
+  preparePilotAccountTransfer: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.prepareAccountTransfer, { pilotId })) as unknown,
+    ),
+  approvePilotAccountTransfer: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.approveAccountTransfer, { pilotId })) as unknown,
+    ),
+  capturePilotAccountTransfer: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.captureAccountTransfer, { pilotId })) as unknown,
+    ),
+  revealPilotAccountTransfer: async (pilotId) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.revealAccountTransfer, { pilotId })) as unknown,
     ),
   approvePilotCodex: async (pilotId) =>
     pilotViewResponseSchema.parse(

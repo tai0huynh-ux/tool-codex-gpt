@@ -133,7 +133,7 @@ try {
       capability,
       sentAt: new Date(now).toISOString(),
       expiresAt: new Date(now + 10_000).toISOString(),
-      operation: { type: 'bridge.health' },
+      operation: { type: 'bridge.health', contentVersion: '1.0' },
     }),
   );
   const desktopResponse = readDesktopFrame();

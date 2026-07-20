@@ -1,10 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import type {
-  ChatGptDestination,
-  LocalTransportOperation,
-  LocalTransportResult,
+import {
+  CHATGPT_CONTENT_VERSION,
+  type ChatGptDestination,
+  type LocalTransportOperation,
+  type LocalTransportResult,
 } from '@codex-context-bridge/contracts';
 import {
   createNativeDesktopBridgeService,
@@ -48,7 +49,10 @@ export async function runInstalledChatGptSmoke(
     }
   };
 
-  const health = await execute({ type: 'bridge.health' });
+  const health = await execute({
+    type: 'bridge.health',
+    contentVersion: CHATGPT_CONTENT_VERSION,
+  });
   if (health.type !== 'bridge.health.result' || health.status !== 'ready') {
     throw new Error('LIVE_CHATGPT_BRIDGE_NOT_READY');
   }

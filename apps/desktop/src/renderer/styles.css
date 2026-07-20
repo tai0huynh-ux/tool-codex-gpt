@@ -393,6 +393,80 @@ h1 {
 .pilot-bundle button {
   justify-self: start;
 }
+.pilot-account-switch {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  padding: 0.9rem;
+  border: 1px solid #f6c64f;
+  background:
+    linear-gradient(120deg, rgba(246, 198, 79, 0.16), transparent 65%), rgba(0, 0, 0, 0.16);
+}
+.pilot-account-switch > div {
+  display: grid;
+  gap: 0.25rem;
+}
+.pilot-account-switch span {
+  color: #f6c64f;
+  font:
+    800 0.65rem ui-monospace,
+    monospace;
+  letter-spacing: 0.12em;
+}
+.pilot-account-switch small {
+  color: #c7d0c9;
+  line-height: 1.4;
+}
+.pilot-transfer-primary {
+  width: 100%;
+  border: 0;
+  background: #e98257;
+  color: #10231a;
+  padding: 0.85rem 1rem;
+  font-weight: 850;
+  box-shadow: 5px 5px 0 #7e3218;
+}
+.pilot-transfer {
+  margin-top: 1rem;
+  padding: 0.9rem;
+  border: 1px solid #e98257;
+  background: rgba(233, 130, 87, 0.08);
+}
+.pilot-transfer-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0.85rem 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: transfer-step;
+}
+.pilot-transfer-steps li {
+  min-height: 4.5rem;
+  padding: 0.55rem;
+  border-top: 3px solid rgba(248, 242, 229, 0.22);
+  color: #aeb9b1;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  counter-increment: transfer-step;
+}
+.pilot-transfer-steps li::before {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #aeb9b1;
+  content: '0' counter(transfer-step);
+  font:
+    800 0.65rem ui-monospace,
+    monospace;
+}
+.pilot-transfer-steps li.done {
+  border-color: #83d89f;
+  color: #f8f2e5;
+}
+.pilot-transfer-steps li.blocked {
+  border-color: #ee7d68;
+  color: #eea695;
+}
 .pilot-preview,
 .pilot-response,
 .pilot-result,
@@ -1016,5 +1090,8 @@ dd {
   .input-action {
     align-items: stretch;
     flex-direction: column;
+  }
+  .pilot-transfer-steps {
+    grid-template-columns: 1fr 1fr;
   }
 }

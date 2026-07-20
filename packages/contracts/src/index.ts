@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const NATIVE_MESSAGING_HOST_NAME = 'com.codex_context_bridge.host';
 export const NATIVE_MESSAGING_EXTENSION_ID = 'ccchffnkidpolmnnlonbnakjjmphfdjp';
+export const CHATGPT_CONTENT_VERSION = '1.0';
 
 export const handoffEnvelopeSchema = z
   .object({
@@ -260,7 +261,12 @@ export const chatGptRenderedCatalogSchema = z
   .strict();
 
 export const localTransportOperationSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('bridge.health') }).strict(),
+  z
+    .object({
+      type: z.literal('bridge.health'),
+      contentVersion: z.literal(CHATGPT_CONTENT_VERSION),
+    })
+    .strict(),
   z.object({ type: z.literal('conversation.discover') }).strict(),
   z
     .object({

@@ -26,6 +26,15 @@ const statusLabels: Record<PilotView['status'], string> = {
   failed: 'Đã dừng vì lỗi',
 };
 
+const accountTransferLabels: Record<NonNullable<PilotView['accountTransfer']>['status'], string> = {
+  review_required: 'Chờ xem trước và xác nhận',
+  dispatching: 'Đang xác minh lần gửi',
+  confirmation_required: 'Cần kiểm tra lần gửi',
+  manual_attachment_required: 'ZIP quá lớn - cần đính kèm thủ công',
+  completed: 'Đã liên kết account mới',
+  failed: 'Chuyển account thất bại',
+};
+
 function shortHash(value: string | undefined): string {
   return value ? `${value.slice(0, 12)}…${value.slice(-8)}` : 'Chưa có';
 }
@@ -34,6 +43,9 @@ function errorText(response: PilotViewResponse): string {
   if (response.ok) return '';
   if (response.error.code === 'CHATGPT_CONVERSATION_UNAVAILABLE') {
     return 'Cuộc chat không khả dụng trong tài khoản/workspace hiện tại. Hãy mở đúng conversation trong Edge rồi nhấn "Kiểm tra ChatGPT"; nếu vẫn lỗi, tạo pilot mới với "Conversation đang mở".';
+  }
+  if (response.error.code === 'CHAT_TRANSFER_SECRET_DETECTED') {
+    return 'Gói chuyển bị chặn vì lịch sử có dữ liệu giống secret hoặc credential. File lưu trữ cũ vẫn còn trong SQLite; hãy kiểm tra và loại bỏ dữ liệu nhạy cảm trước khi gửi sang account khác.';
   }
   return `${response.error.code}: ${response.error.message}`;
 }
@@ -81,7 +93,14 @@ export function LiveProjectPilot({
     () => items.filter((item) => ['chatgpt_dispatched', 'codex_running'].includes(item.status)),
     [items],
   );
-  const activeKey = activeItems.map((item) => `${item.id}:${item.status}`).join('|');
+  const activeTransfers = useMemo(
+    () => items.filter((item) => item.accountTransfer?.status === 'dispatching'),
+    [items],
+  );
+  const activeKey = [
+    ...activeItems.map((item) => `${item.id}:${item.status}`),
+    ...activeTransfers.map((item) => `${item.id}:account-transfer`),
+  ].join('|');
   const selectedTargetProject =
     codexTargets.projects.find((item) => item.projectId === targetProjectId) ??
     codexTargets.projects.find((item) => item.projectId === projectId);
@@ -138,7 +157,7 @@ export function LiveProjectPilot({
     }
     setTransport(
       health.ok
-        ? `${health.value.state} / nativeMessaging ${health.value.permissionActive ? 'active' : 'inactive'}`
+        ? `${health.value.state} / nativeMessaging ${health.value.permissionActive ? 'active' : 'inactive'}${health.value.lastErrorCode ? ` / ${health.value.lastErrorCode}` : ''}`
         : `${health.error.code}: unavailable`,
     );
   };
@@ -166,7 +185,7 @@ export function LiveProjectPilot({
   }, []);
 
   useEffect(() => {
-    if (activeItems.length === 0) return;
+    if (activeItems.length === 0 && activeTransfers.length === 0) return;
     const timer = window.setInterval(() => {
       void (async () => {
         for (const item of activeItems) {
@@ -187,6 +206,19 @@ export function LiveProjectPilot({
             setNotice(errorText(response));
           }
         }
+        for (const item of activeTransfers) {
+          const response = await window.contextBridgeDesktop.capturePilotAccountTransfer(item.id);
+          if (response.ok) {
+            merge(response.value);
+            if (response.value.accountTransfer?.status === 'completed') {
+              setNotice(
+                'Đã xác minh tin nhắn trong chat mới và liên kết conversation đó với project Codex hiện tại.',
+              );
+            }
+          } else if (response.error.code !== 'CHAT_TRANSFER_CONFIRMATION_REQUIRED') {
+            setNotice(errorText(response));
+          }
+        }
       })();
     }, 2_000);
     return () => window.clearInterval(timer);
@@ -194,6 +226,14 @@ export function LiveProjectPilot({
 
   useEffect(() => {
     if (selected?.destination.mode !== 'existing') return;
+    if (
+      selected.accountTransfer &&
+      ['review_required', 'dispatching', 'confirmation_required'].includes(
+        selected.accountTransfer.status,
+      )
+    ) {
+      return;
+    }
     let active = true;
     const sync = async (): Promise<void> => {
       if (archiveSyncing.current) return;
@@ -219,7 +259,7 @@ export function LiveProjectPilot({
       active = false;
       window.clearInterval(timer);
     };
-  }, [selected?.id, selected?.destination.mode]);
+  }, [selected?.id, selected?.destination.mode, selected?.accountTransfer?.status]);
 
   const run = async (
     action: () => Promise<PilotViewResponse>,
@@ -347,6 +387,14 @@ export function LiveProjectPilot({
       response.value.canceled
         ? 'Đã hủy xuất lịch sử; dữ liệu lưu trong SQLite không thay đổi.'
         : `Đã xuất ${String(response.value.conversationCount)} cuộc chat, ${String(response.value.revisionCount)} phiên bản vào ${response.value.filePath ?? ''}.`,
+    );
+  };
+
+  const prepareAccountTransfer = async (): Promise<void> => {
+    if (!selected) return;
+    await run(
+      () => window.contextBridgeDesktop.preparePilotAccountTransfer(selected.id),
+      'Đã đóng gói lịch sử cũ và mở chat mới trong account hiện tại. Hãy xem trước trước khi gửi.',
     );
   };
 
@@ -706,7 +754,151 @@ export function LiveProjectPilot({
                       Xuất toàn bộ lịch sử (.json)
                     </button>
                   </div>
+                  <div className="pilot-account-switch">
+                    <div>
+                      <span>ACCOUNT SWITCH TRANSFER</span>
+                      <strong>Đổi account mà không mất liên kết dự án</strong>
+                      <small>
+                        Dùng lịch sử đã lưu cục bộ, tạo chat mới, xác nhận đúng một lần rồi gắn
+                        conversation mới vào cùng project và Codex target.
+                      </small>
+                    </div>
+                    <button
+                      className="pilot-transfer-primary"
+                      type="button"
+                      disabled={busy || !selected.chatArchive}
+                      onClick={() => void prepareAccountTransfer()}
+                    >
+                      Chuyển sang account hiện tại
+                    </button>
+                  </div>
                 </div>
+                {selected.accountTransfer && (
+                  <div
+                    className="pilot-transfer"
+                    aria-label="Chuyển lịch sử sang account ChatGPT mới"
+                  >
+                    <div className="pilot-card-heading">
+                      <span>ACCOUNT TRANSFER</span>
+                      <strong>{accountTransferLabels[selected.accountTransfer.status]}</strong>
+                    </div>
+                    <ol className="pilot-transfer-steps">
+                      <li className="done">Đóng gói lịch sử cũ</li>
+                      <li
+                        className={
+                          selected.accountTransfer.status === 'manual_attachment_required'
+                            ? 'blocked'
+                            : 'done'
+                        }
+                      >
+                        Tạo chat mới trong account hiện tại
+                      </li>
+                      <li
+                        className={
+                          ['dispatching', 'confirmation_required', 'completed'].includes(
+                            selected.accountTransfer.status,
+                          )
+                            ? 'done'
+                            : ''
+                        }
+                      >
+                        Gửi dữ liệu sau xác nhận
+                      </li>
+                      <li className={selected.accountTransfer.status === 'completed' ? 'done' : ''}>
+                        Liên kết lại với project Codex
+                      </li>
+                    </ol>
+                    <div className="pilot-metadata">
+                      <p>
+                        <span>ZIP lịch sử</span>
+                        <code>{selected.accountTransfer.artifact.zipPath}</code>
+                      </p>
+                      <p>
+                        <span>Cuộc chat / phiên bản</span>
+                        <b>
+                          {selected.accountTransfer.artifact.conversationCount} /{' '}
+                          {selected.accountTransfer.artifact.revisionCount}
+                        </b>
+                      </p>
+                      <p>
+                        <span>SHA-256</span>
+                        <code>{shortHash(selected.accountTransfer.artifact.sha256)}</code>
+                      </p>
+                      <p>
+                        <span>Đích mới</span>
+                        <code>
+                          {selected.accountTransfer.targetDestination.mode === 'existing'
+                            ? (selected.accountTransfer.targetDestination.conversationPath ??
+                              selected.accountTransfer.targetDestination.conversationId)
+                            : 'ChatGPT new chat'}
+                        </code>
+                      </p>
+                    </div>
+                    <div className="pilot-actions">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() =>
+                          void run(
+                            () =>
+                              window.contextBridgeDesktop.revealPilotAccountTransfer(selected.id),
+                            'Đã mở vị trí ZIP chuyển account để kiểm tra.',
+                          )
+                        }
+                      >
+                        Mở vị trí ZIP
+                      </button>
+                      {selected.accountTransfer.status === 'confirmation_required' && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() =>
+                            void run(
+                              () =>
+                                window.contextBridgeDesktop.capturePilotAccountTransfer(
+                                  selected.id,
+                                ),
+                              'Đã kiểm tra tin nhắn và conversation mới; không gửi lặp lại.',
+                            )
+                          }
+                        >
+                          Kiểm tra gửi và liên kết lại
+                        </button>
+                      )}
+                    </div>
+                    {selected.accountTransfer.status === 'manual_attachment_required' && (
+                      <p className="pilot-empty">
+                        Gói lịch sử vượt giới hạn composer an toàn. App đã tạo ZIP đầy đủ nhưng chưa
+                        tự upload; hãy mở ZIP và đính kèm thủ công sau khi kiểm tra.
+                      </p>
+                    )}
+                    {selected.accountTransfer.preview && (
+                      <div className="pilot-preview">
+                        <p>
+                          <span>Payload hash</span>
+                          <code>{shortHash(selected.accountTransfer.preview.textHash)}</code>
+                        </p>
+                        <pre>{selected.accountTransfer.preview.text}</pre>
+                        <button
+                          className="pilot-approve"
+                          type="button"
+                          disabled={busy || selected.accountTransfer.status !== 'review_required'}
+                          onClick={() =>
+                            void run(
+                              () =>
+                                window.contextBridgeDesktop.approvePilotAccountTransfer(
+                                  selected.id,
+                                ),
+                              'Đã dùng xác nhận một lần để gửi gói khôi phục vào chat mới.',
+                            )
+                          }
+                        >
+                          Xác nhận và gửi sang chat mới
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {selected.chatGptPreview && (
                   <div className="pilot-preview">
                     <p>

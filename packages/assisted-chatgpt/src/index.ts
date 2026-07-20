@@ -339,7 +339,7 @@ export class AssistedChatGptService {
     if (!effect) throw new Error('EFFECT_NOT_FOUND');
     if (effect.status === 'acknowledged') return { status: 'acknowledged', effect };
     if (effect.status !== 'dispatching') throw new Error('CHATGPT_CONFIRMATION_STATE_INVALID');
-    this.assertEffectDestination(effect, destination);
+    this.assertEffectDestination(effect, destination, true);
     const inspection = await adapter.inspect(destination);
     if (!pageMatches(destination, inspection, true)) {
       throw new Error('CHATGPT_DESTINATION_MISMATCH');
@@ -420,11 +420,16 @@ export class AssistedChatGptService {
     return preview;
   }
 
-  private assertEffectDestination(effect: WorkflowEffect, destination: ChatGptDestination): void {
+  private assertEffectDestination(
+    effect: WorkflowEffect,
+    destination: ChatGptDestination,
+    allowNewConversationTransition = false,
+  ): void {
     const matches =
       destination.mode === 'existing'
-        ? effect.destinationType === 'chatgpt_conversation' &&
-          effect.destinationId === destination.conversationId
+        ? (effect.destinationType === 'chatgpt_conversation' &&
+            effect.destinationId === destination.conversationId) ||
+          (allowNewConversationTransition && effect.destinationType === 'chatgpt_new')
         : effect.destinationType === 'chatgpt_new';
     if (!matches) throw new Error('CHATGPT_EFFECT_DESTINATION_MISMATCH');
   }

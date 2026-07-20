@@ -76,10 +76,17 @@
     "Catalog correctness focused suite passed 46 tests; full verification passed 233 Vitest tests with migration v6, multi-tab ChatGPT discovery, and Codex display titles",
     "Windows package and packaged smoke passed after catalog correctness changes",
     "Multi-tab discovery now bounds 16 tabs concurrently with a two-second timeout per tab; full verification passed 234 Vitest tests",
-    "Live bridge health remained ready; count-only discovery timed out before the rebuilt Edge extension was reloaded"
+    "Live bridge health remained ready; count-only discovery timed out before the rebuilt Edge extension was reloaded",
+    "Account transfer and health handshake focused suite passed 84 tests",
+    "pnpm.cmd run verify passed with 240 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, and all workspace builds",
+    "pnpm.cmd run test:internal-beta-uat passed 46 targeted tests and 2 Chromium fixture flows",
+    "pnpm.cmd run package:win passed with unsigned Windows installer",
+    "pnpm.cmd run smoke:packaged:win passed packaged launch and native-host smoke",
+    "pnpm.cmd run test:pilot-packaged-restart passed fixture-only restart with zero renderer runtime errors"
   ],
   "knownFailures": [
-    "Post-build live ChatGPT discovery is not yet proven because Edge still needs to reload the rebuilt unpacked extension and open ChatGPT tabs"
+    "Post-build live ChatGPT discovery is not yet proven because Edge still needs to reload the rebuilt unpacked extension and open ChatGPT tabs",
+    "Authenticated account-transfer send and automatic browser ZIP upload remain unverified and intentionally action-time/manual gated"
   ],
   "activeBlockers": [],
   "nextActions": [
@@ -90,5 +97,5 @@
     "Keep ZIP attachment explicit until a separate safe production browser file-upload boundary is implemented and accepted."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-21T00:52:00.000+07:00"
+  "updatedAt": "2026-07-21T01:57:00.000+07:00"
 }

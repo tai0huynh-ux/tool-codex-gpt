@@ -91,6 +91,10 @@ describe('guided workflow renderer', () => {
       capturePilotChatGpt: vi.fn(),
       syncPilotChatHistory: vi.fn(),
       exportPilotChatHistory: vi.fn(),
+      preparePilotAccountTransfer: vi.fn(),
+      approvePilotAccountTransfer: vi.fn(),
+      capturePilotAccountTransfer: vi.fn(),
+      revealPilotAccountTransfer: vi.fn(),
       approvePilotCodex: vi.fn(),
       revealPilotCodexBundle: vi.fn(),
     };
