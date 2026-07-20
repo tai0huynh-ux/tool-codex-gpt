@@ -68,6 +68,13 @@ The adapter owns stdin/stdout/stderr, aborts the exact child process on cancella
 before runtime cleanup, bounds captured stderr, maps failures to stable redacted codes, and removes temporary
 runtime files on disposal.
 
+The desktop project picker may import only bounded Codex local metadata from the two allowlisted files
+`%USERPROFILE%\\.codex\\.codex-global-state.json` and `%USERPROFILE%\\.codex\\session_index.jsonl`. Each file must be a
+regular non-symlink file inside the canonical Codex directory and stay within its byte limit. The importer reads
+project names, Git roots, thread IDs, titles, timestamps, and working directories only; it never reads prompt bodies,
+`auth.json`, cookies, browser storage, tokens, or credentials. Roots are revalidated by the registry Git detector
+before a selectable mapping is created, and mismatched or duplicate thread assignments are ignored.
+
 ## Threat model highlights
 
 - Cross-project disclosure: mitigated by multi-signal identity and confirmation thresholds.

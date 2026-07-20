@@ -1444,6 +1444,26 @@ The first packaged build stayed alive without initializing the bridge. An Electr
 
 Discovery is rendered-DOM-only and capped at 200 links. ZIP creation is local, audited, secret-safe, and explicitly reviewed. Automatic browser file upload remains unimplemented because a safe size-bounded production file-input boundary has not been accepted. No authenticated ChatGPT submit or writable live Codex run is claimed by this checkpoint.
 
+## 2026-07-20 - Redirect-loop and automatic Codex project discovery fix
+
+### Goal
+
+Stop ChatGPT archive synchronization from opening a new tab on every failed recovery attempt, and make Codex projects selectable without manual project entry.
+
+### Changes
+
+Added an explicit `allowOpenExternal` recovery option. Background `syncChatHistory` uses the no-open mode, while startup recovery is capped to one destination. Redirected exact conversations now fail with a stable unavailable status instead of causing tab fan-out.
+
+Added `codex-local-catalog.ts`, which reads only bounded, non-symlink Codex metadata files, extracts project/root/thread metadata, validates Git roots in the main process, and projects safe mappings into the registry. The pilot now refreshes this catalog automatically (10-second throttle) and exposes a primary `Đồng bộ project Codex` button; projects remain collapsible with five-thread expansion.
+
+### Verification
+
+The targeted recovery/catalog/IPC/renderer suite passed 30 tests. `pnpm.cmd run verify` passed 232 Vitest tests, two workflow fixture tests, two Chromium fixture tests, and all workspace builds. `pnpm.cmd run package:win` and `pnpm.cmd run smoke:packaged:win` passed after closing the previously running unpacked app; the rebuilt packaged app was reopened and visibly displayed the local Codex project tree.
+
+### Security and limitations
+
+No browser profile, cookies, tokens, credentials, prompt bodies, or private APIs were read. Local Codex discovery is metadata-only and fails closed for invalid roots/files. Automatic browser ZIP upload remains unimplemented; ZIP reveal and attachment stay explicit.
+
 ### Next action
 
 Publish this checkpoint. The separate live pilot remains paused for action-time confirmation of payload `75cae5042832…428bae39`; after any confirmed ChatGPT send, stop again for the independent Codex workspace-write approval.

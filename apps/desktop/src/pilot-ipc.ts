@@ -37,6 +37,7 @@ import {
 } from './pilot-contracts';
 import { ChatArchiveStore } from './chat-archive';
 import type { CodexChangeBundleResult, GitChangeBaseline } from './codex-change-bundle';
+import type { CodexLocalCatalog } from './codex-local-catalog';
 import { verifyStaticWebsite } from './website-verifier';
 
 const PILOT_PREFIX = 'live-project-pilot:';
@@ -161,7 +162,12 @@ export function createPilotDesktopService(input: {
   router: ResponseRouter;
   codex: CodexAdapter;
   openPreview?: (repositoryRoot: string) => Promise<void>;
-  ensureChatGptPage?: (destination: ChatGptDestination) => Promise<void>;
+  ensureChatGptPage?: (
+    destination: ChatGptDestination,
+    options?: { allowOpenExternal?: boolean },
+  ) => Promise<void>;
+  discoverCodexCatalog?: () => Promise<CodexLocalCatalog>;
+  syncCodexCatalog?: (catalog: CodexLocalCatalog) => Promise<void> | void;
   saveChatHistory?: (input: {
     suggestedFileName: string;
     content: string;
@@ -180,6 +186,23 @@ export function createPilotDesktopService(input: {
   const assisted = new AssistedChatGptService(input.workflows, { now });
   const chatGpt = new NativeChatGptAdapter(input.bridge);
   const archive = new ChatArchiveStore(input.database, now);
+  let codexCatalogSyncAt = 0;
+  let codexCatalogSync: Promise<void> | undefined;
+
+  const syncCodexCatalogIfStale = async (): Promise<void> => {
+    if (!input.discoverCodexCatalog || !input.syncCodexCatalog) return;
+    if (Date.now() - codexCatalogSyncAt < 10_000) return;
+    if (codexCatalogSync) return codexCatalogSync;
+    codexCatalogSync = input
+      .discoverCodexCatalog()
+      .then((catalog) => input.syncCodexCatalog?.(catalog))
+      .catch(() => undefined)
+      .finally(() => {
+        codexCatalogSyncAt = Date.now();
+        codexCatalogSync = undefined;
+      });
+    return codexCatalogSync;
+  };
 
   const save = (view: PilotView): PilotView => {
     const value = pilotViewSchema.parse({ ...view, updatedAt: now() });
@@ -399,8 +422,9 @@ export function createPilotDesktopService(input: {
       }
       return result.catalog;
     },
-    listCodexTargets: () =>
-      Promise.resolve({
+    listCodexTargets: async () => {
+      await syncCodexCatalogIfStale();
+      return {
         projects: input.projects.list().map((project) => ({
           projectId: project.id,
           projectName: project.name,
@@ -417,7 +441,8 @@ export function createPilotDesktopService(input: {
             updatedAt: thread.updatedAt,
           })),
         })),
-      }),
+      };
+    },
     create: async ({ projectId, repositoryId, objective, destination, codexDestination }) => {
       const project = input.projects.get(projectId);
       const repository = input.projects.getRepository(repositoryId);
@@ -640,7 +665,7 @@ export function createPilotDesktopService(input: {
       if (view.destination.mode !== 'existing') {
         throw new Error('CHAT_ARCHIVE_DESTINATION_REQUIRED');
       }
-      await input.ensureChatGptPage?.(view.destination);
+      await input.ensureChatGptPage?.(view.destination, { allowOpenExternal: false });
       const transport = await input.bridge.getStatus();
       if (transport.state !== 'connected') throw new Error('TRANSPORT_DISCONNECTED');
       const inspection = await chatGpt.inspect(view.destination);

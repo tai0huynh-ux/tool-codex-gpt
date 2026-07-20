@@ -273,12 +273,21 @@ describe('pilot desktop persistence', () => {
     });
     const workflows = new WorkflowEngine(database);
     const codex = new FixtureCodexAdapter();
+    const syncCodexCatalog = vi.fn();
     const service = createPilotDesktopService({
       database,
       projects,
       workflows,
       codex,
       router: new ResponseRouter(database, workflows, projects, codex),
+      discoverCodexCatalog: () =>
+        Promise.resolve({
+          source: 'codex-local-state' as const,
+          capturedAt: '2026-07-20T08:00:00.000Z',
+          truncated: false,
+          projects: [],
+        }),
+      syncCodexCatalog,
       bridge: {
         ...bridge,
         execute: (operation) => {
@@ -316,6 +325,7 @@ describe('pilot desktop persistence', () => {
         },
       ],
     });
+    expect(syncCodexCatalog).toHaveBeenCalledOnce();
     const created = await service.create({
       projectId: 'project-1',
       repositoryId: 'repository-1',

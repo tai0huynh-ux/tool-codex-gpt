@@ -70,7 +70,9 @@
     "Chat history archive MVP passed 214 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, 46-test internal-beta UAT, all workspace builds, Windows packaging, packaged/native-host smoke, and fixture-only packaged restart acceptance",
     "Canonical ChatGPT destination recovery passed 219 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, 46-test internal-beta UAT, all workspace builds, Windows packaging, packaged/native-host smoke, and fixture-only packaged restart acceptance",
     "Multi-connection catalog and safe ZIP checkpoint passed 228 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, 46-test internal-beta UAT, all workspace builds, Windows packaging, packaged ZIP-runtime and native-host smoke, and fixture-only packaged restart acceptance",
-    "Installed native-host smoke was intentionally not rerun because an existing user Registry64 registration was detected and the non-destructive gate stopped before modification"
+    "Installed native-host smoke was intentionally not rerun because an existing user Registry64 registration was detected and the non-destructive gate stopped before modification",
+    "Redirect-loop and Codex local catalog targeted recovery/IPC/renderer suite passed 30 tests",
+    "Codex local catalog reads only bounded allowlisted metadata and imports validated Git roots without manual project entry"
   ],
   "knownFailures": [],
   "activeBlockers": [],
@@ -78,7 +80,8 @@
     "Obtain action-time user confirmation for reviewed ChatGPT payload 75cae5042832…428bae39.",
     "After confirmation, submit exactly once and require rendered acknowledgement plus a valid structured response.",
     "Stop again for the separate repository-bound Codex workspace-write approval before any file changes.",
-    "Keep ZIP attachment explicit until a separate safe production browser file-upload boundary is implemented and accepted."
+    "Keep ZIP attachment explicit until a separate safe production browser file-upload boundary is implemented and accepted.",
+    "Publish the redirect-loop and automatic Codex project discovery checkpoint after full verification and packaged gates."
   ],
   "workingTreeExpectedClean": true,
   "updatedAt": "2026-07-20T01:54:48.854+07:00"

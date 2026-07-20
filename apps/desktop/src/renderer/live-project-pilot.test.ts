@@ -227,7 +227,7 @@ describe('Live Project Pilot renderer', () => {
         truncated: false,
       },
     });
-    api.listPilotCodexTargets = vi.fn().mockResolvedValue({
+    const listCodexTargets = vi.fn().mockResolvedValue({
       ok: true,
       value: {
         projects: [
@@ -245,6 +245,7 @@ describe('Live Project Pilot renderer', () => {
         ],
       },
     });
+    api.listPilotCodexTargets = listCodexTargets;
 
     await act(async () => {
       root.render(
@@ -261,6 +262,12 @@ describe('Live Project Pilot renderer', () => {
     expect(container.textContent).toContain('MVP planning');
     expect(container.textContent).toContain('thread-5');
     expect(container.textContent).not.toContain('thread-6');
+    await act(async () => {
+      button(container, 'Đồng bộ project Codex').click();
+      await Promise.resolve();
+    });
+    expect(listCodexTargets).toHaveBeenCalledTimes(2);
+    expect(container.textContent).toContain('Đã đồng bộ 1 project từ Codex Desktop');
     await act(async () => {
       button(container, 'Hiện thêm 5 đoạn chat').click();
       await Promise.resolve();

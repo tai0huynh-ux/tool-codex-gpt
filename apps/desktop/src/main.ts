@@ -29,6 +29,7 @@ import { createWorkflowDesktopService, registerWorkflowIpc } from './workflow-ip
 import { createPilotDesktopService, registerPilotIpc } from './pilot-ipc';
 import { ensureChatGptPageReadable } from './chatgpt-page-recovery';
 import { captureGitChangeBaseline, createCodexChangeBundle } from './codex-change-bundle';
+import { readCodexLocalCatalog, syncCodexLocalCatalog } from './codex-local-catalog';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const trustedRendererIds = new Set<number>();
@@ -144,11 +145,15 @@ async function startDesktop(): Promise<void> {
   const router = new ResponseRouter(projectDatabase, workflows, registry, codex);
   const ensureChatGptPage = async (
     destination: Parameters<typeof ensureChatGptPageReadable>[0]['destination'],
+    options: { allowOpenExternal?: boolean } = {},
   ): Promise<void> => {
     await ensureChatGptPageReadable({
       bridge,
       destination,
       openExternal: (url) => shell.openExternal(url),
+      ...(options.allowOpenExternal === undefined
+        ? {}
+        : { allowOpenExternal: options.allowOpenExternal }),
       audit: ({ action, outcome }) => auditDesktopTransfer(`chatgpt.recovery.${action}`, outcome),
     });
   };
@@ -181,6 +186,11 @@ async function startDesktop(): Promise<void> {
     codex,
     openPreview: openWebsitePreview,
     ensureChatGptPage,
+    discoverCodexCatalog: () => readCodexLocalCatalog(),
+    syncCodexCatalog: (catalog) => {
+      syncCodexLocalCatalog(registry, catalog, validateGitRepositoryInput);
+      auditDesktopTransfer('codex.catalog.sync', 'allowed');
+    },
     captureCodexBaseline: (repositoryRoot) => captureGitChangeBaseline(repositoryRoot),
     createCodexBundle: ({ repositoryRoot, baseline, finalResponse, pilotId }) =>
       createCodexChangeBundle({
@@ -231,7 +241,8 @@ async function startDesktop(): Promise<void> {
               (candidate) => JSON.stringify(candidate) === JSON.stringify(destination),
             ) === index,
         )
-        .slice(0, 8);
+        // Startup is a recovery hint, not a browser-tab fan-out mechanism.
+        .slice(0, 1);
       for (const destination of destinations) await ensureChatGptPage(destination);
     })
     .catch((error: unknown) => {

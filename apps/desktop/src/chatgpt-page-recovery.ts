@@ -17,6 +17,8 @@ export interface ChatGptPageRecoveryOptions {
   bridge: DesktopBridgeService;
   destination: ChatGptDestination;
   openExternal(url: string): Promise<void>;
+  /** Background checks may reload an exact tab but must never create new tabs. */
+  allowOpenExternal?: boolean;
   audit?: (event: { action: 'inspect' | 'reload' | 'open'; outcome: 'allowed' | 'failed' }) => void;
   wait?: (milliseconds: number) => Promise<void>;
   retryDelaysMs?: readonly number[];
@@ -83,6 +85,7 @@ export async function ensureChatGptPageReadable(
   const wait =
     options.wait ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
   const retryDelaysMs = options.retryDelaysMs ?? [500, 1_000, 2_000];
+  const allowOpenExternal = options.allowOpenExternal ?? true;
   const initial = await inspect(options);
   if (initial) return { action: 'none', inspection: initial };
 
@@ -108,6 +111,14 @@ export async function ensureChatGptPageReadable(
     } catch {
       options.audit?.({ action: 'reload', outcome: 'failed' });
     }
+  }
+
+  if (!allowOpenExternal) {
+    if (health.state === 'disconnected') throw new Error('TRANSPORT_DISCONNECTED');
+    if (options.destination.mode === 'existing') {
+      throw new Error('CHATGPT_CONVERSATION_UNAVAILABLE');
+    }
+    throw new Error('CHATGPT_NOT_READY');
   }
 
   await openDestination(options);

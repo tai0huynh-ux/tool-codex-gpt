@@ -187,4 +187,23 @@ describe('ChatGPT page startup recovery', () => {
     expect(openExternal).toHaveBeenCalledOnce();
     expect(execute).toHaveBeenCalledTimes(3);
   });
+
+  it('never opens a new tab for a background check after reload fails', async () => {
+    const openExternal = vi.fn(() => Promise.resolve());
+    const execute = vi.fn<DesktopBridgeService['execute']>(() =>
+      Promise.reject(new Error('CHATGPT_TAB_NOT_FOUND')),
+    );
+
+    await expect(
+      ensureChatGptPageReadable({
+        bridge: bridge({ execute }),
+        destination: { mode: 'existing', conversationId: 'conversation-missing' },
+        openExternal,
+        allowOpenExternal: false,
+        wait: () => Promise.resolve(),
+        retryDelaysMs: [1, 1],
+      }),
+    ).rejects.toThrow('CHATGPT_CONVERSATION_UNAVAILABLE');
+    expect(openExternal).not.toHaveBeenCalled();
+  });
 });

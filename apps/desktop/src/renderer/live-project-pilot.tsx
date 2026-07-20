@@ -227,6 +227,27 @@ export function LiveProjectPilot({
     setNotice(successMessage);
   };
 
+  const refreshCodexCatalog = async (): Promise<void> => {
+    setBusy(true);
+    const response = await window.contextBridgeDesktop.listPilotCodexTargets();
+    setBusy(false);
+    if (!response.ok) {
+      setNotice(`${response.error.code}: ${response.error.message}`);
+      return;
+    }
+    setCodexTargets(response.value);
+    const preferred =
+      response.value.projects.find((item) => item.projectId === targetProjectId) ??
+      response.value.projects[0];
+    if (preferred) {
+      setTargetProjectId(preferred.projectId);
+      setRepositoryId(preferred.repositories[0]?.id ?? '');
+    }
+    setNotice(
+      `Đã đồng bộ ${String(response.value.projects.length)} project từ Codex Desktop và registry an toàn.`,
+    );
+  };
+
   const create = async (): Promise<void> => {
     if (!targetProjectId || !repositoryId || !objective.trim()) return;
     await run(
@@ -335,9 +356,20 @@ export function LiveProjectPilot({
           </dl>
           <div className="pilot-target-browser" aria-label="Danh sách dự án và đoạn chat Codex">
             <div className="pilot-card-heading">
-              <span>CODEX TARGET</span>
-              <strong>{threadMappingId ? 'Tiếp tục đoạn chat' : 'Đoạn chat mới'}</strong>
+              <div>
+                <span>CODEX DESKTOP — TỰ ĐỘNG</span>
+                <strong>{threadMappingId ? 'Tiếp tục đoạn chat' : 'Chọn project chính'}</strong>
+              </div>
+              <button type="button" disabled={busy} onClick={() => void refreshCodexCatalog()}>
+                Đồng bộ project Codex
+              </button>
             </div>
+            {codexTargets.projects.length === 0 && (
+              <p className="pilot-empty">
+                Chưa tìm thấy project Git hợp lệ trong Codex Desktop. App không yêu cầu nhập tên thủ
+                công; hãy mở project đó một lần trong Codex rồi nhấn đồng bộ.
+              </p>
+            )}
             {codexTargets.projects.map((target) => {
               const expanded = expandedProjects.has(target.projectId);
               const limit = threadLimits[target.projectId] ?? 5;

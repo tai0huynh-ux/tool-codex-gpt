@@ -77,3 +77,24 @@
 - Evidence: 70 targeted regression cases, 219 full Vitest tests, two workflow fixture E2E tests, two Chromium fixture tests, internal-beta UAT, build, package, packaged/native-host smoke, and packaged restart acceptance passed
 - Unsafe actions avoided: no browser profile, cookie, token, authorization header, history, storage, private endpoint, or screen-derived routing identity was used
 - Remaining limitation: the specific user conversation was not live-inspected because Computer Use could not verify the active Edge URL; account/workspace availability remains external state
+
+## CHATGPT-RECOVERY-002
+
+- Status: resolved locally; regression-covered
+- First observed: 2026-07-20
+- Reproduction: leave a saved conversation redirected to `chatgpt.com` while the 30-second archive timer continues running
+- Expected: inspect/reload the exact destination without creating another browser tab
+- Actual before fix: every failed background recovery called `shell.openExternal`, producing an unbounded sequence of new tabs
+- Resolution: background sync passes `allowOpenExternal: false`; only explicit startup recovery may open an allowlisted destination and it is capped to one unique destination
+- Evidence: targeted recovery/pilot/catalog suite passed 30 tests; full verification and packaged smoke remain the publication gates
+- Remaining limitation: an unavailable or redirected conversation still requires the user to reopen the exact conversation manually; the app will not guess a replacement tab
+
+## CODEX-CATALOG-001
+
+- Status: resolved locally; regression-covered
+- First observed: 2026-07-20
+- Reproduction: open the pilot without manually registering a Codex project
+- Expected: show selectable Codex projects and threads from the local Codex desktop state
+- Resolution: bounded reader imports only `.codex-global-state.json` and `session_index.jsonl`, validates Git roots through the registry, and refreshes the primary picker automatically with a manual `Đồng bộ project Codex` action
+- Evidence: three catalog safety/import tests plus renderer and IPC coverage; packaged UI displayed the local Codex project tree
+- Remaining limitation: projects not yet recorded by Codex or roots that are no longer valid Git repositories remain intentionally hidden

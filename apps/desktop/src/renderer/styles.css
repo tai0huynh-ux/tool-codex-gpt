@@ -334,6 +334,17 @@ h1 {
   padding-bottom: 0.7rem;
   border-bottom: 1px solid rgba(248, 242, 229, 0.2);
 }
+.pilot-card-heading > div {
+  display: grid;
+  gap: 0.25rem;
+}
+.pilot-target-browser > .pilot-card-heading > button {
+  align-self: center;
+  border-color: #e98257;
+  background: #e98257;
+  color: #15231b;
+  font-weight: 800;
+}
 .pilot-card-heading span {
   color: #f6c64f;
   font:

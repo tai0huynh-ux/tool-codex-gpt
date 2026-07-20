@@ -31,6 +31,17 @@ Codex projects, repositories, and verified thread mappings. Selecting a project 
 selecting a persisted mapping resumes only that exact thread and repository fingerprint. Active pilots keep
 their own status, approvals, destinations, recovery state, and polling lifecycle.
 
+The Codex project catalog is refreshed from bounded local Codex metadata on demand and at most once per ten
+seconds. The main process validates discovered Git roots and projects them into the registry; the renderer only
+receives the typed project/thread tree. Projects are collapsed by default, show five threads initially, and reveal
+five more per action. No manual project-name entry is required, and missing or malformed local metadata fails closed
+to an empty catalog.
+
+ChatGPT history synchronization uses the exact persisted destination but passes a no-open policy to recovery. A
+background refresh may inspect or reload the existing tab once, then returns a deterministic unavailable status;
+it cannot call `shell.openExternal` and therefore cannot create an unbounded tab loop after a redirect to
+`chatgpt.com`. Startup recovery remains separately bounded to one destination.
+
 Before an approved write-capable Codex dispatch, the main process records a Git change baseline outside the
 renderer projection. Terminal completion produces an audited ZIP in app data by comparing the baseline with
 new commits and working-tree state, then reusing the file safety boundary. The renderer receives only bundle

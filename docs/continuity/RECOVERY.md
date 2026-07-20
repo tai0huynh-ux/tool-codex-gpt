@@ -111,6 +111,8 @@ pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=p
 - Packaged native executables resolved through dependencies may point inside `app.asar`; production execution must translate them to the matching `app.asar.unpacked` path and packaging tests must prove the pinned platform package is present.
 - Adapter run handles are process-local. Persisted terminal pilot views must restore from SQLite after restart instead of querying a newly constructed adapter for an old run ID.
 - Current-conversation selection must resolve through the validated main-process Native Messaging boundary. Never infer a conversation ID from renderer text, browser profile data, history, or an unverified URL.
+- Background ChatGPT archive sync must call page recovery with `allowOpenExternal: false`; a failed timer refresh may reload/inspect but must never open a browser tab. Startup recovery is separately capped to one unique persisted destination.
+- Codex project discovery reads only the bounded local metadata catalog and must revalidate every root through `validateGitRepositoryInput` before projecting a project/thread mapping into SQLite.
 - Keep mock evidence labeled fixture-only; rerun the separate live Codex spike before claiming production acceptance in a new environment.
 
 ## Blockers and safe alternatives
