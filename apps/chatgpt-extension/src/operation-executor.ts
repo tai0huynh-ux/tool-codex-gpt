@@ -9,6 +9,9 @@ import {
   type LocalTransportResult,
 } from '@codex-context-bridge/contracts';
 
+const MAX_DISCOVERY_TABS = 16;
+const DISCOVERY_TAB_TIMEOUT_MS = 2_000;
+
 export interface BrowserTab {
   id?: number | undefined;
   url?: string | undefined;
@@ -185,21 +188,32 @@ async function discoverAcrossTabs(
   );
   if (eligible.length === 0) throw new Error('CHATGPT_TAB_NOT_FOUND');
 
-  const catalogs: ChatGptRenderedCatalog[] = [];
-  let lastError: unknown;
-  for (const tab of rankTabs(eligible) as TabWithId[]) {
+  const discoverTab = async (tab: TabWithId): Promise<ChatGptRenderedCatalog> => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const response = await sendToTab(tabs, tab.id, {
-        type: 'discover-conversations',
-      });
-      catalogs.push(chatGptRenderedCatalogSchema.parse(response));
-    } catch (error) {
-      lastError = error;
+      const response = await Promise.race([
+        sendToTab(tabs, tab.id, { type: 'discover-conversations' }),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error('CHATGPT_DISCOVERY_TAB_TIMEOUT')),
+            DISCOVERY_TAB_TIMEOUT_MS,
+          );
+        }),
+      ]);
+      return chatGptRenderedCatalogSchema.parse(response);
+    } finally {
+      if (timer) clearTimeout(timer);
     }
-  }
-  if (catalogs.length === 0) {
-    throw lastError instanceof Error ? lastError : new Error('CHATGPT_DISCOVERY_FAILED');
-  }
+  };
+  const results = await Promise.allSettled(
+    rankTabs(eligible)
+      .slice(0, MAX_DISCOVERY_TABS)
+      .map((tab) => discoverTab(tab as TabWithId)),
+  );
+  const catalogs = results.flatMap((result) =>
+    result.status === 'fulfilled' ? [result.value] : [],
+  );
+  if (catalogs.length === 0) throw new Error('CHATGPT_DISCOVERY_FAILED');
 
   const merged = new Map<string, (typeof catalogs)[number]['conversations'][number]>();
   for (const catalog of catalogs) {

@@ -74,17 +74,21 @@
     "Redirect-loop and Codex local catalog targeted recovery/IPC/renderer suite passed 30 tests",
     "Codex local catalog reads only bounded allowlisted metadata and imports validated Git roots without manual project entry",
     "Catalog correctness focused suite passed 46 tests; full verification passed 233 Vitest tests with migration v6, multi-tab ChatGPT discovery, and Codex display titles",
-    "Windows package and packaged smoke passed after catalog correctness changes"
+    "Windows package and packaged smoke passed after catalog correctness changes",
+    "Multi-tab discovery now bounds 16 tabs concurrently with a two-second timeout per tab; full verification passed 234 Vitest tests",
+    "Live bridge health remained ready; count-only discovery timed out before the rebuilt Edge extension was reloaded"
   ],
-  "knownFailures": [],
+  "knownFailures": [
+    "Post-build live ChatGPT discovery is not yet proven because Edge still needs to reload the rebuilt unpacked extension and open ChatGPT tabs"
+  ],
   "activeBlockers": [],
   "nextActions": [
+    "Reload the unpacked Edge extension and open ChatGPT tabs, then rerun count-only conversation discovery.",
     "Obtain action-time user confirmation for reviewed ChatGPT payload 75cae5042832…428bae39.",
     "After confirmation, submit exactly once and require rendered acknowledgement plus a valid structured response.",
     "Stop again for the separate repository-bound Codex workspace-write approval before any file changes.",
-    "Keep ZIP attachment explicit until a separate safe production browser file-upload boundary is implemented and accepted.",
-    "Publish the redirect-loop, Codex title, and multi-tab ChatGPT discovery checkpoint after remote ancestry verification."
+    "Keep ZIP attachment explicit until a separate safe production browser file-upload boundary is implemented and accepted."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-20T01:54:48.854+07:00"
+  "updatedAt": "2026-07-21T00:52:00.000+07:00"
 }

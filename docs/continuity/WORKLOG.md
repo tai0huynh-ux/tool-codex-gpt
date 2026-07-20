@@ -1478,12 +1478,14 @@ Changed `conversation.discover` to query every eligible open `chatgpt.com` tab, 
 
 ### Verification
 
-Focused catalog/registry/extension/UI tests passed 46 cases. Full `pnpm.cmd run verify` passed 233 Vitest tests, two workflow fixture tests, two Chromium fixture tests, and all workspace builds. Windows packaging and packaged smoke passed.
+Focused catalog/registry/extension/UI tests passed 47 cases, including an unresponsive-tab regression. Full `pnpm.cmd run verify` passed 234 Vitest tests, two workflow fixture tests, two Chromium fixture tests, and all workspace builds. Windows packaging and packaged smoke passed.
 
 ### Limitation
 
 The live browser path still requires the user-authorized extension and an authenticated ChatGPT tab with the sidebar rendered. No cookies, tokens, browser profile, account API, or private history endpoint is used.
 
+The post-build count-only live rerun confirmed `bridge.health: ready`, but `conversation.discover` reached the 15-second desktop timeout. That duration is longer than the rebuilt two-second per-tab bound and therefore indicates that Edge had not reloaded the new service worker. Computer Use stopped before opening `edge://extensions` because it could not verify the current browser URL; the agent did not retry clicks, inspect the account, or use a browser profile workaround.
+
 ### Next action
 
-Publish this checkpoint. The separate live pilot remains paused for action-time confirmation of payload `75cae5042832…428bae39`; after any confirmed ChatGPT send, stop again for the independent Codex workspace-write approval.
+Publish this checkpoint, reload the unpacked Edge extension and existing ChatGPT tabs manually, then rerun count-only discovery. The separate live pilot remains paused for action-time confirmation of payload `75cae5042832…428bae39`; after any confirmed ChatGPT send, stop again for the independent Codex workspace-write approval.

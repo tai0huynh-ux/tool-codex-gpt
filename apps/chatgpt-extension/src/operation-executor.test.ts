@@ -79,6 +79,37 @@ describe('extension operation executor', () => {
     expect(sendMessage).toHaveBeenCalledTimes(3);
   });
 
+  it('does not let an unresponsive ChatGPT tab block discovery', async () => {
+    vi.useFakeTimers();
+    try {
+      const sendMessage = vi.fn((tabId: number) => {
+        if (tabId === 30) return new Promise<never>(() => undefined);
+        return Promise.resolve({
+          conversations: [
+            {
+              conversationId: `tab-${String(tabId)}`,
+              conversationPath: `/c/tab-${String(tabId)}`,
+              title: `Tab ${String(tabId)}`,
+              current: false,
+            },
+          ],
+          capturedAt: '2026-07-21T08:00:00.000Z',
+          truncated: false,
+        });
+      });
+      const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+      const pending = executor.execute({ type: 'conversation.discover' });
+      await vi.advanceTimersByTimeAsync(2_000);
+      const result = await pending;
+      expect(result.type).toBe('conversation.discover.result');
+      if (result.type === 'conversation.discover.result') {
+        expect(result.catalog.conversations).toHaveLength(2);
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('reports degraded health without a rendered ChatGPT tab', async () => {
     const executor = createExtensionOperationExecutor(tabs({ query: () => Promise.resolve([]) }));
     await expect(executor.execute({ type: 'bridge.health' })).resolves.toEqual({

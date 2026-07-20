@@ -105,6 +105,7 @@
 - First observed: 2026-07-21
 - Reproduction: Codex picker displayed opaque external thread IDs; ChatGPT discovery returned zero while another open tab contained rendered sidebar links
 - Root cause: local thread titles were discarded before registry persistence, and discovery selected only the highest-ranked tab
-- Resolution: migration v6 persists bounded `thread_name` display titles; discovery sends the rendered-only operation to every eligible ChatGPT tab and merges canonical paths
-- Evidence: 46 focused tests, 233 full Vitest tests, build, Windows package, and packaged smoke passed
-- Remaining limitation: ChatGPT still requires an authenticated, user-opened tab with its sidebar rendered; private APIs and account history remain intentionally out of scope
+- Resolution: migration v6 persists bounded `thread_name` display titles; discovery sends the rendered-only operation to every eligible ChatGPT tab, bounds each tab to two seconds, and merges canonical paths
+- Evidence: 47 focused catalog/timeout tests, 234 full Vitest tests, build, Windows package, and packaged smoke passed
+- Live rerun: the installed bridge reported `ready`, but discovery still reached the 15-second desktop timeout before Edge reloaded the rebuilt extension; Computer Use then stopped because it could not verify the current browser URL, so no UI retry or account interaction was attempted
+- Remaining limitation: reload the unpacked Edge extension and the open ChatGPT tabs before repeating the count-only live discovery check. ChatGPT still requires an authenticated, user-opened tab with its sidebar rendered; private APIs and account history remain intentionally out of scope

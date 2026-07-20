@@ -45,7 +45,8 @@ it cannot call `shell.openExternal` and therefore cannot create an unbounded tab
 
 ChatGPT sidebar discovery queries every eligible open `chatgpt.com` tab, not only the active tab. It validates and
 merges rendered catalogs by canonical conversation path, which prevents a blank new-chat tab from hiding history
-rendered in another tab.
+rendered in another tab. At most 16 tabs are queried concurrently and each tab has a two-second response bound, so
+one stale content script cannot block the complete catalog.
 
 Before an approved write-capable Codex dispatch, the main process records a Git change baseline outside the
 renderer projection. Terminal completion produces an audited ZIP in app data by comparing the baseline with
