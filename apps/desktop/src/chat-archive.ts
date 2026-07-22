@@ -40,6 +40,7 @@ export interface ChatArchiveSummary {
   revisionCount: number;
   latestMessageCount: number;
   latestContentHash: string;
+  latestMessages: { ordinal: number; role: string; text: string }[];
   lastSyncedAt: string;
 }
 
@@ -245,12 +246,23 @@ export class ChatArchiveStore {
     const messageCount = this.database
       .prepare('SELECT COUNT(*) AS count FROM chat_messages WHERE snapshot_id = ?')
       .get(revision.id) as { count: number };
+    const latestMessages = this.database
+      .prepare(
+        `SELECT ordinal, role, content FROM chat_messages
+         WHERE snapshot_id = ? ORDER BY ordinal`,
+      )
+      .all(revision.id) as { ordinal: number; role: string; content: string }[];
     return {
       sourceId,
       conversationId,
       revisionCount: revisionCount.count,
       latestMessageCount: messageCount.count,
       latestContentHash: revision.content_hash,
+      latestMessages: latestMessages.map((message) => ({
+        ordinal: message.ordinal,
+        role: message.role,
+        text: message.content,
+      })),
       lastSyncedAt: lastSyncedAt ?? revision.captured_at,
     };
   }

@@ -128,6 +128,13 @@
 - Evidence: after the user reloaded extension `ccchffnkidpolmnnlonbnakjjmphfdjp`, live health returned connected with no legacy error, count-only discovery returned three canonical conversations with no navigation entries, and the installed no-submit smoke passed insert/clear with `composerSent: false`.
 - Remaining boundary: authenticated ChatGPT submit and writable Codex execution still require their separate action-time approvals.
 
+## INSTALLED-RELAY-WAKE-001
+
+- Status: resolved as an environment wake condition; no product blocker.
+- Reproduction: immediately after a silent per-user installer update, `smoke:installed-chatgpt:win` could report `TRANSPORT_DISCONNECTED` because Edge had no active ChatGPT content-script/native-host connection.
+- Resolution: opening the allowlisted ChatGPT home in the existing Edge profile woke the current unpacked extension/native relay; the same installed smoke then passed with `health: ready` and exact no-submit cleanup.
+- Safety: no cookies, tokens, history, or private endpoints were read; no message was submitted. The app's manual catalog refresh remains the supported user-facing recovery path.
+
 ## ASSISTED-CONTROLS-004
 
 - Status: resolved locally and package-verified on 2026-07-22.

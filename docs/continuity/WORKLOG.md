@@ -1579,3 +1579,21 @@ Reworked the repeated UI collections so every item has semantic, stable, accessi
 Focused desktop IPC/renderer suites passed 36 tests. `pnpm.cmd run format:check`, `pnpm.cmd run lint`, `pnpm.cmd run typecheck`, `pnpm.cmd run test` (255 tests), `pnpm.cmd run test:e2e` (two workflow fixture tests and two Chromium tests), `pnpm.cmd run test:internal-beta-uat` (46 tests plus two Chromium tests), and `pnpm.cmd run build` passed.
 
 Using `CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT=artifacts/desktop-current-final`, Windows packaging, packaged/native-host smoke, and fixture-only packaged restart acceptance passed. The final restart evidence is under `artifacts/pilot-restart-acceptance/2026-07-22T10-03-39-006Z` with zero renderer runtime errors. No authenticated external send or writable live Codex execution was performed.
+
+## 2026-07-22 18:19 +07:00 - Operator context MVP checkpoint
+
+### Goal
+
+Finish the safe MVP interactions still missing from the pilot: operator notes with one-time/repeat semantics and user-selected archived ChatGPT context.
+
+### Changes
+
+Added strict `operatorNotes` and `chatSelection` pilot fields, typed update channels in main/preload, SQLite persistence, target-aware preview decoration, acknowledgment-bound note consumption, stale selection invalidation, and a 60,000-character selected-context bound. The renderer now exposes target/mode note controls, per-pilot add/remove actions, latest-message checkboxes, five-item expansion, and selected-only preview feedback.
+
+### Verification
+
+`pnpm.cmd run verify` passed 258 Vitest tests, two workflow fixture tests, two Chromium fixture tests, strict type-check, lint, formatting, and all workspace builds. `pnpm.cmd run test:internal-beta-uat` passed 46 tests plus two Chromium fixture flows; `pnpm.cmd run test:project-pilot` passed. Windows package, packaged smoke, fixture-only restart, silent per-user installer update, and installed ChatGPT no-submit smoke passed. Installed result: `health: ready`, `pageMode: new`, `capturedMessages: 0`, `composerInserted: true`, `composerSent: false`, `composerCleared: true`.
+
+### Boundary
+
+No authenticated ChatGPT message was submitted, no automatic ZIP upload was attempted, and no writable live Codex run was claimed. Large transfers remain explicit manual attachments and all external sends retain action-time approval.

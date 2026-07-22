@@ -109,6 +109,8 @@ describe('guided workflow renderer', () => {
       }),
       listPilotCodexTargets: vi.fn().mockResolvedValue({ ok: true, value: { projects: [] } }),
       createPilot: vi.fn(),
+      updatePilotNotes: vi.fn(),
+      updatePilotChatSelection: vi.fn(),
       deletePilot: vi.fn(),
       refreshPilot: vi.fn(),
       verifyPilotWebsite: vi.fn(),

@@ -215,6 +215,108 @@ h1 {
   color: #aeb9b1;
   font-size: 0.72rem;
 }
+.pilot-notes-editor,
+.pilot-chat-selection {
+  display: grid;
+  gap: 0.55rem;
+  margin: 1rem 0;
+  padding: 0.8rem;
+  border: 1px solid rgba(248, 242, 229, 0.22);
+  background: rgba(0, 0, 0, 0.12);
+}
+.pilot-notes-existing {
+  margin-top: 0.9rem;
+}
+.pilot-note-controls,
+.pilot-selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.pilot-note-controls select,
+.pilot-notes-editor textarea {
+  border: 1px solid rgba(248, 242, 229, 0.32);
+  background: #172f24;
+  color: #f8f2e5;
+  padding: 0.55rem;
+}
+.pilot-notes-editor textarea {
+  width: 100%;
+  resize: vertical;
+}
+.pilot-notes-editor > button,
+.pilot-selection-actions button {
+  width: fit-content;
+  border: 1px solid rgba(248, 242, 229, 0.38);
+  background: transparent;
+  color: #f8f2e5;
+  padding: 0.5rem 0.65rem;
+}
+.pilot-note-list,
+.pilot-selection-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pilot-note-list li,
+.pilot-note-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.2rem 0.55rem;
+  align-items: start;
+  padding: 0.45rem;
+  border-left: 3px solid #f0a17e;
+  background: rgba(240, 161, 126, 0.08);
+}
+.pilot-note-list li span,
+.pilot-note-row span {
+  color: #f0a17e;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+.pilot-note-list li strong,
+.pilot-note-row strong {
+  overflow-wrap: anywhere;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.pilot-note-list button,
+.pilot-note-row button {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  border: 1px solid rgba(248, 242, 229, 0.35);
+  background: transparent;
+  color: #f8f2e5;
+  padding: 0.35rem 0.5rem;
+}
+.pilot-selection-list label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem;
+  padding: 0.45rem;
+  border: 1px solid rgba(248, 242, 229, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+.pilot-selection-list input {
+  margin-top: 0.2rem;
+}
+.pilot-selection-list span {
+  display: grid;
+  gap: 0.15rem;
+}
+.pilot-selection-list small {
+  color: #b9c3ba;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.pilot-selection-list .show-more {
+  border: 1px dashed rgba(240, 161, 126, 0.6);
+  background: transparent;
+  color: #f0a17e;
+  padding: 0.5rem;
+}
 .pilot-destination {
   display: grid;
   gap: 0.6rem;

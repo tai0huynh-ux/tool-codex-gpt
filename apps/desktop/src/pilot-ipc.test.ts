@@ -111,6 +111,8 @@ function stubService(overrides: Partial<PilotDesktopService> = {}): PilotDesktop
       }),
     listCodexTargets: () => Promise.resolve({ projects: [] }),
     create: () => Promise.resolve(view()),
+    updateNotes: () => Promise.resolve(view()),
+    updateChatSelection: () => Promise.resolve(view()),
     delete: () => Promise.resolve({ pilotId: 'pilot-1' }),
     refresh: () => Promise.resolve(view()),
     inspectChatGpt: () => Promise.resolve(view()),
@@ -1120,6 +1122,117 @@ describe('pilot desktop persistence', () => {
         finalResponse: 'Created index.html and styles.css.',
       },
     ]);
+    database.close();
+  });
+
+  it('persists routed operator notes and only sends explicitly selected archived messages', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-22T10:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, {
+      now: () => '2026-07-22T10:00:00.000Z',
+    });
+    const codex = new FixtureCodexAdapter();
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge,
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+      now: () => '2026-07-22T10:00:00.000Z',
+    });
+    const created = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Continue the reviewed project.',
+      destination: { mode: 'new' },
+    });
+    const archive = new (await import('./chat-archive')).ChatArchiveStore(
+      database,
+      () => '2026-07-22T10:00:00.000Z',
+    ).archive({
+      projectId: 'project-1',
+      conversationId: 'conversation-1',
+      snapshot: {
+        title: 'Pilot chat',
+        messages: [
+          { role: 'user', text: 'Keep this context.' },
+          { role: 'assistant', text: 'Do not include this unless selected.' },
+        ],
+        contentHash: 'a'.repeat(64),
+        capturedAt: '2026-07-22T10:00:00.000Z',
+      },
+    });
+    database
+      .prepare('UPDATE settings SET value_json = ? WHERE key = ?')
+      .run(
+        JSON.stringify({ ...created, chatArchive: archive }),
+        `live-project-pilot:${created.id}`,
+      );
+
+    const selected = await service.updateChatSelection({ pilotId: created.id, ordinals: [0] });
+    expect(selected.chatSelection).toMatchObject({
+      sourceId: archive.sourceId,
+      contentHash: archive.latestContentHash,
+      ordinals: [0],
+    });
+    const noted = await service.updateNotes({
+      pilotId: created.id,
+      notes: [
+        { target: 'chatgpt', mode: 'once', text: 'Keep the response concise.' },
+        { target: 'codex', mode: 'repeat', text: 'Run the existing verification suite.' },
+      ],
+    });
+    expect(noted.operatorNotes).toHaveLength(2);
+    const prepared = await service.prepareChatGpt(created.id);
+    expect(prepared.chatGptPreview?.text).toContain('Keep the response concise.');
+    expect(prepared.chatGptPreview?.text).toContain('Keep this context.');
+    expect(prepared.chatGptPreview?.text).not.toContain('Do not include this unless selected.');
+    database.close();
+  });
+
+  it('rejects a chat selection ordinal outside the archived snapshot', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-22T11:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, { now: () => '2026-07-22T11:00:00.000Z' });
+    const codex = new FixtureCodexAdapter();
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge,
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+      now: () => '2026-07-22T11:00:00.000Z',
+    });
+    const created = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Select valid context.',
+      destination: { mode: 'new' },
+    });
+    database.prepare('UPDATE settings SET value_json = ? WHERE key = ?').run(
+      JSON.stringify({
+        ...created,
+        chatArchive: {
+          sourceId: 'source-1',
+          conversationId: 'conversation-1',
+          revisionCount: 1,
+          latestMessageCount: 1,
+          latestContentHash: 'b'.repeat(64),
+          latestMessages: [{ ordinal: 0, role: 'user', text: 'Only message' }],
+          lastSyncedAt: '2026-07-22T11:00:00.000Z',
+        },
+      }),
+      `live-project-pilot:${created.id}`,
+    );
+    expect(() => service.updateChatSelection({ pilotId: created.id, ordinals: [1] })).toThrow(
+      'CHAT_SELECTION_INVALID',
+    );
     database.close();
   });
 });

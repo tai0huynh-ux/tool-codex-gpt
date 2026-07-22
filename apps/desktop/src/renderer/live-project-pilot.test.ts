@@ -93,6 +93,8 @@ function baseApi(): ContextBridgeDesktopApi {
     }),
     listPilotCodexTargets: vi.fn().mockResolvedValue({ ok: true, value: { projects: [] } }),
     createPilot: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
+    updatePilotNotes: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
+    updatePilotChatSelection: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
     deletePilot: vi.fn().mockResolvedValue({ ok: true, value: { pilotId: 'pilot-1' } }),
     refreshPilot: vi
       .fn()
@@ -502,5 +504,81 @@ describe('Live Project Pilot renderer', () => {
       await new Promise((resolve) => window.setTimeout(resolve, 20));
     });
     expect(approvePilotAccountTransfer).toHaveBeenCalledWith('pilot-1');
+  });
+
+  it('routes operator notes and selected archived messages through the typed UI actions', async () => {
+    const existing = pilot({
+      chatArchive: {
+        sourceId: 'source-1',
+        conversationId: 'old-chat',
+        revisionCount: 1,
+        latestMessageCount: 2,
+        latestContentHash: 'e'.repeat(64),
+        latestMessages: [
+          { ordinal: 0, role: 'user', text: 'Keep this line.' },
+          { ordinal: 1, role: 'assistant', text: 'Do not pick this line.' },
+        ],
+        lastSyncedAt: timestamp,
+      },
+    });
+    api.listPilots = vi.fn().mockResolvedValue({ ok: true, value: [existing] });
+    api.updatePilotChatSelection = vi.fn().mockResolvedValue({ ok: true, value: existing });
+    api.updatePilotNotes = vi.fn().mockResolvedValue({
+      ok: true,
+      value: pilot({
+        ...existing,
+        operatorNotes: [
+          {
+            id: 'note-1',
+            target: 'chatgpt',
+            mode: 'once',
+            text: 'Keep the answer concise.',
+            createdAt: timestamp,
+          },
+        ],
+      }),
+    });
+    await act(async () => {
+      root.render(
+        createElement(LiveProjectPilot, {
+          projectId: 'project-2',
+          projectName: 'AI Website Pilot',
+          repositories: [repository],
+        }),
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const checkbox = container.querySelector('input[type="checkbox"]');
+    expect(checkbox).toBeInstanceOf(HTMLInputElement);
+    if (!(checkbox instanceof HTMLInputElement)) throw new Error('Selection checkbox missing.');
+    await act(async () => {
+      checkbox.click();
+      await Promise.resolve();
+    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.updatePilotChatSelection).toHaveBeenCalledWith({
+      pilotId: 'pilot-1',
+      ordinals: [0],
+    });
+
+    const noteTextarea = container.querySelector('textarea[aria-label="Ghi chú operator"]');
+    expect(noteTextarea).toBeInstanceOf(HTMLTextAreaElement);
+    if (!(noteTextarea instanceof HTMLTextAreaElement)) throw new Error('Note textarea missing.');
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
+    if (!setter) throw new Error('Textarea setter missing.');
+    Reflect.apply(setter, noteTextarea, ['Keep the answer concise.']);
+    noteTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+    await act(async () => {
+      button(container, 'Thêm ghi chú vào pilot đang chọn').click();
+      await Promise.resolve();
+    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.updatePilotNotes).toHaveBeenCalledWith({
+      pilotId: 'pilot-1',
+      notes: [{ target: 'chatgpt', mode: 'once', text: 'Keep the answer concise.' }],
+    });
   });
 });

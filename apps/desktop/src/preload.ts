@@ -28,6 +28,8 @@ import {
   type ProjectListResponse,
   type ProjectViewResponse,
   type PilotCreateInput,
+  type PilotNotesUpdateInput,
+  type PilotChatSelectionInput,
   type PilotDiscoverChatGptInput,
   type PilotListResponse,
   type PilotDeleteResponse,
@@ -64,6 +66,8 @@ export interface ContextBridgeDesktopApi {
   discoverPilotChatGpt(options?: PilotDiscoverChatGptInput): Promise<ChatGptDiscoveryResponse>;
   listPilotCodexTargets(): Promise<CodexTargetCatalogResponse>;
   createPilot(input: PilotCreateInput): Promise<PilotViewResponse>;
+  updatePilotNotes(input: PilotNotesUpdateInput): Promise<PilotViewResponse>;
+  updatePilotChatSelection(input: PilotChatSelectionInput): Promise<PilotViewResponse>;
   deletePilot(pilotId: string): Promise<PilotDeleteResponse>;
   inspectPilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
   preparePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
@@ -170,6 +174,14 @@ const api: ContextBridgeDesktopApi = {
   createPilot: async (input) =>
     pilotViewResponseSchema.parse(
       (await ipcRenderer.invoke(pilotIpcChannels.create, input)) as unknown,
+    ),
+  updatePilotNotes: async (input) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.updateNotes, input)) as unknown,
+    ),
+  updatePilotChatSelection: async (input) =>
+    pilotViewResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.updateChatSelection, input)) as unknown,
     ),
   deletePilot: async (pilotId) =>
     pilotDeleteResponseSchema.parse(

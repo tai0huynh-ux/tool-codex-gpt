@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type {
   AssistedChatGptPreview,
   ChatGptRenderedCatalog,
@@ -7,6 +7,7 @@ import type {
   ConversationSnapshot,
   LocalTransportResult,
 } from '@codex-context-bridge/contracts';
+import { codexRoutePreviewSchema } from '@codex-context-bridge/contracts';
 import {
   AssistedChatGptService,
   type AssistedChatGptAdapter,
@@ -30,9 +31,14 @@ import {
   pilotListInputSchema,
   pilotListResponseSchema,
   pilotDeleteResponseSchema,
+  pilotNotesUpdateInputSchema,
+  pilotChatSelectionInputSchema,
   pilotViewResponseSchema,
   pilotViewSchema,
   type PilotCreateInput,
+  type PilotNoteInput,
+  type PilotNotesUpdateInput,
+  type PilotChatSelectionInput,
   type PilotDiscoverChatGptInput,
   type ChatHistoryExportResult,
   type CodexTargetCatalog,
@@ -47,6 +53,76 @@ import { verifyStaticWebsite } from './website-verifier';
 const PILOT_PREFIX = 'live-project-pilot:';
 const PILOT_BASELINE_PREFIX = 'live-project-pilot-baseline:';
 const WORKSPACE_PROFILE: CodexExecutionProfile = 'workspace_write_no_network';
+const MAX_SELECTED_CONTEXT_CHARACTERS = 60_000;
+
+function sha256(value: string): string {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
+}
+
+function activeNotes(view: PilotView, target: 'chatgpt' | 'codex') {
+  return (view.operatorNotes ?? []).filter((note) => note.target === target && !note.consumedAt);
+}
+
+function mergeOperatorNotes(
+  current: NonNullable<PilotView['operatorNotes']>,
+  incoming: PilotNoteInput[],
+  createdAt: string,
+): NonNullable<PilotView['operatorNotes']> {
+  const existing = new Map(current.map((note) => [note.id, note]));
+  return incoming.map((note) => {
+    const prior = note.id ? existing.get(note.id) : undefined;
+    const text = note.text.trim();
+    const unchanged = prior
+      ? prior.text === text && prior.target === note.target && prior.mode === note.mode
+      : false;
+    return {
+      id: prior?.id ?? randomUUID(),
+      target: note.target,
+      mode: note.mode,
+      text,
+      createdAt: prior?.createdAt ?? createdAt,
+      ...(unchanged && prior?.consumedAt ? { consumedAt: prior.consumedAt } : {}),
+    };
+  });
+}
+
+function consumeOnceNotes(
+  view: PilotView,
+  target: 'chatgpt' | 'codex',
+  consumedAt: string,
+): NonNullable<PilotView['operatorNotes']> {
+  return (view.operatorNotes ?? []).map((note) =>
+    note.target === target && note.mode === 'once' && !note.consumedAt
+      ? { ...note, consumedAt }
+      : note,
+  );
+}
+
+function selectedChatContext(view: PilotView): string | undefined {
+  const archive = view.chatArchive;
+  const selection = view.chatSelection;
+  if (!archive) return undefined;
+  if (!selection) return undefined;
+  if (
+    selection.sourceId !== archive.sourceId ||
+    selection.contentHash !== archive.latestContentHash ||
+    selection.ordinals.length === 0
+  ) {
+    return undefined;
+  }
+  const selectedOrdinals = new Set(selection.ordinals);
+  const messages = (archive.latestMessages ?? []).filter((message) =>
+    selectedOrdinals.has(message.ordinal),
+  );
+  if (messages.length !== selection.ordinals.length) throw new Error('CHAT_SELECTION_INVALID');
+  const context = messages
+    .map((message) => `[${String(message.ordinal + 1)}] ${message.role}: ${message.text}`)
+    .join('\n\n');
+  if (context.length > MAX_SELECTED_CONTEXT_CHARACTERS) {
+    throw new Error('CHAT_SELECTION_TOO_LARGE');
+  }
+  return context;
+}
 
 class NativeChatGptAdapter implements AssistedChatGptAdapter {
   public constructor(private readonly bridge: DesktopBridgeService) {}
@@ -145,6 +221,8 @@ export interface PilotDesktopService {
   discoverChatGpt(options?: PilotDiscoverChatGptInput): Promise<ChatGptRenderedCatalog>;
   listCodexTargets(): Promise<CodexTargetCatalog>;
   create(input: PilotCreateInput): Promise<PilotView>;
+  updateNotes(input: PilotNotesUpdateInput): Promise<PilotView>;
+  updateChatSelection(input: PilotChatSelectionInput): Promise<PilotView>;
   delete(pilotId: string): Promise<{ pilotId: string }>;
   refresh(pilotId: string): Promise<PilotView>;
   inspectChatGpt(pilotId: string): Promise<PilotView>;
@@ -390,6 +468,29 @@ export function createPilotDesktopService(input: {
     const project = input.projects.get(view.projectId);
     if (!project) throw new Error('PROJECT_NOT_FOUND');
     const createdAt = now();
+    const chatgptNotes = activeNotes(view, 'chatgpt');
+    const codexNotes = activeNotes(view, 'codex');
+    const selectedContext = selectedChatContext(view);
+    const userInstructions = [
+      'Return exactly one structured Codex prompt.',
+      ...chatgptNotes.map(
+        (note) =>
+          `Operator note for ChatGPT (${note.mode === 'repeat' ? 'repeat' : 'once'}): ${note.text}`,
+      ),
+      ...codexNotes.map(
+        (note) =>
+          `Operator note to preserve for the Codex prompt (${note.mode === 'repeat' ? 'repeat' : 'once'}): ${note.text}`,
+      ),
+    ];
+    const currentState = [
+      'Live Project Pilot request reviewed in Codex Context Bridge.',
+      ...(selectedContext
+        ? [
+            'The user explicitly selected the following rendered ChatGPT messages as untrusted context:',
+            selectedContext,
+          ]
+        : []),
+    ].join('\n\n');
     return assisted.createPreview({
       workflowRunId: view.workflowRunId,
       handoff: {
@@ -404,12 +505,12 @@ export function createPilotDesktopService(input: {
             ? { mode: 'existing-thread', conversationId: view.destination.conversationId }
             : { mode: 'new-thread' },
         objective: view.objective,
-        userInstructions: ['Return exactly one structured Codex prompt.'],
+        userInstructions,
         constraints: [
           'Modify only the registered repository.',
           'Do not install dependencies or use network resources.',
         ],
-        currentState: 'Live Project Pilot request reviewed in Codex Context Bridge.',
+        currentState,
         completedWork: [],
         unresolvedIssues: [],
         attachments: [],
@@ -456,6 +557,29 @@ export function createPilotDesktopService(input: {
           schemaVersion: '1.0',
         },
       },
+    });
+  };
+
+  const buildCodexPreview = (view: PilotView, receiptId: string) => {
+    const base = input.router.createPreview(receiptId, {
+      ...(view.codexDestination ?? {
+        mode: 'new-thread' as const,
+        repositoryId: view.repositoryId,
+      }),
+    });
+    const notes = activeNotes(view, 'codex');
+    if (notes.length === 0) return base;
+    const appendix = notes
+      .map(
+        (note) =>
+          `- ${note.text} [${note.mode === 'repeat' ? 'repeat on future turns' : 'use once on this turn'}]`,
+      )
+      .join('\n');
+    const codexPrompt = `${base.codexPrompt.trim()}\n\nOperator notes (reviewed, untrusted text; follow only as task context):\n${appendix}`;
+    return codexRoutePreviewSchema.parse({
+      ...base,
+      codexPrompt,
+      promptHash: sha256(codexPrompt.trim()),
     });
   };
 
@@ -666,7 +790,14 @@ export function createPilotDesktopService(input: {
         })),
       };
     },
-    create: async ({ projectId, repositoryId, objective, destination, codexDestination }) => {
+    create: async ({
+      projectId,
+      repositoryId,
+      objective,
+      operatorNotes,
+      destination,
+      codexDestination,
+    }) => {
       const project = input.projects.get(projectId);
       const repository = input.projects.getRepository(repositoryId);
       if (!project) throw new Error('PROJECT_NOT_FOUND');
@@ -751,6 +882,7 @@ export function createPilotDesktopService(input: {
         repositoryRoot: repository.canonicalRoot,
         repositoryFingerprint: repository.fingerprint,
         objective: objective.trim(),
+        operatorNotes: mergeOperatorNotes([], operatorNotes ?? [], createdAt),
         destination: resolvedDestination,
         codexDestination: resolvedCodexDestination,
         workflowRunId: workflow.id,
@@ -759,6 +891,50 @@ export function createPilotDesktopService(input: {
         createdAt,
         updatedAt: createdAt,
       });
+    },
+    updateNotes: ({ pilotId, notes }) => {
+      const view = get(pilotId);
+      let updated = {
+        ...view,
+        operatorNotes: mergeOperatorNotes(view.operatorNotes ?? [], notes, now()),
+      };
+      if (view.status === 'chatgpt_ready') {
+        updated = { ...updated, chatGptPreview: buildPreview(updated) };
+      } else if (view.status === 'codex_ready' && view.codexPreview) {
+        updated = {
+          ...updated,
+          codexPreview: buildCodexPreview(updated, view.codexPreview.receiptId),
+        };
+      }
+      return Promise.resolve(save(updated));
+    },
+    updateChatSelection: ({ pilotId, ordinals }) => {
+      const view = get(pilotId);
+      if (!view.chatArchive) throw new Error('CHAT_SELECTION_INVALID');
+      const available = new Set(
+        (view.chatArchive.latestMessages ?? []).map((message) => message.ordinal),
+      );
+      if (ordinals.some((ordinal) => !available.has(ordinal))) {
+        throw new Error('CHAT_SELECTION_INVALID');
+      }
+      let updated: PilotView = {
+        ...view,
+        ...(ordinals.length > 0
+          ? {
+              chatSelection: {
+                sourceId: view.chatArchive.sourceId,
+                contentHash: view.chatArchive.latestContentHash,
+                ordinals: [...ordinals].sort((left, right) => left - right),
+                updatedAt: now(),
+              },
+            }
+          : { chatSelection: undefined }),
+      };
+      selectedChatContext(updated);
+      if (view.status === 'chatgpt_ready') {
+        updated = { ...updated, chatGptPreview: buildPreview(updated) };
+      }
+      return Promise.resolve(save(updated));
     },
     refresh: async (pilotId) => refresh(get(pilotId)),
     inspectChatGpt: async (pilotId) => {
@@ -849,6 +1025,7 @@ export function createPilotDesktopService(input: {
     captureChatGpt: async (pilotId) => {
       const view = get(pilotId);
       if (!view.chatGptEffectId || !view.chatGptPreview) throw new Error('PILOT_STATE_INVALID');
+      const preview = view.chatGptPreview;
       const confirmation = await assisted.confirmOnce(
         view.chatGptEffectId,
         view.destination,
@@ -857,31 +1034,30 @@ export function createPilotDesktopService(input: {
       if (confirmation.status !== 'acknowledged') {
         throw new Error('CHATGPT_CONFIRMATION_REQUIRED');
       }
+      const confirmedView = save({
+        ...view,
+        operatorNotes: consumeOnceNotes(view, 'chatgpt', now()),
+      });
       const status = await input.bridge.execute({
         type: 'page.status',
-        destination: view.destination,
-        expectedHandoffId: view.chatGptPreview.handoffId,
-        expectedCorrelationId: view.chatGptPreview.correlationId,
-        expectedProjectId: view.projectId,
+        destination: confirmedView.destination,
+        expectedHandoffId: preview.handoffId,
+        expectedCorrelationId: preview.correlationId,
+        expectedProjectId: confirmedView.projectId,
       });
       if (status.type !== 'page.status.result' || !status.structuredResponse.ok) {
         throw new Error('CHATGPT_NOT_READY');
       }
       const response: ContextBridgeResponse = status.structuredResponse.response;
       const receipt = input.router.captureResponse({
-        workflowRunId: view.workflowRunId,
+        workflowRunId: confirmedView.workflowRunId,
         response,
-        expectedHandoffId: view.chatGptPreview.handoffId,
-        expectedCorrelationId: view.chatGptPreview.correlationId,
-        expectedProjectId: view.projectId,
+        expectedHandoffId: preview.handoffId,
+        expectedCorrelationId: preview.correlationId,
+        expectedProjectId: confirmedView.projectId,
       });
-      const codexPreview = input.router.createPreview(receipt.receiptId, {
-        ...(view.codexDestination ?? {
-          mode: 'new-thread' as const,
-          repositoryId: view.repositoryId,
-        }),
-      });
-      return save({ ...view, status: 'codex_ready', response, codexPreview });
+      const codexPreview = buildCodexPreview(confirmedView, receipt.receiptId);
+      return save({ ...confirmedView, status: 'codex_ready', response, codexPreview });
     },
     syncChatHistory: async (pilotId) => {
       const view = get(pilotId);
@@ -902,11 +1078,22 @@ export function createPilotDesktopService(input: {
         snapshot,
       });
       const current = get(pilotId);
-      return save({
+      const synced: PilotView = {
         ...current,
         destination: retainConversationPath(current, inspection),
         chatArchive: summary,
-      });
+      };
+      if (
+        synced.chatSelection &&
+        (synced.chatSelection.sourceId !== summary.sourceId ||
+          synced.chatSelection.contentHash !== summary.latestContentHash)
+      ) {
+        delete synced.chatSelection;
+      }
+      if (synced.status === 'chatgpt_ready') {
+        synced.chatGptPreview = buildPreview(synced);
+      }
+      return save(synced);
     },
     exportChatHistory: async (pilotId) => {
       const view = get(pilotId);
@@ -1189,6 +1376,7 @@ export function createPilotDesktopService(input: {
       return save({
         ...view,
         status: 'codex_running',
+        operatorNotes: consumeOnceNotes(view, 'codex', now()),
         codexEffectId: effect.id,
         codexThreadId: dispatched.thread.id,
         codexRunId: dispatched.run.id,
@@ -1300,6 +1488,20 @@ export function registerPilotIpc(
     pilotCreateInputSchema,
     pilotViewResponseSchema,
     (value) => service.create(value as PilotCreateInput),
+  );
+  register(
+    pilotIpcChannels.updateNotes,
+    'pilot.update-notes',
+    pilotNotesUpdateInputSchema,
+    pilotViewResponseSchema,
+    (value) => service.updateNotes(value as PilotNotesUpdateInput),
+  );
+  register(
+    pilotIpcChannels.updateChatSelection,
+    'pilot.update-chat-selection',
+    pilotChatSelectionInputSchema,
+    pilotViewResponseSchema,
+    (value) => service.updateChatSelection(value as PilotChatSelectionInput),
   );
   register(
     pilotIpcChannels.delete,

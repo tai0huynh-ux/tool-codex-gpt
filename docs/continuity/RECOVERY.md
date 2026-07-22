@@ -133,3 +133,9 @@ The installed desktop build was older than the fresh package, so its renderer di
 Reviewed handoff deletion is item-scoped and confirmation-gated. It preserves the referenced workflow, durable audit history, and generated archives, and blocks active or ambiguous send/run states. ASSISTED MODE workflow deletion is terminal-only, rejects pilot-referenced rows and prepared/dispatching effects, deletes dependent workflow rows transactionally, and preserves the redacted audit event.
 
 The renderer log dialog reads only the bounded `workflows:logs` projection. It must never expose `audit_events.details_json`; only validated stable error codes may cross IPC. The latest accepted fixture/package evidence is 255 Vitest tests, two workflow fixture tests, two Chromium fixture tests, 46 internal-beta UAT tests, all builds, Windows packaging, packaged/native-host smoke, and fixture-only packaged restart acceptance.
+
+## 2026-07-22 operator-context MVP recovery
+
+The pilot state now accepts optional `operatorNotes` and `chatSelection` fields. Notes are generated and consumed in the main process; a renderer cannot mark a note consumed or select an ordinal outside the persisted latest snapshot. A new archive content hash clears the prior selection before any preview can reuse it. `selectedChatContext` is capped at 60,000 characters and is rendered as untrusted evidence inside the reviewed handoff.
+
+For a fresh checkout, run `pnpm.cmd run verify`, `pnpm.cmd run test:internal-beta-uat`, `pnpm.cmd run test:project-pilot`, `pnpm.cmd run package:win`, `pnpm.cmd run smoke:packaged:win`, and `pnpm.cmd run test:pilot-packaged-restart`. The installed no-submit check is `pnpm.cmd run smoke:installed-chatgpt:win`; if it reports `TRANSPORT_DISCONNECTED` immediately after an install, open an allowed `chatgpt.com` tab to wake the unpacked Edge content script/native relay, then rerun once. Do not submit a message during this recovery.

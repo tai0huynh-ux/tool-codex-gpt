@@ -49,6 +49,8 @@ export const pilotIpcChannels = {
   delete: 'pilot:delete',
   verifyWebsite: 'pilot:verify-website',
   openPreview: 'pilot:open-preview',
+  updateNotes: 'pilot:update-notes',
+  updateChatSelection: 'pilot:update-chat-selection',
 } as const;
 
 export const pilotIdSchema = z.string().min(1).max(256);
@@ -93,6 +95,18 @@ export const pilotCreateInputSchema = z
     projectId: pilotIdSchema,
     repositoryId: pilotIdSchema,
     objective: z.string().trim().min(1).max(20_000),
+    operatorNotes: z
+      .array(
+        z
+          .object({
+            target: z.enum(['chatgpt', 'codex']),
+            mode: z.enum(['once', 'repeat']),
+            text: z.string().trim().min(1).max(10_000),
+          })
+          .strict(),
+      )
+      .max(50)
+      .optional(),
     destination: pilotCreateDestinationSchema,
     codexDestination: z
       .discriminatedUnion('mode', [
@@ -103,6 +117,33 @@ export const pilotCreateInputSchema = z
   })
   .strict();
 export const pilotIdInputSchema = z.object({ pilotId: pilotIdSchema }).strict();
+
+const pilotNoteIdSchema = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);
+export const pilotNoteInputSchema = z
+  .object({
+    id: pilotNoteIdSchema.optional(),
+    target: z.enum(['chatgpt', 'codex']),
+    mode: z.enum(['once', 'repeat']),
+    text: z.string().trim().min(1).max(10_000),
+  })
+  .strict();
+export const pilotNotesUpdateInputSchema = z
+  .object({
+    pilotId: pilotIdSchema,
+    notes: z.array(pilotNoteInputSchema).max(50),
+  })
+  .strict();
+export const pilotChatSelectionInputSchema = z
+  .object({
+    pilotId: pilotIdSchema,
+    ordinals: z.array(z.number().int().nonnegative()).max(5_000),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (new Set(value.ordinals).size !== value.ordinals.length) {
+      context.addIssue({ code: 'custom', path: ['ordinals'], message: 'Duplicate ordinal.' });
+    }
+  });
 
 export const pilotStatusSchema = z.enum([
   'draft',
@@ -122,6 +163,18 @@ export const chatArchiveSummarySchema = z
     revisionCount: z.number().int().positive(),
     latestMessageCount: z.number().int().positive().max(5_000),
     latestContentHash: z.string().regex(/^[a-f0-9]{64}$/),
+    latestMessages: z
+      .array(
+        z
+          .object({
+            ordinal: z.number().int().nonnegative(),
+            role: z.string().min(1).max(32),
+            text: z.string().min(1).max(100_000),
+          })
+          .strict(),
+      )
+      .max(5_000)
+      .optional(),
     lastSyncedAt: z.iso.datetime(),
   })
   .strict();
@@ -169,6 +222,21 @@ export const pilotViewSchema = z
     repositoryRoot: z.string().min(1).max(32_768),
     repositoryFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
     objective: z.string().min(1).max(20_000),
+    operatorNotes: z
+      .array(
+        z
+          .object({
+            id: pilotNoteIdSchema,
+            target: z.enum(['chatgpt', 'codex']),
+            mode: z.enum(['once', 'repeat']),
+            text: z.string().min(1).max(10_000),
+            createdAt: z.iso.datetime(),
+            consumedAt: z.iso.datetime().optional(),
+          })
+          .strict(),
+      )
+      .max(50)
+      .optional(),
     destination: pilotDestinationSchema,
     codexDestination: z
       .discriminatedUnion('mode', [
@@ -193,6 +261,15 @@ export const pilotViewSchema = z
     chatGptPreview: assistedChatGptPreviewSchema.optional(),
     chatGptEffectId: pilotIdSchema.optional(),
     chatArchive: chatArchiveSummarySchema.optional(),
+    chatSelection: z
+      .object({
+        sourceId: pilotIdSchema,
+        contentHash: z.string().regex(/^[a-f0-9]{64}$/),
+        ordinals: z.array(z.number().int().nonnegative()).max(5_000),
+        updatedAt: z.iso.datetime(),
+      })
+      .strict()
+      .optional(),
     accountTransfer: accountTransferSchema.optional(),
     response: contextBridgeResponseSchema.optional(),
     codexPreview: codexRoutePreviewSchema.optional(),
@@ -248,6 +325,8 @@ export const pilotErrorCodeSchema = z.enum([
   'CHAT_ARCHIVE_INVALID',
   'CHAT_ARCHIVE_WRITE_FAILED',
   'CHAT_ARCHIVE_EXPORT_FAILED',
+  'CHAT_SELECTION_INVALID',
+  'CHAT_SELECTION_TOO_LARGE',
   'CHAT_TRANSFER_NOT_READY',
   'CHAT_TRANSFER_SECRET_DETECTED',
   'CHAT_TRANSFER_TOO_LARGE',
@@ -283,7 +362,6 @@ export const pilotDeleteResponseSchema = z.discriminatedUnion('ok', [
   pilotDeleteSuccessSchema,
   pilotFailureSchema,
 ]);
-
 export const chatGptDiscoveryResponseSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(true), value: chatGptRenderedCatalogSchema }).strict(),
   pilotFailureSchema,
@@ -348,6 +426,9 @@ export const chatHistoryExportResponseSchema = z.discriminatedUnion('ok', [
 ]);
 
 export type PilotCreateInput = z.infer<typeof pilotCreateInputSchema>;
+export type PilotNoteInput = z.infer<typeof pilotNoteInputSchema>;
+export type PilotNotesUpdateInput = z.infer<typeof pilotNotesUpdateInputSchema>;
+export type PilotChatSelectionInput = z.infer<typeof pilotChatSelectionInputSchema>;
 export type PilotDiscoverChatGptInput = z.infer<typeof pilotDiscoverChatGptInputSchema>;
 export type PilotView = z.infer<typeof pilotViewSchema>;
 export type PilotViewResponse = z.infer<typeof pilotViewResponseSchema>;

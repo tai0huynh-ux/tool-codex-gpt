@@ -233,6 +233,8 @@ export {
   pilotListResponseSchema,
   pilotViewResponseSchema,
   type PilotCreateInput,
+  type PilotNotesUpdateInput,
+  type PilotChatSelectionInput,
   type PilotDiscoverChatGptInput,
   type ChatGptDiscoveryResponse,
   type CodexTargetCatalogResponse,

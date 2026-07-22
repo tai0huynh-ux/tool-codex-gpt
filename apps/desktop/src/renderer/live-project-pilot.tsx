@@ -1,6 +1,11 @@
 import type { ChatGptRenderedCatalog } from '@codex-context-bridge/contracts';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CodexTargetCatalog, PilotView, PilotViewResponse } from '../pilot-contracts';
+import type {
+  CodexTargetCatalog,
+  PilotNoteInput,
+  PilotView,
+  PilotViewResponse,
+} from '../pilot-contracts';
 import type { ProjectView } from '../project-ipc';
 
 export const SAMPLE_PILOT_OBJECTIVE = `Hãy tạo một trang web tĩnh đơn giản bằng HTML và CSS.
@@ -70,6 +75,10 @@ export function LiveProjectPilot({
   const [targetProjectId, setTargetProjectId] = useState(projectId);
   const [repositoryId, setRepositoryId] = useState(repositories[0]?.id ?? '');
   const [objective, setObjective] = useState('');
+  const [draftNotes, setDraftNotes] = useState<PilotNoteInput[]>([]);
+  const [noteText, setNoteText] = useState('');
+  const [noteTarget, setNoteTarget] = useState<'chatgpt' | 'codex'>('chatgpt');
+  const [noteMode, setNoteMode] = useState<'once' | 'repeat'>('once');
   const [destinationMode, setDestinationMode] = useState<'current' | 'new' | 'existing'>('new');
   const [conversationId, setConversationId] = useState('');
   const [conversationPath, setConversationPath] = useState('');
@@ -80,6 +89,7 @@ export function LiveProjectPilot({
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(() => new Set([projectId]));
   const [threadLimits, setThreadLimits] = useState<Record<string, number>>({});
   const [chatLimit, setChatLimit] = useState(5);
+  const [messageLimit, setMessageLimit] = useState(5);
   const [transport, setTransport] = useState('Chưa kiểm tra');
   const [notice, setNotice] = useState('Chưa có dữ liệu nào được gửi.');
   const [busy, setBusy] = useState(false);
@@ -89,6 +99,8 @@ export function LiveProjectPilot({
     () => items.find((item) => item.id === selectedId) ?? items[0],
     [items, selectedId],
   );
+  const selectedNotes = selected?.operatorNotes ?? [];
+  const selectedMessages = selected?.chatArchive?.latestMessages ?? [];
   const activeItems = useMemo(
     () => items.filter((item) => ['chatgpt_dispatched', 'codex_running'].includes(item.status)),
     [items],
@@ -106,6 +118,29 @@ export function LiveProjectPilot({
     codexTargets.projects.find((item) => item.projectId === projectId);
   const targetRepositories = selectedTargetProject?.repositories ?? repositories;
   const selectedRepository = targetRepositories.find((item) => item.id === repositoryId);
+
+  const noteTargetLabel = (target: 'chatgpt' | 'codex'): string =>
+    target === 'chatgpt' ? 'ChatGPT' : 'Codex';
+
+  const addDraftNote = (): void => {
+    const text = noteText.trim();
+    if (!text) return;
+    setDraftNotes((current) => [...current, { target: noteTarget, mode: noteMode, text }]);
+    setNoteText('');
+  };
+
+  const addNoteToSelected = async (): Promise<void> => {
+    if (!selected || !noteText.trim()) return;
+    const notes: PilotNoteInput[] = [
+      ...selectedNotes.map(({ id, target, mode, text }) => ({ id, target, mode, text })),
+      { target: noteTarget, mode: noteMode, text: noteText.trim() },
+    ];
+    await run(
+      () => window.contextBridgeDesktop.updatePilotNotes({ pilotId: selected.id, notes }),
+      'Đã lưu ghi chú vào pilot; ghi chú một lần chỉ bị đánh dấu sau khi gửi được xác nhận.',
+    );
+    setNoteText('');
+  };
 
   const replace = (view: PilotView): void => {
     setItems((current) => [view, ...current.filter((item) => item.id !== view.id)]);
@@ -193,6 +228,10 @@ export function LiveProjectPilot({
     setRepositoryId(repositories[0]?.id ?? '');
     void load();
   }, [projectId, repositories[0]?.id]);
+
+  useEffect(() => {
+    setMessageLimit(5);
+  }, [selected?.id, selected?.chatArchive?.latestContentHash]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -348,6 +387,7 @@ export function LiveProjectPilot({
           projectId: targetProjectId,
           repositoryId,
           objective,
+          ...(draftNotes.length > 0 ? { operatorNotes: draftNotes } : {}),
           destination:
             destinationMode === 'current'
               ? { mode: 'current' }
@@ -413,6 +453,17 @@ export function LiveProjectPilot({
       response.value.canceled
         ? 'Đã hủy xuất lịch sử; dữ liệu lưu trong SQLite không thay đổi.'
         : `Đã xuất ${String(response.value.conversationCount)} cuộc chat, ${String(response.value.revisionCount)} phiên bản vào ${response.value.filePath ?? ''}.`,
+    );
+  };
+
+  const updateChatSelection = async (ordinals: number[]): Promise<void> => {
+    if (!selected) return;
+    await run(
+      () =>
+        window.contextBridgeDesktop.updatePilotChatSelection({ pilotId: selected.id, ordinals }),
+      ordinals.length > 0
+        ? `Đã chọn ${String(ordinals.length)} tin nhắn làm ngữ cảnh cho ChatGPT.`
+        : 'Đã bỏ chọn ngữ cảnh hội thoại; handoff sẽ không gửi đoạn trích cũ.',
     );
   };
 
@@ -554,6 +605,68 @@ export function LiveProjectPilot({
               Dùng yêu cầu mẫu
             </button>
             <span>{objective.length.toLocaleString()} / 20.000 ký tự</span>
+          </div>
+          <div className="pilot-notes-editor" aria-label="Ghi chú điều khiển pilot mới">
+            <div className="pilot-card-heading">
+              <div>
+                <span>OPERATOR NOTES</span>
+                <strong>Ghi chú có kiểm soát</strong>
+              </div>
+              <small>Không tự gửi; chỉ đưa vào preview sau khi bạn xem.</small>
+            </div>
+            <div className="pilot-note-controls">
+              <select
+                aria-label="Đích ghi chú"
+                value={noteTarget}
+                onChange={(event) => setNoteTarget(event.target.value as 'chatgpt' | 'codex')}
+              >
+                <option value="chatgpt">Cho ChatGPT</option>
+                <option value="codex">Cho Codex</option>
+              </select>
+              <select
+                aria-label="Chế độ ghi chú"
+                value={noteMode}
+                onChange={(event) => setNoteMode(event.target.value as 'once' | 'repeat')}
+              >
+                <option value="once">Một lần</option>
+                <option value="repeat">Lặp lại</option>
+              </select>
+            </div>
+            <textarea
+              aria-label="Ghi chú operator"
+              maxLength={10_000}
+              rows={3}
+              value={noteText}
+              onChange={(event) => setNoteText(event.target.value)}
+              placeholder="Ví dụ: ưu tiên kiểm tra lỗi mobile trước"
+            />
+            <button type="button" disabled={!noteText.trim()} onClick={addDraftNote}>
+              Thêm ghi chú cho pilot mới
+            </button>
+            {draftNotes.length > 0 && (
+              <ul className="pilot-note-list">
+                {draftNotes.map((note, index) => (
+                  <li key={`${note.target}-${note.mode}-${String(index)}`}>
+                    <span>
+                      {noteTargetLabel(note.target)} ·{' '}
+                      {note.mode === 'repeat' ? 'lặp lại' : 'một lần'}
+                    </span>
+                    <strong>{note.text}</strong>
+                    <button
+                      type="button"
+                      aria-label={`Xóa ghi chú mới ${String(index + 1)}`}
+                      onClick={() =>
+                        setDraftNotes((current) =>
+                          current.filter((_, itemIndex) => itemIndex !== index),
+                        )
+                      }
+                    >
+                      Xóa
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <fieldset className="pilot-destination">
             <legend>ChatGPT destination</legend>
@@ -746,6 +859,64 @@ export function LiveProjectPilot({
                     Chuẩn bị ChatGPT handoff
                   </button>
                 </div>
+                <div
+                  className="pilot-notes-editor pilot-notes-existing"
+                  aria-label="Ghi chú pilot đang chọn"
+                >
+                  <div className="pilot-card-heading">
+                    <div>
+                      <span>OPERATOR NOTES</span>
+                      <strong>Ghi chú cho phiên này</strong>
+                    </div>
+                    <small>Đã dùng một lần sẽ được giữ trong lịch sử nhưng không gửi lại.</small>
+                  </div>
+                  <div className="pilot-note-list">
+                    {selectedNotes.length === 0 && (
+                      <p className="pilot-empty">Chưa có ghi chú bổ sung.</p>
+                    )}
+                    {selectedNotes.map((note) => (
+                      <div className="pilot-note-row" key={note.id}>
+                        <span>
+                          {noteTargetLabel(note.target)} ·{' '}
+                          {note.mode === 'repeat' ? 'lặp lại' : 'một lần'}
+                          {note.consumedAt ? ' · đã dùng' : ' · chờ dùng'}
+                        </span>
+                        <strong>{note.text}</strong>
+                        <button
+                          type="button"
+                          aria-label={`Xóa ghi chú ${note.id}`}
+                          disabled={busy}
+                          onClick={() =>
+                            void run(
+                              () =>
+                                window.contextBridgeDesktop.updatePilotNotes({
+                                  pilotId: selected.id,
+                                  notes: selectedNotes
+                                    .filter((candidate) => candidate.id !== note.id)
+                                    .map(({ id, target, mode, text }) => ({
+                                      id,
+                                      target,
+                                      mode,
+                                      text,
+                                    })),
+                                }),
+                              'Đã xóa ghi chú khỏi pilot đang chọn.',
+                            )
+                          }
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={busy || !noteText.trim()}
+                    onClick={() => void addNoteToSelected()}
+                  >
+                    Thêm ghi chú vào pilot đang chọn
+                  </button>
+                </div>
                 <div className="pilot-archive" aria-label="Lưu trữ lịch sử ChatGPT">
                   <div className="pilot-card-heading">
                     <span>LỊCH SỬ</span>
@@ -777,6 +948,76 @@ export function LiveProjectPilot({
                       <code>{shortHash(selected.chatArchive?.latestContentHash)}</code>
                     </p>
                   </div>
+                  {selectedMessages.length > 0 && (
+                    <div className="pilot-chat-selection" aria-label="Chọn tin nhắn làm ngữ cảnh">
+                      <div className="pilot-card-heading">
+                        <div>
+                          <span>CONTEXT PICKER</span>
+                          <strong>Chọn đoạn cần đưa vào handoff</strong>
+                        </div>
+                        <small>
+                          Chỉ các dòng được tick mới đi vào preview; archive đầy đủ vẫn được lưu
+                          riêng.
+                        </small>
+                      </div>
+                      <div className="pilot-selection-actions">
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() =>
+                            void updateChatSelection(
+                              selectedMessages.map((message) => message.ordinal),
+                            )
+                          }
+                        >
+                          Chọn tất cả
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy || !selected.chatSelection?.ordinals.length}
+                          onClick={() => void updateChatSelection([])}
+                        >
+                          Bỏ chọn
+                        </button>
+                      </div>
+                      <div className="pilot-selection-list">
+                        {selectedMessages.slice(0, messageLimit).map((message) => {
+                          const checked =
+                            selected.chatSelection?.ordinals.includes(message.ordinal) ?? false;
+                          return (
+                            <label key={`${String(message.ordinal)}-${message.role}`}>
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                disabled={busy}
+                                onChange={() => {
+                                  const current = new Set(selected.chatSelection?.ordinals ?? []);
+                                  if (checked) current.delete(message.ordinal);
+                                  else current.add(message.ordinal);
+                                  void updateChatSelection([...current]);
+                                }}
+                              />
+                              <span>
+                                <strong>
+                                  {String(message.ordinal + 1)} · {message.role}
+                                </strong>
+                                <small>{message.text}</small>
+                              </span>
+                            </label>
+                          );
+                        })}
+                        {selectedMessages.length > messageLimit && (
+                          <button
+                            className="show-more"
+                            type="button"
+                            onClick={() => setMessageLimit((current) => current + 5)}
+                          >
+                            Hiện thêm 5 tin nhắn
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className="pilot-actions">
                     <button
                       type="button"

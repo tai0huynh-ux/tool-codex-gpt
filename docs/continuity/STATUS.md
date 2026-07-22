@@ -211,3 +211,12 @@ Verification for this checkpoint: `pnpm.cmd run verify` passed 240 Vitest tests,
 - The workflow header now opens a responsive detailed log dialog. It shows local timestamp, outcome, event type, actor, bounded resource identity, workflow identity, and a safe error code when recorded. Raw `details_json`, approval secrets, payloads, cookies, tokens, and file content never cross IPC.
 - Verification passed formatting, lint, strict type-check, 255 Vitest tests, two recoverable workflow fixture tests, two Chromium fixture tests, the 46-test internal-beta UAT selection, all workspace builds, unsigned Windows packaging under `artifacts/desktop-current-final`, packaged/native-host smoke, and fixture-only packaged restart acceptance with zero runtime errors.
 - No authenticated ChatGPT submit, browser account action, or writable live Codex run was performed for this checkpoint.
+
+## 2026-07-22 - Operator notes and bounded context picker MVP checkpoint
+
+- Added persisted per-pilot operator notes with strict `chatgpt`/`codex` targets and `once`/`repeat` modes. A once note is consumed only after rendered ChatGPT acknowledgement or an acknowledged Codex dispatch; repeat notes remain active.
+- Added a bounded picker for the latest archived conversation snapshot. The user can select individual rendered messages, expand five at a time, and rebuild the reviewed ChatGPT preview from only the selected messages. The complete archive remains separate and exportable.
+- Added typed main/preload IPC channels, SQLite-backed pilot state, stale-selection invalidation on a new snapshot, 60,000-character selected-context bound, and renderer add/remove/toggle interactions.
+- Verification passed `pnpm.cmd run verify`: 258 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, strict type-check, lint, formatting, and all workspace builds. The 46-test internal-beta UAT and one project-pilot integration test passed.
+- Windows packaging, packaged smoke, fixture-only packaged restart, per-user silent installer update, and installed no-submit ChatGPT smoke passed. The live smoke result was `health: ready`, `pageMode: new`, `capturedMessages: 0`, `composerSent: false`, and exact composer cleanup.
+- Remaining boundary is unchanged: authenticated ChatGPT submit, automatic browser ZIP upload, and writable live Codex execution remain explicit approval-gated or intentionally manual; fixture evidence is not claimed as live completion.
