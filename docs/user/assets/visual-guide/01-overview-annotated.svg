@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2575" height="1405" viewBox="0 0 2575 1405">
+  <image href="01-overview.png" width="2575" height="1405" preserveAspectRatio="none"/>
+  <rect x="0" y="0" width="2575" height="92" fill="#07130f" fill-opacity="0.82"/>
+  <text x="54" y="58" fill="#ffd04d" font-family="Segoe UI, sans-serif" font-size="34" font-weight="700">ẢNH 1 — KIỂM TRA APP VÀ CHỌN PROJECT CODEX</text>
+  <g fill="#f04e23" stroke="#fff3d0" stroke-width="6">
+    <circle cx="2280" cy="548" r="32"/><circle cx="694" cy="838" r="32"/><circle cx="332" cy="956" r="32"/><circle cx="939" cy="759" r="32"/>
+  </g>
+  <g fill="#fff3d0" font-family="Segoe UI, sans-serif" font-size="28" font-weight="700" text-anchor="middle">
+    <text x="2280" y="558">1</text><text x="694" y="848">2</text><text x="332" y="966">3</text><text x="939" y="769">4</text>
+  </g>
+  <g font-family="Segoe UI, sans-serif" font-size="25" font-weight="700">
+    <rect x="1840" y="660" width="665" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="1870" y="704" fill="#fff3d0">1. Phải thấy connected / nativeMessaging active</text>
+    <rect x="390" y="748" width="585" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="420" y="792" fill="#fff3d0">2. Nhấp Đồng bộ project Codex</text>
+    <rect x="60" y="1010" width="610" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="90" y="1054" fill="#fff3d0">3. Nhấp project muốn làm việc</text>
+    <rect x="760" y="645" width="640" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="790" y="689" fill="#fff3d0">4. Chọn card pilot đúng; card cũ lỗi thì bỏ qua</text>
+  </g>
+</svg>

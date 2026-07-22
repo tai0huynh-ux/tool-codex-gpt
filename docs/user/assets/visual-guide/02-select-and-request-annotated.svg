@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2575" height="1405" viewBox="0 0 2575 1405">
+  <image href="02-select-and-request.png" width="2575" height="1405" preserveAspectRatio="none"/>
+  <rect x="0" y="0" width="2575" height="92" fill="#07130f" fill-opacity="0.82"/>
+  <text x="54" y="58" fill="#ffd04d" font-family="Segoe UI, sans-serif" font-size="34" font-weight="700">ẢNH 2 — NHẬP YÊU CẦU VÀ ĐỒNG BỘ DANH SÁCH CHAT</text>
+  <g fill="#f04e23" stroke="#fff3d0" stroke-width="6">
+    <circle cx="470" cy="316" r="32"/><circle cx="405" cy="490" r="32"/><circle cx="265" cy="785" r="32"/><circle cx="500" cy="1048" r="32"/><circle cx="400" cy="1140" r="32"/>
+  </g>
+  <g fill="#fff3d0" font-family="Segoe UI, sans-serif" font-size="28" font-weight="700" text-anchor="middle">
+    <text x="470" y="326">5</text><text x="405" y="500">6</text><text x="265" y="795">7</text><text x="500" y="1058">8</text><text x="400" y="1150">9</text>
+  </g>
+  <g font-family="Segoe UI, sans-serif" font-size="25" font-weight="700">
+    <rect x="60" y="220" width="690" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="90" y="264" fill="#fff3d0">5. Kiểm tra Repository đích</text>
+    <rect x="60" y="585" width="720" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="90" y="629" fill="#fff3d0">6. Gõ yêu cầu hoặc nhấp Dùng yêu cầu mẫu</text>
+    <rect x="55" y="690" width="720" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="85" y="734" fill="#fff3d0">7. Ghi chú: Cho ChatGPT/Codex + Một lần/Lặp lại</text>
+    <rect x="250" y="960" width="910" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="280" y="1004" fill="#fff3d0">8. Nhấp Đồng bộ đoạn chat ChatGPT</text>
+    <rect x="830" y="1080" width="850" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="860" y="1124" fill="#fff3d0">9. Nhấp đúng dòng chat; không nhập URL bằng tay</text>
+  </g>
+</svg>

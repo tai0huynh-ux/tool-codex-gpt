@@ -12,6 +12,8 @@ Codex Context Bridge is a local-first desktop project for coordinating repositor
 
 See `docs/SECURITY.md` and `docs/continuity/STATUS.md` for the current verified state.
 
+Vietnamese visual walkthrough: `docs/user/VISUAL_GUIDE_CHAT_PROJECT.md`.
+
 ## Requirements
 
 - Node.js `>=20.19` (CI uses Node.js 24).

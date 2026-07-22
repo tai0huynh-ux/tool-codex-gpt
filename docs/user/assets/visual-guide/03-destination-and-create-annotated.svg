@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2575" height="1405" viewBox="0 0 2575 1405">
+  <image href="03-destination-and-create.png" width="2575" height="1405" preserveAspectRatio="none"/>
+  <rect x="0" y="0" width="2575" height="92" fill="#07130f" fill-opacity="0.82"/>
+  <text x="54" y="58" fill="#ffd04d" font-family="Segoe UI, sans-serif" font-size="34" font-weight="700">ẢNH 3 — CHỌN DESTINATION VÀ TẠO LIÊN KẾT</text>
+  <g fill="#f04e23" stroke="#fff3d0" stroke-width="6">
+    <circle cx="280" cy="600" r="32"/><circle cx="170" cy="920" r="32"/><circle cx="420" cy="1045" r="32"/><circle cx="2050" cy="1215" r="32"/><circle cx="2350" cy="1215" r="32"/>
+  </g>
+  <g fill="#fff3d0" font-family="Segoe UI, sans-serif" font-size="28" font-weight="700" text-anchor="middle">
+    <text x="280" y="610">10</text><text x="170" y="930">11</text><text x="420" y="1055">12</text><text x="2050" y="1225">13</text><text x="2350" y="1225">14</text>
+  </g>
+  <g font-family="Segoe UI, sans-serif" font-size="25" font-weight="700">
+    <rect x="60" y="495" width="790" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="90" y="539" fill="#fff3d0">10. Xác nhận tên chat và đường dẫn</text>
+    <rect x="60" y="785" width="760" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="90" y="829" fill="#fff3d0">11. Chọn Conversation xác định</text>
+    <rect x="60" y="1090" width="790" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="90" y="1134" fill="#fff3d0">12. Nhấp Tạo Live Project Pilot</text>
+    <rect x="1750" y="1090" width="620" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="1780" y="1134" fill="#fff3d0">13. Log chi tiết chỉ xem log</text>
+    <rect x="2100" y="1260" width="410" height="70" rx="12" fill="#07130f" fill-opacity="0.9" stroke="#ffd04d" stroke-width="3"/>
+    <text x="2130" y="1304" fill="#fff3d0">14. Start guided workflow không gửi dữ liệu</text>
+  </g>
+</svg>
