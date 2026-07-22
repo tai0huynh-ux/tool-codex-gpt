@@ -179,7 +179,7 @@ Resolve current HEAD with `git rev-parse HEAD`; the state helper reports it with
 
 ## Latest successful push
 
-`b9023dae0b8d352e2298740cd51ccaad0b2aa4d4`; verify equality with `git rev-parse HEAD` and `git rev-parse origin/main`.
+Resolve the published hash with `git rev-parse origin/main`; publication requires equality with `HEAD`.
 
 ## Account transfer checkpoint - 2026-07-21
 
