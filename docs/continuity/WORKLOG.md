@@ -1597,3 +1597,23 @@ Added strict `operatorNotes` and `chatSelection` pilot fields, typed update chan
 ### Boundary
 
 No authenticated ChatGPT message was submitted, no automatic ZIP upload was attempted, and no writable live Codex run was claimed. Large transfers remain explicit manual attachments and all external sends retain action-time approval.
+
+## 2026-07-22 19:17 +07:00 - Full control acceptance and safe pilot deletion checkpoint
+
+### Goal
+
+Reproduce the reported `PILOT_NOT_DELETABLE` failure for pilot `8ec5d3b7`, test the desktop controls one by one in an isolated fixture, fix the root causes, and repeat the packaged and installed acceptance flows.
+
+### Root causes and changes
+
+The real pilot was in `chatgpt_confirmation_required` with a persisted ChatGPT effect in `dispatching`. Blocking deletion of that card was too coarse because it hid the local projection without cancelling or deleting the external workflow. Deletion now removes only the local pilot settings/baseline for non-running states, returns `finalStatus`, `preservedWorkflow`, and `unresolvedExternalEffect`, keeps the workflow/effect/audit durable, warns the operator, and blocks only while Codex is actively running.
+
+The remaining acceptance failure was in `scripts/live-ui-acceptance.mjs`: its archive action did not accept the native confirmation dialog. The product archive IPC and renderer state were correct. The harness now accepts the confirmation, and `project-ui.test.ts` asserts selected-project removal plus unrelated-project preservation.
+
+### Verification
+
+Focused pilot/project IPC and renderer tests passed (40 tests). `pnpm.cmd run verify` passed 261 Vitest tests, two workflow fixture tests, two Chromium fixture tests, strict type-check, lint, formatting, migrations parity, and all workspace builds. Internal-beta UAT passed 46 tests plus two Chromium flows; project-pilot integration passed. Windows packaging, packaged/native-host smoke, fixture-only packaged restart, and per-user silent installer update passed. Packaged and installed UI acceptance each passed 14/14 checks with 68 controls and no runtime errors. Installed ChatGPT no-submit smoke passed with `health: ready`, two captured messages, `composerSent: false`, and exact composer cleanup.
+
+### Boundary
+
+No authenticated ChatGPT submission, account-transfer send, automatic browser ZIP upload, or writable production Codex run was performed. The real pilot `8ec5d3b7` remains untouched pending action-time confirmation immediately before any destructive card deletion.

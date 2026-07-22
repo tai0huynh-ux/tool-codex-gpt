@@ -42,19 +42,30 @@ page.on('console', (message) => {
 await page.waitForSelector('.workspace-shell');
 await page.setViewportSize({ width: 1280, height: 900 });
 const results = [];
-const inventory = await page.locator('button, input, form, [role]').evaluateAll((nodes) =>
-  nodes.map((node, index) => ({
-    id: node.getAttribute('data-testid') ?? `control-${index + 1}`,
-    tag: node.tagName.toLowerCase(),
-    role:
-      node.getAttribute('role') ?? (node.tagName.toLowerCase() === 'button' ? 'button' : 'input'),
-    label:
-      node.getAttribute('aria-label') ??
-      node.textContent?.trim() ??
-      node.getAttribute('placeholder') ??
-      '',
-  })),
-);
+const inventoryByKey = new Map();
+async function collectControls(stage) {
+  const controls = await page
+    .locator('button, input, select, textarea, form, [role]')
+    .evaluateAll((nodes) =>
+      nodes.map((node, index) => ({
+        id: node.getAttribute('data-testid') ?? `control-${index + 1}`,
+        tag: node.tagName.toLowerCase(),
+        role:
+          node.getAttribute('role') ??
+          (node.tagName.toLowerCase() === 'button' ? 'button' : 'input'),
+        label:
+          node.getAttribute('aria-label') ??
+          node.textContent?.trim() ??
+          node.getAttribute('placeholder') ??
+          '',
+      })),
+    );
+  for (const control of controls) {
+    const key = `${control.tag}:${control.role}:${control.label}`;
+    if (!inventoryByKey.has(key)) inventoryByKey.set(key, { ...control, firstObservedAt: stage });
+  }
+}
+await collectControls('initial');
 await page.screenshot({ path: path.join(shots, '01-initial.png'), fullPage: true });
 
 async function check(id, action, expected) {
@@ -74,6 +85,7 @@ async function check(id, action, expected) {
     actual = 'error';
   }
   await page.screenshot({ path: path.join(shots, after), fullPage: true });
+  await collectControls(`${id}:after`);
   results.push({
     id,
     status,
@@ -92,7 +104,11 @@ await check(
     await page.getByLabel('Tên project mới').fill('UI Fixture Project');
     await page.getByRole('button', { name: 'Tạo' }).click();
   },
-  async () => (await page.getByRole('button', { name: /UI Fixture Project/ }).count()) === 1,
+  async () =>
+    (await page
+      .locator('.project-list .project-item')
+      .filter({ hasText: 'UI Fixture Project' })
+      .count()) === 1,
 );
 
 await check(
@@ -132,15 +148,96 @@ await check(
 );
 
 await check(
-  'start-and-cancel-workflow',
+  'refresh-codex-catalog-and-expand-threads',
   async () => {
-    await page.getByRole('button', { name: 'Start guided workflow' }).click();
-    await page.getByRole('button', { name: 'Cancel workflow' }).click();
+    await page.locator('.pilot-target-browser .pilot-card-heading button').click();
+    const project = page.locator('.pilot-target-project').filter({ hasText: 'ai-manga-upscaler' });
+    await project.locator(':scope > button').click();
+    const showMore = project.locator('.show-more');
+    if ((await showMore.count()) > 0) await showMore.click();
+  },
+  async () => {
+    const project = page.locator('.pilot-target-project').filter({ hasText: 'ai-manga-upscaler' });
+    return (await project.locator('.pilot-target-threads > button').count()) >= 5;
+  },
+);
+
+await check(
+  'sample-request-and-destination-toggle',
+  async () => {
+    await page.locator('.pilot-inline button').click();
+    await page.locator('input[type="radio"]').first().check();
+    await page.locator('input[type="radio"]').nth(1).check();
   },
   async () =>
-    (await page
-      .getByText('Workflow cancelled through the validated main-process boundary.')
-      .count()) === 1,
+    (await page.locator('input[type="radio"]').nth(1).isChecked()) &&
+    (await page.locator('textarea').first().inputValue()).length > 0,
+);
+
+await check(
+  'pilot-create-and-delete-draft',
+  async () => {
+    await page.locator('textarea').first().fill('UI pilot smoke request');
+    await page.locator('textarea').nth(1).fill('Keep the result concise.');
+    await page
+      .locator('.pilot-notes-editor')
+      .first()
+      .locator('select')
+      .first()
+      .selectOption('codex');
+    await page
+      .locator('.pilot-notes-editor')
+      .first()
+      .locator('select')
+      .last()
+      .selectOption('repeat');
+    await page.locator('.pilot-notes-editor').first().locator('button').first().click();
+    await page.locator('.pilot-notes-editor').first().locator('.pilot-note-list button').click();
+    await page.locator('textarea').nth(1).fill('Keep the result concise.');
+    await page.locator('.pilot-notes-editor').first().locator('button').first().click();
+    await page.locator('.pilot-primary').click();
+  },
+  async () => {
+    const deleteButton = page.locator('.pilot-run-delete').first();
+    if ((await deleteButton.count()) !== 1) return false;
+    page.once('dialog', (dialog) => void dialog.accept());
+    await deleteButton.click();
+    await deleteButton.waitFor({ state: 'detached' });
+    return true;
+  },
+);
+
+await check(
+  'start-run-stop-workflow',
+  async () => {
+    await page.getByRole('button', { name: 'Start guided workflow' }).click();
+    await page.locator('[aria-label^="Chạy workflow"]').first().click();
+    await page.getByRole('button', { name: /Dừng workflow/ }).click();
+  },
+  async () => {
+    const stop = page.getByRole('button', { name: /Dừng workflow/ }).first();
+    return await stop.isDisabled();
+  },
+);
+
+await check(
+  'delete-terminal-workflow',
+  async () => {
+    const deleteButton = page.locator('.run-delete').first();
+    page.once('dialog', (dialog) => void dialog.accept());
+    await deleteButton.click();
+  },
+  async () => (await page.locator('.run-card').count()) === 0,
+);
+
+await check(
+  'workflow-log-dialog-refresh-close',
+  async () => {
+    await page.locator('.workflow-log-trigger').click();
+    await page.locator('.workflow-log-actions button').first().click();
+    await page.locator('.workflow-log-actions button').last().click();
+  },
+  async () => (await page.locator('.workflow-log-dialog').count()) === 0,
 );
 
 await check(
@@ -151,15 +248,40 @@ await check(
   async () => (await page.getByText(/History is reconstructed|No workflow yet/).count()) > 0,
 );
 
+await check(
+  'cleanup-preserved-pilot-workflow',
+  async () => {
+    const card = page.locator('.run-card').first();
+    if ((await card.count()) === 0) return;
+    const stop = card.locator('button[aria-label^="Dừng workflow"]');
+    if ((await stop.count()) > 0 && !(await stop.isDisabled())) await stop.click();
+    const deleteButton = card.locator('.run-delete');
+    if ((await deleteButton.count()) === 0) return;
+    page.once('dialog', (dialog) => void dialog.accept());
+    await deleteButton.click();
+  },
+  async () => (await page.locator('.run-card').count()) === 0,
+);
+
+await check(
+  'archive-fixture-project',
+  async () => {
+    page.once('dialog', (dialog) => void dialog.accept());
+    await page.locator('.archive-action').click();
+  },
+  async () => (await page.locator('.project-list .project-item').count()) === 0,
+);
+
 const summary = [
   `# Live UI Acceptance (${stamp})`,
   '',
   `- App: Electron renderer from commit ${execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()}`,
   `- Fixture: temporary Git repository (removed after run)`,
-  `- Controls inventoried: ${inventory.length}`,
+  `- Controls inventoried: ${inventoryByKey.size}`,
   `- Checks: ${results.length}; passed: ${results.filter((item) => item.status === 'PASS').length}; failed: ${results.filter((item) => item.status === 'FAIL').length}`,
-  '- Folder picker, Edge live capture, and destructive archive were not invoked because they require native/user-session boundaries.',
+  '- Folder picker, Edge live capture, account transfer, and Codex write actions were not invoked because they require native/user-session boundaries or explicit external approval.',
 ].join('\n');
+const inventory = [...inventoryByKey.values()];
 await writeFile(path.join(out, 'control-inventory.json'), JSON.stringify(inventory, null, 2));
 await writeFile(path.join(out, 'control-results.json'), JSON.stringify(results, null, 2));
 await writeFile(

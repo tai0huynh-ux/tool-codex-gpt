@@ -193,7 +193,7 @@ Verification for this checkpoint: `pnpm.cmd run verify` passed 240 Vitest tests,
 
 ## Last updated
 
-2026-07-22 17:04 +07:00.
+2026-07-22 19:17 +07:00.
 
 ## 2026-07-22 - Manual ChatGPT catalog recovery and installed desktop parity
 
@@ -220,3 +220,11 @@ Verification for this checkpoint: `pnpm.cmd run verify` passed 240 Vitest tests,
 - Verification passed `pnpm.cmd run verify`: 258 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, strict type-check, lint, formatting, and all workspace builds. The 46-test internal-beta UAT and one project-pilot integration test passed.
 - Windows packaging, packaged smoke, fixture-only packaged restart, per-user silent installer update, and installed no-submit ChatGPT smoke passed. The live smoke result was `health: ready`, `pageMode: new`, `capturedMessages: 0`, `composerSent: false`, and exact composer cleanup.
 - Remaining boundary is unchanged: authenticated ChatGPT submit, automatic browser ZIP upload, and writable live Codex execution remain explicit approval-gated or intentionally manual; fixture evidence is not claimed as live completion.
+
+## 2026-07-22 - Full control acceptance and PILOT_NOT_DELETABLE safety fix
+
+- Reviewed handoff deletion now removes only the local pilot card for every non-running state, preserves the workflow/effect/audit/archive records, reports whether an external effect remains ambiguous, and keeps `codex_running` deletion blocked until Codex is stopped. The former `PILOT_NOT_DELETABLE` behavior is retained only where deleting would hide an active Codex run.
+- Added strict delete response metadata and regression coverage for draft deletion, ambiguous `dispatching` effects, workflow/audit preservation, and the running-Codex guard. The renderer warns that an unresolved external effect will not be resent automatically.
+- Isolated and fixed the last UI acceptance failure: archive confirmation was not accepted by the harness. Added the archive renderer regression and expanded acceptance to 14 stateful checks across 68 controls.
+- Verification: 40 focused pilot/project renderer and IPC tests; `pnpm.cmd run verify` passed 261 Vitest tests, two workflow fixture tests, two Chromium fixture tests, and all workspace builds; internal-beta UAT 46 plus two Chromium flows; project-pilot integration; Windows package, packaged/native-host smoke, fixture restart, per-user silent installer update; packaged and installed UI acceptance 14/14.
+- Installed ChatGPT no-submit smoke passed with `health: ready`, two captured messages, `composerSent: false`, and exact marker cleanup. No authenticated ChatGPT submit, ZIP upload, account transfer, or writable live Codex run was performed.

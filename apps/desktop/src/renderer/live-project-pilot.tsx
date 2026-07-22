@@ -152,9 +152,17 @@ export function LiveProjectPilot({
   };
 
   const remove = async (pilotId: string): Promise<void> => {
+    const target = items.find((item) => item.id === pilotId);
+    if (!target) return;
+    const ambiguous =
+      ['chatgpt_dispatched', 'chatgpt_confirmation_required'].includes(target.status) ||
+      ['dispatching', 'confirmation_required'].includes(target.accountTransfer?.status ?? '');
+    const warning = ambiguous
+      ? ' Một lần gửi ngoài app đang chưa xác định kết quả; workflow, effect và audit sẽ được giữ nguyên và app sẽ không tự gửi lại.'
+      : ' Lịch sử workflow, audit và file ZIP vẫn được giữ.';
     if (
       !window.confirm(
-        `Xóa reviewed handoff ${pilotId.slice(0, 8)}? Lịch sử workflow, audit và file ZIP vẫn được giữ.`,
+        `Xóa reviewed handoff ${pilotId.slice(0, 8)} khỏi danh sách cục bộ?${warning}`,
       )
     ) {
       return;
@@ -173,7 +181,9 @@ export function LiveProjectPilot({
       current === pilotId ? (remaining[Math.min(index, remaining.length - 1)]?.id ?? '') : current,
     );
     setNotice(
-      `Đã xóa reviewed handoff ${pilotId.slice(0, 8)}. Workflow và audit log không bị xóa.`,
+      response.value.unresolvedExternalEffect
+        ? `Đã xóa reviewed handoff ${pilotId.slice(0, 8)} khỏi danh sách. Effect ngoài app chưa xác định vẫn được giữ trong workflow/audit và sẽ không tự gửi lại.`
+        : `Đã xóa reviewed handoff ${pilotId.slice(0, 8)}. Workflow và audit log không bị xóa.`,
     );
   };
 
@@ -796,7 +806,12 @@ export function LiveProjectPilot({
                 <button
                   className="pilot-run-delete"
                   type="button"
-                  disabled={busy}
+                  disabled={busy || item.status === 'codex_running'}
+                  title={
+                    item.status === 'codex_running'
+                      ? 'Dừng Codex trước khi xóa reviewed handoff.'
+                      : 'Xóa card cục bộ; giữ nguyên workflow và audit.'
+                  }
                   aria-label={`Xóa reviewed handoff ${item.id}`}
                   onClick={() => void remove(item.id)}
                 >

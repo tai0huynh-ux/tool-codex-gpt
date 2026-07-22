@@ -113,7 +113,13 @@ function stubService(overrides: Partial<PilotDesktopService> = {}): PilotDesktop
     create: () => Promise.resolve(view()),
     updateNotes: () => Promise.resolve(view()),
     updateChatSelection: () => Promise.resolve(view()),
-    delete: () => Promise.resolve({ pilotId: 'pilot-1' }),
+    delete: () =>
+      Promise.resolve({
+        pilotId: 'pilot-1',
+        finalStatus: 'draft',
+        preservedWorkflow: true,
+        unresolvedExternalEffect: false,
+      }),
     refresh: () => Promise.resolve(view()),
     inspectChatGpt: () => Promise.resolve(view()),
     prepareChatGpt: () => Promise.resolve(view()),
@@ -190,11 +196,24 @@ describe('pilot IPC boundary', () => {
 
   it('exposes exact reviewed-handoff deletion through a validated channel', async () => {
     const ipc = new FakeIpcMain();
-    const remove = vi.fn<PilotDesktopService['delete']>().mockResolvedValue({ pilotId: 'pilot-1' });
+    const remove = vi.fn<PilotDesktopService['delete']>().mockResolvedValue({
+      pilotId: 'pilot-1',
+      finalStatus: 'draft',
+      preservedWorkflow: true,
+      unresolvedExternalEffect: false,
+    });
     registerPilotIpc(ipc, stubService({ delete: remove }), { validateSender: () => true });
     await expect(
       ipc.handlers.get(pilotIpcChannels.delete)?.({ sender: { id: 7 } }, { pilotId: 'pilot-1' }),
-    ).resolves.toEqual({ ok: true, value: { pilotId: 'pilot-1' } });
+    ).resolves.toEqual({
+      ok: true,
+      value: {
+        pilotId: 'pilot-1',
+        finalStatus: 'draft',
+        preservedWorkflow: true,
+        unresolvedExternalEffect: false,
+      },
+    });
     expect(remove).toHaveBeenCalledWith('pilot-1');
     await expect(
       ipc.handlers.get(pilotIpcChannels.delete)?.({ sender: { id: 7 } }, { pilotId: '' }),
@@ -925,7 +944,7 @@ describe('pilot desktop persistence', () => {
     database.close();
   });
 
-  it('deletes one reviewed handoff, preserves another, and blocks active deletion', async () => {
+  it('deletes local handoffs while preserving ambiguous effects and blocking a running Codex job', async () => {
     const database = openDatabase(':memory:');
     const projects = new ProjectRegistry(database, () => '2026-07-22T09:00:00.000Z');
     projects.create('Pilot', 'project-1');
@@ -955,6 +974,12 @@ describe('pilot desktop persistence', () => {
       objective: 'Second handoff',
       destination: { mode: 'new' },
     });
+    const ambiguous = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Ambiguous ChatGPT handoff',
+      destination: { mode: 'new' },
+    });
     database
       .prepare('INSERT INTO settings (key, value_json, updated_at) VALUES (?, ?, ?)')
       .run(
@@ -963,7 +988,12 @@ describe('pilot desktop persistence', () => {
         first.createdAt,
       );
 
-    await expect(service.delete(first.id)).resolves.toEqual({ pilotId: first.id });
+    await expect(service.delete(first.id)).resolves.toEqual({
+      pilotId: first.id,
+      finalStatus: 'draft',
+      preservedWorkflow: true,
+      unresolvedExternalEffect: false,
+    });
     expect(
       database
         .prepare('SELECT 1 FROM settings WHERE key = ?')
@@ -987,6 +1017,46 @@ describe('pilot desktop persistence', () => {
         )
         .get(first.id),
     ).toEqual({ outcome: 'allowed' });
+
+    const prepared = await service.prepareChatGpt(ambiguous.id);
+    if (!prepared.chatGptPreview) throw new Error('FIXTURE_PREVIEW_MISSING');
+    const assisted = new AssistedChatGptService(workflows, {
+      now: () => '2026-07-22T09:00:00.000Z',
+    });
+    const approval = assisted.approve(prepared.chatGptPreview, 5 * 60_000);
+    const ambiguousEffect = assisted.prepare(
+      prepared.chatGptPreview,
+      { id: approval.approval.id, token: approval.token },
+      `pilot:${ambiguous.id}:chatgpt`,
+    ).effect;
+    workflows.beginDispatch(ambiguousEffect.id);
+    const recovered = await service.list('project-1');
+    expect(recovered.find((item) => item.id === ambiguous.id)?.status).toBe(
+      'chatgpt_confirmation_required',
+    );
+    await expect(service.delete(ambiguous.id)).resolves.toEqual({
+      pilotId: ambiguous.id,
+      finalStatus: 'chatgpt_confirmation_required',
+      preservedWorkflow: true,
+      unresolvedExternalEffect: true,
+    });
+    expect(workflows.getEffect(ambiguousEffect.id)?.status).toBe('dispatching');
+    expect(workflows.getRun(ambiguous.workflowRunId)).toBeDefined();
+    expect(
+      database
+        .prepare('SELECT 1 FROM settings WHERE key = ?')
+        .get(`live-project-pilot:${ambiguous.id}`),
+    ).toBeUndefined();
+    const ambiguousAudit = database
+      .prepare(
+        "SELECT details_json FROM audit_events WHERE event_type = 'pilot.deleted' AND resource_id = ?",
+      )
+      .get(ambiguous.id) as { details_json: string };
+    expect(JSON.parse(ambiguousAudit.details_json)).toMatchObject({
+      finalStatus: 'chatgpt_confirmation_required',
+      preservedWorkflow: true,
+      unresolvedExternalEffect: true,
+    });
 
     database
       .prepare('UPDATE settings SET value_json = ? WHERE key = ?')

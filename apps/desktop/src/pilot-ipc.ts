@@ -223,7 +223,12 @@ export interface PilotDesktopService {
   create(input: PilotCreateInput): Promise<PilotView>;
   updateNotes(input: PilotNotesUpdateInput): Promise<PilotView>;
   updateChatSelection(input: PilotChatSelectionInput): Promise<PilotView>;
-  delete(pilotId: string): Promise<{ pilotId: string }>;
+  delete(pilotId: string): Promise<{
+    pilotId: string;
+    finalStatus: PilotView['status'];
+    preservedWorkflow: true;
+    unresolvedExternalEffect: boolean;
+  }>;
   refresh(pilotId: string): Promise<PilotView>;
   inspectChatGpt(pilotId: string): Promise<PilotView>;
   prepareChatGpt(pilotId: string): Promise<PilotView>;
@@ -711,11 +716,7 @@ export function createPilotDesktopService(input: {
     delete: (pilotId) => {
       const view = get(pilotId);
       const correlationId = input.workflows.getRun(view.workflowRunId)?.correlationId;
-      const active =
-        ['chatgpt_dispatched', 'chatgpt_confirmation_required', 'codex_running'].includes(
-          view.status,
-        ) || ['dispatching', 'confirmation_required'].includes(view.accountTransfer?.status ?? '');
-      if (active) {
+      if (view.status === 'codex_running') {
         appendAuditEvent(input.database, {
           id: randomUUID(),
           eventType: 'pilot.delete.blocked',
@@ -730,6 +731,13 @@ export function createPilotDesktopService(input: {
         });
         throw new Error('PILOT_NOT_DELETABLE');
       }
+      const unresolvedExternalEffect = Boolean(
+        input.database
+          .prepare(
+            "SELECT id FROM workflow_effects WHERE workflow_run_id = ? AND status IN ('prepared', 'dispatching') LIMIT 1",
+          )
+          .get(view.workflowRunId),
+      );
       input.database.transaction(() => {
         appendAuditEvent(input.database, {
           id: randomUUID(),
@@ -740,14 +748,23 @@ export function createPilotDesktopService(input: {
           resourceType: 'live_project_pilot',
           resourceId: view.id,
           outcome: 'allowed',
-          details: { finalStatus: view.status },
+          details: {
+            finalStatus: view.status,
+            preservedWorkflow: true,
+            unresolvedExternalEffect,
+          },
           createdAt: now(),
         });
         input.database
           .prepare('DELETE FROM settings WHERE key IN (?, ?)')
           .run(`${PILOT_PREFIX}${view.id}`, `${PILOT_BASELINE_PREFIX}${view.id}`);
       })();
-      return Promise.resolve({ pilotId: view.id });
+      return Promise.resolve({
+        pilotId: view.id,
+        finalStatus: view.status,
+        preservedWorkflow: true,
+        unresolvedExternalEffect,
+      });
     },
     discoverChatGpt: async (options = {}) => {
       const discover = async (): Promise<ChatGptRenderedCatalog> => {

@@ -10,7 +10,7 @@
   "lastCheckpoint": {
     "id": "P18-PILOT-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-22T17:04:00.000+07:00"
+    "completedAt": "2026-07-22T19:17:00.000+07:00"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -92,7 +92,11 @@
     "Alternate Windows package, packaged/native-host smoke, and fixture-only packaged restart acceptance passed with zero runtime errors",
     "Updated installed renderer listed 3 titled canonical ChatGPT links, selected the exact UUID conversation, and displayed 8 Codex projects without submitting",
     "Assisted item controls passed 255 Vitest tests, 2 workflow fixture tests, 2 Chromium fixture tests, 46 internal-beta UAT tests, all workspace builds, alternate Windows packaging, packaged/native-host smoke, and fixture-only packaged restart with zero runtime errors",
-    "Operator context MVP passed 258 Vitest tests, 2 workflow fixture tests, 2 Chromium fixture tests, 46 internal-beta UAT tests, project-pilot integration, all workspace builds, Windows packaging, packaged/native-host smoke, fixture-only packaged restart, silent installer update, and installed no-submit ChatGPT smoke"
+    "Operator context MVP passed 258 Vitest tests, 2 workflow fixture tests, 2 Chromium fixture tests, 46 internal-beta UAT tests, project-pilot integration, all workspace builds, Windows packaging, packaged/native-host smoke, fixture-only packaged restart, silent installer update, and installed no-submit ChatGPT smoke",
+    "Safe pilot deletion regression passed focused IPC/renderer tests: local cards delete in non-running states, ambiguous dispatching effects remain durable and never auto-resend, and codex_running deletion is blocked",
+    "Full verification passed 261 Vitest tests, 2 workflow fixture tests, 2 Chromium fixture tests, strict formatting/lint/type-check, migrations parity, and all workspace builds",
+    "Packaged and installed UI acceptance each passed 14/14 checks across 68 controls with zero runtime errors, including Codex catalog refresh/thread expansion, destination toggles, workflow controls, logs, and archive confirmation",
+    "Per-user installer update exited 0; installed ChatGPT no-submit smoke passed health ready, 2 captured messages, composerSent false, and exact composer cleanup"
   ],
   "knownFailures": [
     "Authenticated account-transfer send and automatic browser ZIP upload remain unverified and intentionally action-time/manual gated"
@@ -106,5 +110,5 @@
     "Use the operator-note and bounded-context-picker controls for reviewed pilots; do not treat fixture or no-submit smoke as authenticated loop completion."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-22T18:19:00.000+07:00"
+  "updatedAt": "2026-07-22T19:17:00.000+07:00"
 }

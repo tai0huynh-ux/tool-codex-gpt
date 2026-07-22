@@ -158,4 +158,28 @@ describe('project mapping renderer', () => {
       }),
     ).toEqual({ repoRoot: 'C:/work/bridge', branch: 'main' });
   });
+
+  it('archives the selected project after confirmation and preserves unrelated projects', async () => {
+    const archived = {
+      ...project('project-1', 'Má»™t'),
+      project: { ...project('project-1', 'Má»™t').project, archivedAt: timestamp },
+    };
+    const archiveProject = vi
+      .fn<ContextBridgeDesktopApi['archiveProject']>()
+      .mockResolvedValue({ ok: true, value: archived });
+    api.archiveProject = archiveProject;
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    const archiveButton = container.querySelector('.archive-action');
+    if (!(archiveButton instanceof HTMLButtonElement)) throw new Error('Archive button missing.');
+    await act(async () => {
+      archiveButton.click();
+      await Promise.resolve();
+    });
+
+    expect(archiveProject).toHaveBeenCalledWith('project-1');
+    const projectList = container.querySelector('.project-list');
+    expect(projectList?.textContent).not.toContain('Má»™t');
+    expect(projectList?.textContent).toContain('Hai');
+  });
 });

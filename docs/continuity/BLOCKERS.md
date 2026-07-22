@@ -128,6 +128,15 @@
 - Evidence: after the user reloaded extension `ccchffnkidpolmnnlonbnakjjmphfdjp`, live health returned connected with no legacy error, count-only discovery returned three canonical conversations with no navigation entries, and the installed no-submit smoke passed insert/clear with `composerSent: false`.
 - Remaining boundary: authenticated ChatGPT submit and writable Codex execution still require their separate action-time approvals.
 
+## UI-ACCEPTANCE-ARCHIVE-001
+
+- Status: resolved locally and reverified on 2026-07-22.
+- Reproduction: the packaged UI acceptance harness clicked `Lưu trữ project` without accepting the native confirmation dialog, so Playwright dismissed the dialog and the project remained visible.
+- Root cause: the test boundary did not model the user's required confirmation step; the project archive IPC and renderer state update were already correct.
+- Resolution: accept the dialog in the harness and add a renderer regression proving the selected project disappears while an unrelated project remains visible.
+- Evidence: 40 focused desktop/renderer tests, full verification with 261 Vitest tests, packaged UI acceptance 14/14 with 68 controls, installed UI acceptance 14/14, Windows package/smoke/restart, and installed ChatGPT no-submit smoke all passed.
+- Remaining boundary: no authenticated ChatGPT submit, automatic browser ZIP upload, or writable live Codex run was performed.
+
 ## INSTALLED-RELAY-WAKE-001
 
 - Status: resolved as an environment wake condition; no product blocker.

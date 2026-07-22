@@ -347,7 +347,17 @@ const pilotFailureSchema = z
   .strict();
 const pilotSuccessSchema = z.object({ ok: z.literal(true), value: pilotViewSchema }).strict();
 const pilotDeleteSuccessSchema = z
-  .object({ ok: z.literal(true), value: z.object({ pilotId: pilotIdSchema }).strict() })
+  .object({
+    ok: z.literal(true),
+    value: z
+      .object({
+        pilotId: pilotIdSchema,
+        finalStatus: pilotStatusSchema,
+        preservedWorkflow: z.literal(true),
+        unresolvedExternalEffect: z.boolean(),
+      })
+      .strict(),
+  })
   .strict();
 
 export const pilotViewResponseSchema = z.discriminatedUnion('ok', [

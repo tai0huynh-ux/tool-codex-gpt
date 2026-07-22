@@ -95,7 +95,15 @@ function baseApi(): ContextBridgeDesktopApi {
     createPilot: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
     updatePilotNotes: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
     updatePilotChatSelection: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
-    deletePilot: vi.fn().mockResolvedValue({ ok: true, value: { pilotId: 'pilot-1' } }),
+    deletePilot: vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        pilotId: 'pilot-1',
+        finalStatus: 'chatgpt_ready',
+        preservedWorkflow: true,
+        unresolvedExternalEffect: false,
+      },
+    }),
     refreshPilot: vi
       .fn()
       .mockResolvedValue({ ok: true, value: pilot({ status: 'codex_completed' }) }),
@@ -207,6 +215,63 @@ describe('Live Project Pilot renderer', () => {
     expect(api.deletePilot).toHaveBeenCalledWith('pilot-1');
     expect(container.querySelector('[aria-label="Xóa reviewed handoff pilot-1"]')).toBeNull();
     expect(container.textContent).toContain('Workflow và audit log không bị xóa');
+  });
+
+  it('explains ambiguous external effects before removing only the local handoff card', async () => {
+    const ambiguous = pilot({
+      status: 'chatgpt_confirmation_required',
+      chatGptEffectId: 'effect-1',
+      chatGptPreview,
+    });
+    api.listPilots = vi.fn().mockResolvedValue({ ok: true, value: [ambiguous] });
+    api.deletePilot = vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        pilotId: ambiguous.id,
+        finalStatus: ambiguous.status,
+        preservedWorkflow: true,
+        unresolvedExternalEffect: true,
+      },
+    });
+    await act(async () => {
+      root.render(
+        createElement(LiveProjectPilot, {
+          projectId: 'project-2',
+          projectName: 'AI Website Pilot',
+          repositories: [repository],
+        }),
+      );
+      await Promise.resolve();
+    });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const deleteButton = container.querySelector('[aria-label="Xóa reviewed handoff pilot-1"]');
+    if (!(deleteButton instanceof HTMLButtonElement)) throw new Error('Delete button missing.');
+    await act(async () => {
+      deleteButton.click();
+      await Promise.resolve();
+    });
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('chưa xác định kết quả'));
+    expect(container.textContent).toContain('sẽ không tự gửi lại');
+  });
+
+  it('disables local deletion while Codex is still running', async () => {
+    api.listPilots = vi.fn().mockResolvedValue({
+      ok: true,
+      value: [pilot({ status: 'codex_running', codexRunId: 'run-1' })],
+    });
+    await act(async () => {
+      root.render(
+        createElement(LiveProjectPilot, {
+          projectId: 'project-2',
+          projectName: 'AI Website Pilot',
+          repositories: [repository],
+        }),
+      );
+      await Promise.resolve();
+    });
+    const deleteButton = container.querySelector('[aria-label="Xóa reviewed handoff pilot-1"]');
+    expect(deleteButton).toHaveProperty('disabled', true);
+    expect(deleteButton?.getAttribute('title')).toBe('Dừng Codex trước khi xóa reviewed handoff.');
   });
 
   it('creates a pilot only through the typed desktop API', async () => {
