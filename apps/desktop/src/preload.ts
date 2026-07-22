@@ -8,6 +8,7 @@ import {
   chatGptDiscoveryResponseSchema,
   codexTargetCatalogResponseSchema,
   chatHistoryExportResponseSchema,
+  pilotDeleteResponseSchema,
   pilotListResponseSchema,
   pilotViewResponseSchema,
   projectListResponseSchema,
@@ -17,6 +18,8 @@ import {
   transportStatusResponseSchema,
   workflowIpcChannels,
   workflowListResponseSchema,
+  workflowDeleteResponseSchema,
+  workflowLogsResponseSchema,
   workflowViewResponseSchema,
   type ChooseRootResponse,
   type ChatHistoryExportResponse,
@@ -27,12 +30,15 @@ import {
   type PilotCreateInput,
   type PilotDiscoverChatGptInput,
   type PilotListResponse,
+  type PilotDeleteResponse,
   type PilotViewResponse,
   type RepositoryInput,
   type RepositoryPreviewResponse,
   type TransportOperationResponse,
   type TransportStatusResponse,
   type WorkflowListResponse,
+  type WorkflowDeleteResponse,
+  type WorkflowLogsResponse,
   type WorkflowViewResponse,
 } from './preload-contracts';
 
@@ -50,11 +56,15 @@ export interface ContextBridgeDesktopApi {
   confirmRepository(projectId: string, repository: RepositoryInput): Promise<ProjectViewResponse>;
   listWorkflows(projectId?: string): Promise<WorkflowListResponse>;
   startWorkflow(projectId: string): Promise<WorkflowViewResponse>;
+  runWorkflow(workflowRunId: string): Promise<WorkflowViewResponse>;
   cancelWorkflow(workflowRunId: string): Promise<WorkflowViewResponse>;
+  deleteWorkflow(workflowRunId: string): Promise<WorkflowDeleteResponse>;
+  listWorkflowLogs(projectId?: string, limit?: number): Promise<WorkflowLogsResponse>;
   listPilots(projectId?: string): Promise<PilotListResponse>;
   discoverPilotChatGpt(options?: PilotDiscoverChatGptInput): Promise<ChatGptDiscoveryResponse>;
   listPilotCodexTargets(): Promise<CodexTargetCatalogResponse>;
   createPilot(input: PilotCreateInput): Promise<PilotViewResponse>;
+  deletePilot(pilotId: string): Promise<PilotDeleteResponse>;
   inspectPilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
   preparePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
   approvePilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
@@ -124,9 +134,24 @@ const api: ContextBridgeDesktopApi = {
     workflowViewResponseSchema.parse(
       (await ipcRenderer.invoke(workflowIpcChannels.start, { projectId })) as unknown,
     ),
+  runWorkflow: async (workflowRunId) =>
+    workflowViewResponseSchema.parse(
+      (await ipcRenderer.invoke(workflowIpcChannels.run, { workflowRunId })) as unknown,
+    ),
   cancelWorkflow: async (workflowRunId) =>
     workflowViewResponseSchema.parse(
       (await ipcRenderer.invoke(workflowIpcChannels.cancel, { workflowRunId })) as unknown,
+    ),
+  deleteWorkflow: async (workflowRunId) =>
+    workflowDeleteResponseSchema.parse(
+      (await ipcRenderer.invoke(workflowIpcChannels.delete, { workflowRunId })) as unknown,
+    ),
+  listWorkflowLogs: async (projectId, limit) =>
+    workflowLogsResponseSchema.parse(
+      (await ipcRenderer.invoke(workflowIpcChannels.logs, {
+        ...(projectId ? { projectId } : {}),
+        ...(limit === undefined ? {} : { limit }),
+      })) as unknown,
     ),
   listPilots: async (projectId) =>
     pilotListResponseSchema.parse(
@@ -145,6 +170,10 @@ const api: ContextBridgeDesktopApi = {
   createPilot: async (input) =>
     pilotViewResponseSchema.parse(
       (await ipcRenderer.invoke(pilotIpcChannels.create, input)) as unknown,
+    ),
+  deletePilot: async (pilotId) =>
+    pilotDeleteResponseSchema.parse(
+      (await ipcRenderer.invoke(pilotIpcChannels.delete, { pilotId })) as unknown,
     ),
   refreshPilot: async (pilotId) =>
     pilotViewResponseSchema.parse(

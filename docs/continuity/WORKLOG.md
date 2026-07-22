@@ -1561,3 +1561,21 @@ The updated installed renderer returned three live DOM-only ChatGPT entries with
 ### Remaining boundary
 
 The previously persisted unavailable pilot may still display its honest `CHATGPT_CONVERSATION_UNAVAILABLE` notice. Creating or rebinding a pilot remains a user choice, and all ChatGPT submits/Codex writes remain separately approval-gated.
+
+## 2026-07-22 17:04 +07:00 - Assisted item controls and detailed log checkpoint
+
+### Goal
+
+Add delete to each Reviewed handoff, add run/stop/delete to each ASSISTED MODE workflow, and add a detailed timestamped error-aware log view without weakening persistence or renderer isolation.
+
+### Changes
+
+Added strict preload/main-process channels for pilot deletion, exact workflow run/delete, and bounded workflow logs. Pilot deletion removes only the selected persisted pilot and baseline while retaining workflow/audit/archive data. Workflow deletion permits terminal unreferenced records only, blocks prepared/dispatching effects, deletes dependent effect/approval/receipt/run rows transactionally, and leaves a durable audit event.
+
+Reworked the repeated UI collections so every item has semantic, stable, accessible controls with pending and disabled states. Destructive actions require confirmation. Added a responsive keyboard-dismissible log dialog with newest-first local timestamps, outcome badges, actor/resource identity, and validated error codes. The renderer never receives raw audit details.
+
+### Verification
+
+Focused desktop IPC/renderer suites passed 36 tests. `pnpm.cmd run format:check`, `pnpm.cmd run lint`, `pnpm.cmd run typecheck`, `pnpm.cmd run test` (255 tests), `pnpm.cmd run test:e2e` (two workflow fixture tests and two Chromium tests), `pnpm.cmd run test:internal-beta-uat` (46 tests plus two Chromium tests), and `pnpm.cmd run build` passed.
+
+Using `CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT=artifacts/desktop-current-final`, Windows packaging, packaged/native-host smoke, and fixture-only packaged restart acceptance passed. The final restart evidence is under `artifacts/pilot-restart-acceptance/2026-07-22T10-03-39-006Z` with zero renderer runtime errors. No authenticated external send or writable live Codex execution was performed.

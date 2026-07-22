@@ -128,6 +128,14 @@
 - Evidence: after the user reloaded extension `ccchffnkidpolmnnlonbnakjjmphfdjp`, live health returned connected with no legacy error, count-only discovery returned three canonical conversations with no navigation entries, and the installed no-submit smoke passed insert/clear with `composerSent: false`.
 - Remaining boundary: authenticated ChatGPT submit and writable Codex execution still require their separate action-time approvals.
 
+## ASSISTED-CONTROLS-004
+
+- Status: resolved locally and package-verified on 2026-07-22.
+- Risk addressed: deleting the wrong reviewed handoff, deleting a running or ambiguity-bearing workflow, or exposing raw audit details in the renderer.
+- Resolution: exact typed identifiers, destructive confirmation, state/effect/reference guards, transactional child cleanup, durable audit preservation, and a bounded allowlisted log projection.
+- Evidence: focused backend/renderer interaction tests, 255 full Vitest tests, fixture E2E, internal-beta UAT, Windows package, packaged/native-host smoke, and fixture-only packaged restart passed.
+- Remaining boundary: no live ChatGPT submission or writable Codex run was needed or claimed.
+
 ## CHATGPT-DISCOVERY-OPEN-003
 
 - Status: resolved locally; regression-covered and installed-verified.

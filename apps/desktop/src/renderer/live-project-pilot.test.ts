@@ -66,7 +66,10 @@ function baseApi(): ContextBridgeDesktopApi {
     confirmRepository: vi.fn(),
     listWorkflows: vi.fn(),
     startWorkflow: vi.fn(),
+    runWorkflow: vi.fn(),
     cancelWorkflow: vi.fn(),
+    deleteWorkflow: vi.fn(),
+    listWorkflowLogs: vi.fn().mockResolvedValue({ ok: true, value: [] }),
     listPilots: vi.fn().mockResolvedValue({
       ok: true,
       value: [
@@ -90,6 +93,7 @@ function baseApi(): ContextBridgeDesktopApi {
     }),
     listPilotCodexTargets: vi.fn().mockResolvedValue({ ok: true, value: { projects: [] } }),
     createPilot: vi.fn().mockResolvedValue({ ok: true, value: pilot() }),
+    deletePilot: vi.fn().mockResolvedValue({ ok: true, value: { pilotId: 'pilot-1' } }),
     refreshPilot: vi
       .fn()
       .mockResolvedValue({ ok: true, value: pilot({ status: 'codex_completed' }) }),
@@ -186,6 +190,21 @@ describe('Live Project Pilot renderer', () => {
     expect(container.textContent).toContain('Duyệt và gửi ChatGPT');
     expect(container.textContent).not.toContain('Duyệt và gửi Codex');
     expect(button(container, 'Duyệt và gửi ChatGPT')).toHaveProperty('disabled', false);
+  });
+
+  it('confirms and deletes exactly one reviewed handoff through IPC', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const deleteButton = container.querySelector('[aria-label="Xóa reviewed handoff pilot-1"]');
+    expect(deleteButton).toBeInstanceOf(HTMLButtonElement);
+    if (!(deleteButton instanceof HTMLButtonElement)) throw new Error('Delete button missing.');
+    await act(async () => {
+      deleteButton.click();
+      await Promise.resolve();
+    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.deletePilot).toHaveBeenCalledWith('pilot-1');
+    expect(container.querySelector('[aria-label="Xóa reviewed handoff pilot-1"]')).toBeNull();
+    expect(container.textContent).toContain('Workflow và audit log không bị xóa');
   });
 
   it('creates a pilot only through the typed desktop API', async () => {

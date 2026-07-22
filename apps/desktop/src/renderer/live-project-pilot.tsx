@@ -116,6 +116,32 @@ export function LiveProjectPilot({
     setItems((current) => current.map((item) => (item.id === view.id ? view : item)));
   };
 
+  const remove = async (pilotId: string): Promise<void> => {
+    if (
+      !window.confirm(
+        `Xóa reviewed handoff ${pilotId.slice(0, 8)}? Lịch sử workflow, audit và file ZIP vẫn được giữ.`,
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    const response = await window.contextBridgeDesktop.deletePilot(pilotId);
+    setBusy(false);
+    if (!response.ok) {
+      setNotice(`${response.error.code}: ${response.error.message}`);
+      return;
+    }
+    const index = items.findIndex((item) => item.id === pilotId);
+    const remaining = items.filter((item) => item.id !== pilotId);
+    setItems(remaining);
+    setSelectedId((current) =>
+      current === pilotId ? (remaining[Math.min(index, remaining.length - 1)]?.id ?? '') : current,
+    );
+    setNotice(
+      `Đã xóa reviewed handoff ${pilotId.slice(0, 8)}. Workflow và audit log không bị xóa.`,
+    );
+  };
+
   const load = async (): Promise<void> => {
     const [pilots, health, targets, discovered] = await Promise.all([
       window.contextBridgeDesktop.listPilots(),
@@ -644,15 +670,26 @@ export function LiveProjectPilot({
           </div>
           <div className="pilot-run-tabs" aria-label="Danh sách Live Project Pilot">
             {items.map((item) => (
-              <button
-                type="button"
-                className={item.id === selected?.id ? 'active' : ''}
-                key={item.id}
-                onClick={() => setSelectedId(item.id)}
-              >
-                <span>{statusLabels[item.status]}</span>
-                <small>{item.id.slice(0, 8)}</small>
-              </button>
+              <div className={item.id === selected?.id ? 'active' : ''} key={item.id}>
+                <button
+                  className="pilot-run-select"
+                  type="button"
+                  aria-pressed={item.id === selected?.id}
+                  onClick={() => setSelectedId(item.id)}
+                >
+                  <span>{statusLabels[item.status]}</span>
+                  <small>{item.id.slice(0, 8)}</small>
+                </button>
+                <button
+                  className="pilot-run-delete"
+                  type="button"
+                  disabled={busy}
+                  aria-label={`Xóa reviewed handoff ${item.id}`}
+                  onClick={() => void remove(item.id)}
+                >
+                  Xóa
+                </button>
+              </div>
             ))}
           </div>
 

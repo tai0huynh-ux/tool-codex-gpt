@@ -299,18 +299,33 @@ h1 {
   overflow-x: auto;
   padding-bottom: 0.8rem;
 }
-.pilot-run-tabs button {
+.pilot-run-tabs > div {
   display: grid;
-  min-width: 9rem;
+  grid-template-columns: minmax(9rem, 1fr) auto;
+  min-width: 12.5rem;
   border: 1px solid rgba(248, 242, 229, 0.25);
+}
+.pilot-run-tabs > div.active {
+  border-color: #f6c64f;
+  background: rgba(246, 198, 79, 0.12);
+}
+.pilot-run-select {
+  display: grid;
+  border: 0;
   background: transparent;
   color: #f8f2e5;
   padding: 0.65rem;
   text-align: left;
 }
-.pilot-run-tabs button.active {
-  border-color: #f6c64f;
-  background: rgba(246, 198, 79, 0.12);
+.pilot-run-delete {
+  align-self: stretch;
+  border: 0;
+  border-left: 1px solid rgba(238, 125, 104, 0.45);
+  background: rgba(238, 125, 104, 0.08);
+  color: #eea695;
+  padding: 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 .pilot-run-tabs small {
   color: #aeb9b1;
@@ -559,6 +574,7 @@ h1 {
 }
 .workflow-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.55rem;
 }
 .workflow-actions button,
@@ -573,6 +589,10 @@ h1 {
   border-color: var(--rust);
   background: var(--rust);
   font-weight: 750;
+}
+.workflow-actions .workflow-log-trigger {
+  border-color: #f6c64f;
+  color: #f6c64f;
 }
 .workflow-columns {
   display: grid;
@@ -601,19 +621,48 @@ h1 {
 }
 .run-card {
   display: grid;
-  gap: 0.35rem;
-  padding: 0.8rem;
+  gap: 0;
   border: 1px solid rgba(247, 241, 229, 0.18);
   background: transparent;
   color: #f7f1e5;
-  text-align: left;
 }
 .run-card.active {
   border-color: #e07b51;
   background: rgba(170, 73, 39, 0.18);
 }
-.run-card small {
+.run-card-select {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0.8rem;
+  text-align: left;
+}
+.run-card-select small {
   color: #aeb8af;
+}
+.run-card-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid rgba(247, 241, 229, 0.14);
+}
+.run-card-actions button {
+  min-width: 0;
+  border: 0;
+  border-right: 1px solid rgba(247, 241, 229, 0.14);
+  background: rgba(255, 255, 255, 0.035);
+  color: #dbe3da;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+.run-card-actions button:last-child {
+  border-right: 0;
+}
+.run-card-actions .run-delete {
+  color: #eea695;
 }
 .state-badge {
   width: fit-content;
@@ -715,10 +764,118 @@ h1 {
   color: #7fcb96;
   text-transform: uppercase;
 }
-.cancel-action {
-  width: 100%;
-  border-color: #ee7d68;
+.workflow-action-hint {
+  margin: 0.9rem 0 0;
+  color: #aeb8af;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+.workflow-log-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  background: rgba(8, 19, 13, 0.72);
+  backdrop-filter: blur(5px);
+}
+.workflow-log-dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(64rem, 100%);
+  max-height: min(48rem, calc(100vh - 2rem));
+  border: 1px solid #f6c64f;
+  background: linear-gradient(135deg, rgba(246, 198, 79, 0.09), transparent 34%), #13271d;
+  color: #f7f1e5;
+  box-shadow: 16px 18px 0 rgba(0, 0, 0, 0.28);
+}
+.workflow-log-dialog > header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  border-bottom: 1px solid rgba(247, 241, 229, 0.2);
+}
+.workflow-log-dialog h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(1.8rem, 4vw, 3.5rem);
+  font-weight: 500;
+}
+.workflow-log-dialog header p:last-child {
+  margin: 0.45rem 0 0;
+  color: #b9c3ba;
+  font-size: 0.75rem;
+}
+.workflow-log-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.workflow-log-actions button {
+  border: 1px solid rgba(247, 241, 229, 0.4);
+  background: transparent;
+  color: inherit;
+  padding: 0.65rem 0.8rem;
+}
+.workflow-log-list {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  overflow: auto;
+  margin: 0;
+  padding: 1.25rem;
+  list-style: none;
+}
+.workflow-log-list > li {
+  padding: 0.85rem;
+  border: 1px solid rgba(247, 241, 229, 0.14);
+  background: rgba(255, 255, 255, 0.035);
+}
+.workflow-log-line {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.7rem;
+  align-items: center;
+}
+.workflow-log-line time,
+.workflow-log-meta {
+  color: #aeb8af;
+  font:
+    0.68rem ui-monospace,
+    monospace;
+}
+.log-outcome {
+  padding: 0.2rem 0.4rem;
+  border: 1px solid currentColor;
+  color: #7fcb96;
+  font:
+    750 0.62rem ui-monospace,
+    monospace;
+  text-transform: uppercase;
+}
+.log-outcome.blocked {
+  color: #efbd66;
+}
+.log-outcome.failed {
   color: #ee7d68;
+}
+.workflow-log-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin-top: 0.55rem;
+}
+.workflow-log-error {
+  margin: 0.6rem 0 0;
+  padding: 0.5rem 0.65rem;
+  border-left: 3px solid #ee7d68;
+  background: rgba(238, 125, 104, 0.08);
+  color: #f0b0a3;
+  font:
+    0.72rem ui-monospace,
+    monospace;
 }
 
 .workspace-grid {
@@ -1058,6 +1215,17 @@ dd {
   .workflow-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+  .workflow-log-dialog > header,
+  .workflow-log-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .workflow-log-line {
+    grid-template-columns: auto 1fr;
+  }
+  .workflow-log-line time {
+    grid-column: 1 / -1;
   }
   .workflow-columns {
     display: block;

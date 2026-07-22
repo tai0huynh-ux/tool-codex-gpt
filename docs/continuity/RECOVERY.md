@@ -127,3 +127,9 @@ pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=p
 ## 2026-07-22 manual catalog recovery
 
 The installed desktop build was older than the fresh package, so its renderer did not contain the current catalog path. The new build separates manual recovery from background discovery: a user click can open `https://chatgpt.com/` once and retry rendered sidebar discovery once; timers never open tabs. The installed build was updated in place and live DOM-only acceptance returned three titled canonical links and selectable Codex projects without sending a message.
+
+## 2026-07-22 assisted item controls
+
+Reviewed handoff deletion is item-scoped and confirmation-gated. It preserves the referenced workflow, durable audit history, and generated archives, and blocks active or ambiguous send/run states. ASSISTED MODE workflow deletion is terminal-only, rejects pilot-referenced rows and prepared/dispatching effects, deletes dependent workflow rows transactionally, and preserves the redacted audit event.
+
+The renderer log dialog reads only the bounded `workflows:logs` projection. It must never expose `audit_events.details_json`; only validated stable error codes may cross IPC. The latest accepted fixture/package evidence is 255 Vitest tests, two workflow fixture tests, two Chromium fixture tests, 46 internal-beta UAT tests, all builds, Windows packaging, packaged/native-host smoke, and fixture-only packaged restart acceptance.

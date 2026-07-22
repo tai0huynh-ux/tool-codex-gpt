@@ -10,7 +10,7 @@
   "lastCheckpoint": {
     "id": "P18-PILOT-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-22T13:48:00.000+07:00"
+    "completedAt": "2026-07-22T17:04:00.000+07:00"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -90,7 +90,8 @@
     "Manual ChatGPT catalog recovery focused suite passed 53 extension, recovery, IPC, and renderer tests",
     "pnpm.cmd run verify passed with 248 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, and all workspace builds",
     "Alternate Windows package, packaged/native-host smoke, and fixture-only packaged restart acceptance passed with zero runtime errors",
-    "Updated installed renderer listed 3 titled canonical ChatGPT links, selected the exact UUID conversation, and displayed 8 Codex projects without submitting"
+    "Updated installed renderer listed 3 titled canonical ChatGPT links, selected the exact UUID conversation, and displayed 8 Codex projects without submitting",
+    "Assisted item controls passed 255 Vitest tests, 2 workflow fixture tests, 2 Chromium fixture tests, 46 internal-beta UAT tests, all workspace builds, alternate Windows packaging, packaged/native-host smoke, and fixture-only packaged restart with zero runtime errors"
   ],
   "knownFailures": [
     "Authenticated account-transfer send and automatic browser ZIP upload remain unverified and intentionally action-time/manual gated"
@@ -103,5 +104,5 @@
     "Keep ZIP attachment explicit until a separate safe production browser file-upload boundary is implemented and accepted."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-22T13:48:00.000+07:00"
+  "updatedAt": "2026-07-22T17:04:00.000+07:00"
 }

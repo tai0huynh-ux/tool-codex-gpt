@@ -71,7 +71,10 @@ describe('project mapping renderer', () => {
       confirmRepository,
       listWorkflows: vi.fn().mockResolvedValue({ ok: true, value: [] }),
       startWorkflow: vi.fn(),
+      runWorkflow: vi.fn(),
       cancelWorkflow: vi.fn(),
+      deleteWorkflow: vi.fn(),
+      listWorkflowLogs: vi.fn().mockResolvedValue({ ok: true, value: [] }),
       listPilots: vi.fn().mockResolvedValue({ ok: true, value: [] }),
       discoverPilotChatGpt: vi.fn().mockResolvedValue({
         ok: true,
@@ -79,6 +82,7 @@ describe('project mapping renderer', () => {
       }),
       listPilotCodexTargets: vi.fn().mockResolvedValue({ ok: true, value: { projects: [] } }),
       createPilot: vi.fn(),
+      deletePilot: vi.fn(),
       refreshPilot: vi.fn(),
       verifyPilotWebsite: vi.fn(),
       openPilotPreview: vi.fn(),

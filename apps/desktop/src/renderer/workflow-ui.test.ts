@@ -9,14 +9,17 @@ import { WorkflowWorkspace } from './workflow-ui';
 
 const timestamp = '2026-07-18T11:00:00.000Z';
 
-function dashboard(state: WorkflowDashboard['run']['state'] = 'idle'): WorkflowDashboard {
+function dashboard(
+  state: WorkflowDashboard['run']['state'] = 'idle',
+  id = 'workflow-1',
+): WorkflowDashboard {
   return {
     run: {
-      id: 'workflow-1',
-      correlationId: 'correlation-1',
+      id,
+      correlationId: `correlation-${id}`,
       projectId: 'project-1',
       state,
-      idempotencyKey: 'idempotency-1',
+      idempotencyKey: `idempotency-${id}`,
       iterationCount: 0,
       failureRetries: 0,
       maxIterations: 5,
@@ -28,7 +31,7 @@ function dashboard(state: WorkflowDashboard['run']['state'] = 'idle'): WorkflowD
     events: [
       {
         id: 'event-1',
-        workflowRunId: 'workflow-1',
+        workflowRunId: id,
         sequence: 1,
         toState: state,
         eventType: 'workflow.created',
@@ -68,9 +71,33 @@ describe('guided workflow renderer', () => {
       chooseRepositoryRoot: vi.fn(),
       previewRepository: vi.fn(),
       confirmRepository: vi.fn(),
-      listWorkflows: vi.fn().mockResolvedValue({ ok: true, value: [dashboard()] }),
+      listWorkflows: vi.fn().mockResolvedValue({
+        ok: true,
+        value: [dashboard(), dashboard('cancelled', 'workflow-2')],
+      }),
       startWorkflow: vi.fn().mockResolvedValue({ ok: true, value: dashboard() }),
+      runWorkflow: vi.fn().mockResolvedValue({ ok: true, value: dashboard('project_resolving') }),
       cancelWorkflow,
+      deleteWorkflow: vi
+        .fn()
+        .mockResolvedValue({ ok: true, value: { workflowRunId: 'workflow-1' } }),
+      listWorkflowLogs: vi.fn().mockResolvedValue({
+        ok: true,
+        value: [
+          {
+            id: 'log-1',
+            createdAt: timestamp,
+            eventType: 'workflow.delete.blocked',
+            outcome: 'failed',
+            actor: 'user',
+            projectId: 'project-1',
+            resourceType: 'workflow_run',
+            resourceId: 'workflow-1',
+            workflowRunId: 'workflow-1',
+            errorCode: 'WORKFLOW_NOT_DELETABLE',
+          },
+        ],
+      }),
       listPilots: vi.fn().mockResolvedValue({ ok: true, value: [] }),
       discoverPilotChatGpt: vi.fn().mockResolvedValue({
         ok: true,
@@ -82,6 +109,7 @@ describe('guided workflow renderer', () => {
       }),
       listPilotCodexTargets: vi.fn().mockResolvedValue({ ok: true, value: { projects: [] } }),
       createPilot: vi.fn(),
+      deletePilot: vi.fn(),
       refreshPilot: vi.fn(),
       verifyPilotWebsite: vi.fn(),
       openPilotPreview: vi.fn(),
@@ -113,19 +141,53 @@ describe('guided workflow renderer', () => {
     container.remove();
   });
 
-  it('shows an accessible timeline and persists cancellation through IPC', async () => {
+  it('shows per-workflow run, stop, and delete controls with exact IPC calls', async () => {
     expect(container.querySelector('[aria-label="Workflow runs"]')).not.toBeNull();
     expect(container.textContent).toContain('Workflow timeline');
-    const cancel = [...container.querySelectorAll('button')].find((item) =>
-      item.textContent.includes('Cancel workflow'),
-    );
-    expect(cancel).toBeInstanceOf(HTMLButtonElement);
-    if (!(cancel instanceof HTMLButtonElement)) throw new Error('Cancel button missing.');
+    const run = container.querySelector('[aria-label="Chạy workflow workflow-1"]');
+    expect(run).toBeInstanceOf(HTMLButtonElement);
+    if (!(run instanceof HTMLButtonElement)) throw new Error('Run button missing.');
     await act(async () => {
-      cancel.click();
+      run.click();
+      await Promise.resolve();
+    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.runWorkflow).toHaveBeenCalledWith('workflow-1');
+    const stop = container.querySelector('[aria-label="Dừng workflow workflow-1"]');
+    expect(stop).toBeInstanceOf(HTMLButtonElement);
+    if (!(stop instanceof HTMLButtonElement)) throw new Error('Stop button missing.');
+    await act(async () => {
+      stop.click();
       await Promise.resolve();
     });
     expect(cancelWorkflow).toHaveBeenCalledWith('workflow-1');
+    const deleteButton = container.querySelector('[aria-label="Xóa workflow workflow-1"]');
+    expect(deleteButton).toBeInstanceOf(HTMLButtonElement);
+    if (!(deleteButton instanceof HTMLButtonElement)) throw new Error('Delete button missing.');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await act(async () => {
+      deleteButton.click();
+      await Promise.resolve();
+    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.deleteWorkflow).toHaveBeenCalledWith('workflow-1');
     expect(container.textContent).toContain('Cancelled');
+  });
+
+  it('opens the detailed log dialog with timestamp and error cause', async () => {
+    const logButton = [...container.querySelectorAll('button')].find((item) =>
+      item.textContent.includes('Log chi tiết'),
+    );
+    expect(logButton).toBeInstanceOf(HTMLButtonElement);
+    if (!(logButton instanceof HTMLButtonElement)) throw new Error('Log button missing.');
+    await act(async () => {
+      logButton.click();
+      await Promise.resolve();
+    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.listWorkflowLogs).toHaveBeenCalledWith('project-1', 100);
+    expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(container.textContent).toContain('WORKFLOW_NOT_DELETABLE');
+    expect(container.querySelector('time[dateTime="2026-07-18T11:00:00.000Z"]')).not.toBeNull();
   });
 });

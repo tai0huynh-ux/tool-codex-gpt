@@ -111,6 +111,7 @@ function stubService(overrides: Partial<PilotDesktopService> = {}): PilotDesktop
       }),
     listCodexTargets: () => Promise.resolve({ projects: [] }),
     create: () => Promise.resolve(view()),
+    delete: () => Promise.resolve({ pilotId: 'pilot-1' }),
     refresh: () => Promise.resolve(view()),
     inspectChatGpt: () => Promise.resolve(view()),
     prepareChatGpt: () => Promise.resolve(view()),
@@ -183,6 +184,19 @@ describe('pilot IPC boundary', () => {
     await expect(
       ipc.handlers.get(pilotIpcChannels.listCodexTargets)?.({ sender: { id: 7 } }),
     ).resolves.toMatchObject({ ok: true, value: { projects: [{ projectName: 'Pilot' }] } });
+  });
+
+  it('exposes exact reviewed-handoff deletion through a validated channel', async () => {
+    const ipc = new FakeIpcMain();
+    const remove = vi.fn<PilotDesktopService['delete']>().mockResolvedValue({ pilotId: 'pilot-1' });
+    registerPilotIpc(ipc, stubService({ delete: remove }), { validateSender: () => true });
+    await expect(
+      ipc.handlers.get(pilotIpcChannels.delete)?.({ sender: { id: 7 } }, { pilotId: 'pilot-1' }),
+    ).resolves.toEqual({ ok: true, value: { pilotId: 'pilot-1' } });
+    expect(remove).toHaveBeenCalledWith('pilot-1');
+    await expect(
+      ipc.handlers.get(pilotIpcChannels.delete)?.({ sender: { id: 7 } }, { pilotId: '' }),
+    ).resolves.toMatchObject({ error: { code: 'IPC_SCHEMA_INVALID' } });
   });
 
   it('accepts a bounded objective and rejects empty, oversized, unknown, and untrusted requests', async () => {
@@ -906,6 +920,86 @@ describe('pilot desktop persistence', () => {
       finalResponse: 'Created index.html and styles.css.',
     });
     expect(JSON.stringify(refreshed)).not.toContain('approvalToken');
+    database.close();
+  });
+
+  it('deletes one reviewed handoff, preserves another, and blocks active deletion', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-22T09:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, {
+      now: () => '2026-07-22T09:00:00.000Z',
+    });
+    const codex = new FixtureCodexAdapter();
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge,
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+      now: () => '2026-07-22T09:00:00.000Z',
+    });
+    const first = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'First handoff',
+      destination: { mode: 'new' },
+    });
+    const second = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Second handoff',
+      destination: { mode: 'new' },
+    });
+    database
+      .prepare('INSERT INTO settings (key, value_json, updated_at) VALUES (?, ?, ?)')
+      .run(
+        `live-project-pilot-baseline:${first.id}`,
+        JSON.stringify({ head: 'a'.repeat(40), entries: [], capturedAt: first.createdAt }),
+        first.createdAt,
+      );
+
+    await expect(service.delete(first.id)).resolves.toEqual({ pilotId: first.id });
+    expect(
+      database
+        .prepare('SELECT 1 FROM settings WHERE key = ?')
+        .get(`live-project-pilot:${first.id}`),
+    ).toBeUndefined();
+    expect(
+      database
+        .prepare('SELECT 1 FROM settings WHERE key = ?')
+        .get(`live-project-pilot-baseline:${first.id}`),
+    ).toBeUndefined();
+    expect(
+      database
+        .prepare('SELECT 1 FROM settings WHERE key = ?')
+        .get(`live-project-pilot:${second.id}`),
+    ).toBeDefined();
+    expect(workflows.getRun(first.workflowRunId)).toBeDefined();
+    expect(
+      database
+        .prepare(
+          "SELECT outcome FROM audit_events WHERE event_type = 'pilot.deleted' AND resource_id = ?",
+        )
+        .get(first.id),
+    ).toEqual({ outcome: 'allowed' });
+
+    database
+      .prepare('UPDATE settings SET value_json = ? WHERE key = ?')
+      .run(
+        JSON.stringify({ ...second, status: 'codex_running' }),
+        `live-project-pilot:${second.id}`,
+      );
+    expect(() => service.delete(second.id)).toThrow('PILOT_NOT_DELETABLE');
+    expect(
+      database
+        .prepare(
+          "SELECT outcome FROM audit_events WHERE event_type = 'pilot.delete.blocked' AND resource_id = ?",
+        )
+        .get(second.id),
+    ).toEqual({ outcome: 'blocked' });
     database.close();
   });
 

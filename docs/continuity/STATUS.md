@@ -193,7 +193,7 @@ Verification for this checkpoint: `pnpm.cmd run verify` passed 240 Vitest tests,
 
 ## Last updated
 
-2026-07-22 13:48 +07:00.
+2026-07-22 17:04 +07:00.
 
 ## 2026-07-22 - Manual ChatGPT catalog recovery and installed desktop parity
 
@@ -203,3 +203,11 @@ Verification for this checkpoint: `pnpm.cmd run verify` passed 240 Vitest tests,
 - Regression evidence: 248 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, all workspace builds, unsigned Windows packaging, packaged smoke, native-host smoke, and packaged restart acceptance passed.
 - Installed acceptance after update: clicking the refresh action returned three rendered entries (`Giải thích UUID`, `Hỗ trợ phát triển phần mềm`, and `Phương án viết app WhatsApp, cuộc trò chuyện trong dự án app whatapp, Công việc`) with canonical paths; selecting the first set the exact conversation ID `6a60618a-ec88-83ec-800c-1da420fe5de3`. Codex local discovery showed eight projects, including `ai-manga-upscaler` with five visible thread titles after expansion. No ChatGPT message was submitted.
 - The current installer was applied over the existing per-user install without deleting app data, and the refreshed shortcut at `C:\Users\a\Desktop\Codex Context Bridge.lnk` is open.
+
+## 2026-07-22 - Per-item assisted controls and detailed audit log
+
+- Every Reviewed handoff now has an explicit confirmed delete action. Deletion removes only the selected pilot setting and its Git baseline; workflow history, audit events, account-transfer ZIPs, and Codex result ZIPs remain intact. Active or confirmation-ambiguous pilots fail closed with `PILOT_NOT_DELETABLE`.
+- Every ASSISTED MODE workflow card now exposes `Chạy`, `Dừng`, and `Xóa`. Run advances only an exact idle workflow into guided project resolution without sending data. Stop uses the persisted cancellation transition. Delete is limited to terminal, unreferenced workflows with no prepared or dispatching effect.
+- The workflow header now opens a responsive detailed log dialog. It shows local timestamp, outcome, event type, actor, bounded resource identity, workflow identity, and a safe error code when recorded. Raw `details_json`, approval secrets, payloads, cookies, tokens, and file content never cross IPC.
+- Verification passed formatting, lint, strict type-check, 255 Vitest tests, two recoverable workflow fixture tests, two Chromium fixture tests, the 46-test internal-beta UAT selection, all workspace builds, unsigned Windows packaging under `artifacts/desktop-current-final`, packaged/native-host smoke, and fixture-only packaged restart acceptance with zero runtime errors.
+- No authenticated ChatGPT submit, browser account action, or writable live Codex run was performed for this checkpoint.

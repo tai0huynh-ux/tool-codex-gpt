@@ -46,6 +46,7 @@ export const pilotIpcChannels = {
   revealAccountTransfer: 'pilot:reveal-account-transfer',
   approveCodex: 'pilot:approve-codex',
   revealCodexBundle: 'pilot:reveal-codex-bundle',
+  delete: 'pilot:delete',
   verifyWebsite: 'pilot:verify-website',
   openPreview: 'pilot:open-preview',
 } as const;
@@ -233,6 +234,7 @@ export const pilotErrorCodeSchema = z.enum([
   'IPC_SCHEMA_INVALID',
   'IPC_TIMEOUT',
   'PILOT_NOT_FOUND',
+  'PILOT_NOT_DELETABLE',
   'PILOT_STATE_INVALID',
   'PROJECT_NOT_FOUND',
   'REPOSITORY_NOT_FOUND',
@@ -265,6 +267,9 @@ const pilotFailureSchema = z
   })
   .strict();
 const pilotSuccessSchema = z.object({ ok: z.literal(true), value: pilotViewSchema }).strict();
+const pilotDeleteSuccessSchema = z
+  .object({ ok: z.literal(true), value: z.object({ pilotId: pilotIdSchema }).strict() })
+  .strict();
 
 export const pilotViewResponseSchema = z.discriminatedUnion('ok', [
   pilotSuccessSchema,
@@ -272,6 +277,10 @@ export const pilotViewResponseSchema = z.discriminatedUnion('ok', [
 ]);
 export const pilotListResponseSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(true), value: z.array(pilotViewSchema) }).strict(),
+  pilotFailureSchema,
+]);
+export const pilotDeleteResponseSchema = z.discriminatedUnion('ok', [
+  pilotDeleteSuccessSchema,
   pilotFailureSchema,
 ]);
 
@@ -343,6 +352,7 @@ export type PilotDiscoverChatGptInput = z.infer<typeof pilotDiscoverChatGptInput
 export type PilotView = z.infer<typeof pilotViewSchema>;
 export type PilotViewResponse = z.infer<typeof pilotViewResponseSchema>;
 export type PilotListResponse = z.infer<typeof pilotListResponseSchema>;
+export type PilotDeleteResponse = z.infer<typeof pilotDeleteResponseSchema>;
 export type ChatGptDiscoveryResponse = z.infer<typeof chatGptDiscoveryResponseSchema>;
 export type CodexTargetCatalog = z.infer<typeof codexTargetCatalogSchema>;
 export type CodexTargetCatalogResponse = z.infer<typeof codexTargetCatalogResponseSchema>;

@@ -12,7 +12,7 @@ import {
   type AssistedChatGptAdapter,
 } from '@codex-context-bridge/assisted-chatgpt';
 import type { CodexAdapter, CodexExecutionProfile } from '@codex-context-bridge/codex-adapter';
-import type { SqliteDatabase } from '@codex-context-bridge/database';
+import { appendAuditEvent, type SqliteDatabase } from '@codex-context-bridge/database';
 import type { ProjectRegistry } from '@codex-context-bridge/project-registry';
 import type { ResponseRouter } from '@codex-context-bridge/response-router';
 import type { WorkflowEngine } from '@codex-context-bridge/workflow-engine';
@@ -29,6 +29,7 @@ import {
   pilotDiscoverChatGptInputSchema,
   pilotListInputSchema,
   pilotListResponseSchema,
+  pilotDeleteResponseSchema,
   pilotViewResponseSchema,
   pilotViewSchema,
   type PilotCreateInput,
@@ -144,6 +145,7 @@ export interface PilotDesktopService {
   discoverChatGpt(options?: PilotDiscoverChatGptInput): Promise<ChatGptRenderedCatalog>;
   listCodexTargets(): Promise<CodexTargetCatalog>;
   create(input: PilotCreateInput): Promise<PilotView>;
+  delete(pilotId: string): Promise<{ pilotId: string }>;
   refresh(pilotId: string): Promise<PilotView>;
   inspectChatGpt(pilotId: string): Promise<PilotView>;
   prepareChatGpt(pilotId: string): Promise<PilotView>;
@@ -581,6 +583,47 @@ export function createPilotDesktopService(input: {
         .map((row) => pilotViewSchema.parse(JSON.parse(row.value_json) as unknown))
         .filter((view) => !projectId || view.projectId === projectId);
       return Promise.all(views.map((view) => refresh(view)));
+    },
+    delete: (pilotId) => {
+      const view = get(pilotId);
+      const correlationId = input.workflows.getRun(view.workflowRunId)?.correlationId;
+      const active =
+        ['chatgpt_dispatched', 'chatgpt_confirmation_required', 'codex_running'].includes(
+          view.status,
+        ) || ['dispatching', 'confirmation_required'].includes(view.accountTransfer?.status ?? '');
+      if (active) {
+        appendAuditEvent(input.database, {
+          id: randomUUID(),
+          eventType: 'pilot.delete.blocked',
+          actor: 'user',
+          projectId: view.projectId,
+          ...(correlationId ? { correlationId } : {}),
+          resourceType: 'live_project_pilot',
+          resourceId: view.id,
+          outcome: 'blocked',
+          details: { errorCode: 'PILOT_NOT_DELETABLE' },
+          createdAt: now(),
+        });
+        throw new Error('PILOT_NOT_DELETABLE');
+      }
+      input.database.transaction(() => {
+        appendAuditEvent(input.database, {
+          id: randomUUID(),
+          eventType: 'pilot.deleted',
+          actor: 'user',
+          projectId: view.projectId,
+          ...(correlationId ? { correlationId } : {}),
+          resourceType: 'live_project_pilot',
+          resourceId: view.id,
+          outcome: 'allowed',
+          details: { finalStatus: view.status },
+          createdAt: now(),
+        });
+        input.database
+          .prepare('DELETE FROM settings WHERE key IN (?, ?)')
+          .run(`${PILOT_PREFIX}${view.id}`, `${PILOT_BASELINE_PREFIX}${view.id}`);
+      })();
+      return Promise.resolve({ pilotId: view.id });
     },
     discoverChatGpt: async (options = {}) => {
       const discover = async (): Promise<ChatGptRenderedCatalog> => {
@@ -1257,6 +1300,13 @@ export function registerPilotIpc(
     pilotCreateInputSchema,
     pilotViewResponseSchema,
     (value) => service.create(value as PilotCreateInput),
+  );
+  register(
+    pilotIpcChannels.delete,
+    'pilot.delete',
+    pilotIdInputSchema,
+    pilotDeleteResponseSchema,
+    (value) => service.delete((value as { pilotId: string }).pilotId),
   );
   register(
     pilotIpcChannels.refresh,

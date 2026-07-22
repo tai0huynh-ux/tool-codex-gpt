@@ -25,7 +25,10 @@ export const projectIpcChannels = {
 export const workflowIpcChannels = {
   list: 'workflows:list',
   start: 'workflows:start',
+  run: 'workflows:run',
   cancel: 'workflows:cancel',
+  delete: 'workflows:delete',
+  logs: 'workflows:logs',
 } as const;
 
 const ipcErrorCode = z.enum([
@@ -37,7 +40,9 @@ const ipcErrorCode = z.enum([
   'REPOSITORY_ROOT_INVALID',
   'REPOSITORY_ALREADY_REGISTERED',
   'WORKFLOW_NOT_FOUND',
+  'WORKFLOW_NOT_RUNNABLE',
   'WORKFLOW_NOT_CANCELLABLE',
+  'WORKFLOW_NOT_DELETABLE',
   'INTERNAL_ERROR',
 ]);
 const ipcError = z.object({ code: ipcErrorCode, message: z.string().min(1) }).strict();
@@ -180,6 +185,33 @@ export const workflowViewResponseSchema = z.discriminatedUnion('ok', [
   success(workflowDashboardSchema),
   failure,
 ]);
+const workflowLogSchema = z
+  .object({
+    id: z.string().min(1).max(256),
+    createdAt: z.iso.datetime(),
+    eventType: z.string().min(1).max(256),
+    outcome: z.enum(['allowed', 'blocked', 'failed']),
+    actor: z.string().min(1).max(256),
+    projectId: z.string().min(1).max(256).optional(),
+    resourceType: z.string().min(1).max(128).optional(),
+    resourceId: z.string().min(1).max(512).optional(),
+    workflowRunId: z.string().min(1).max(256).optional(),
+    errorCode: z
+      .string()
+      .min(1)
+      .max(256)
+      .regex(/^[A-Z0-9][A-Z0-9_.:-]*$/)
+      .optional(),
+  })
+  .strict();
+export const workflowDeleteResponseSchema = z.discriminatedUnion('ok', [
+  success(z.object({ workflowRunId: z.string().min(1).max(256) }).strict()),
+  failure,
+]);
+export const workflowLogsResponseSchema = z.discriminatedUnion('ok', [
+  success(z.array(workflowLogSchema)),
+  failure,
+]);
 
 export type TransportStatusResponse = z.infer<typeof transportStatusResponseSchema>;
 export type TransportOperationResponse = z.infer<typeof transportOperationResponseSchema>;
@@ -190,11 +222,14 @@ export type RepositoryPreviewResponse = z.infer<typeof repositoryPreviewResponse
 export type ChooseRootResponse = z.infer<typeof chooseRootResponseSchema>;
 export type WorkflowListResponse = z.infer<typeof workflowListResponseSchema>;
 export type WorkflowViewResponse = z.infer<typeof workflowViewResponseSchema>;
+export type WorkflowDeleteResponse = z.infer<typeof workflowDeleteResponseSchema>;
+export type WorkflowLogsResponse = z.infer<typeof workflowLogsResponseSchema>;
 export {
   pilotIpcChannels,
   chatGptDiscoveryResponseSchema,
   codexTargetCatalogResponseSchema,
   chatHistoryExportResponseSchema,
+  pilotDeleteResponseSchema,
   pilotListResponseSchema,
   pilotViewResponseSchema,
   type PilotCreateInput,
@@ -203,6 +238,7 @@ export {
   type CodexTargetCatalogResponse,
   type ChatHistoryExportResponse,
   type PilotListResponse,
+  type PilotDeleteResponse,
   type PilotView,
   type PilotViewResponse,
 } from './pilot-contracts';
