@@ -347,6 +347,73 @@ describe('pilot desktop persistence', () => {
     database.close();
   });
 
+  it('opens one allowlisted ChatGPT home page and retries only for an explicit refresh', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database);
+    const workflows = new WorkflowEngine(database);
+    const codex = new FixtureCodexAdapter();
+    const ensureChatGptPage = vi.fn().mockResolvedValue(undefined);
+    const execute = vi
+      .fn<DesktopBridgeService['execute']>()
+      .mockRejectedValueOnce(new Error('CHATGPT_TAB_NOT_FOUND'))
+      .mockResolvedValueOnce({
+        type: 'conversation.discover.result',
+        catalog: {
+          conversations: [
+            {
+              conversationId: '6a60618a-ec88-83ec-800c-1da420fe5de3',
+              conversationPath: '/c/6a60618a-ec88-83ec-800c-1da420fe5de3',
+              title: 'Giải thích UUID',
+              current: false,
+            },
+          ],
+          capturedAt: '2026-07-22T08:00:00.000Z',
+          truncated: false,
+        },
+      });
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+      bridge: { ...bridge, execute },
+      ensureChatGptPage,
+    });
+
+    await expect(service.discoverChatGpt({ openIfNeeded: true })).resolves.toMatchObject({
+      conversations: [{ title: 'Giải thích UUID' }],
+    });
+    expect(ensureChatGptPage).toHaveBeenCalledOnce();
+    expect(ensureChatGptPage).toHaveBeenCalledWith({ mode: 'new' }, { allowOpenExternal: true });
+    expect(execute).toHaveBeenCalledTimes(2);
+    database.close();
+  });
+
+  it('never opens ChatGPT from background catalog discovery', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database);
+    const workflows = new WorkflowEngine(database);
+    const codex = new FixtureCodexAdapter();
+    const ensureChatGptPage = vi.fn().mockResolvedValue(undefined);
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+      bridge: {
+        ...bridge,
+        execute: () => Promise.reject(new Error('CHATGPT_TAB_NOT_FOUND')),
+      },
+      ensureChatGptPage,
+    });
+
+    await expect(service.discoverChatGpt()).rejects.toThrow('CHATGPT_TAB_NOT_FOUND');
+    expect(ensureChatGptPage).not.toHaveBeenCalled();
+    database.close();
+  });
+
   it('restores an orphaned dispatching ChatGPT effect as confirmation-required', async () => {
     const database = openDatabase(':memory:');
     const projects = new ProjectRegistry(database, () => '2026-07-19T08:00:00.000Z');

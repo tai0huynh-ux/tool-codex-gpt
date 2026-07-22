@@ -1535,3 +1535,29 @@ The installed bridge currently reports `EXTENSION_LEGACY_COMPATIBILITY` and disc
 The user reloaded the current unpacked Edge extension and ChatGPT tabs. Native health then returned connected with no legacy warning. Count-only rendered discovery completed without timeout and returned three canonical conversation paths; `/library`, `/projects`, `/scheduled`, and `/plugins` were absent. The installed ChatGPT smoke passed current-version health, redacted capture, exact marker insertion, `composerSent: false`, and exact cleanup.
 
 No conversation title or message content was logged, no ChatGPT message was submitted, and no Codex write was approved.
+
+## 2026-07-22 - Installed ChatGPT catalog selection recovery
+
+### Goal
+
+Make the user-triggered catalog action open ChatGPT only when needed, read the rendered sidebar title/link pairs, and allow exact ChatGPT/Codex selection without restoring the previous tab-opening loop.
+
+### Root cause
+
+The active per-user desktop installation predated the fresh compatibility package, so the running renderer did not contain the current catalog behavior. Discovery also lacked a typed distinction between a user click and background polling. Three desktop main windows were running concurrently, allowing separate startup recovery attempts.
+
+### Changes
+
+Added a strict `openIfNeeded` IPC input. Normal load and 15-second polling remain no-open. The manual action first attempts rendered discovery, may invoke the allowlisted home-page recovery once, then retries discovery once. The renderer shows the canonical ChatGPT URL next to each visible title and preserves the exact path/ID when selected. Electron now takes a single-instance lock and focuses the existing window on a second launch.
+
+Updated the existing per-user installation in place from `artifacts/desktop-current-final`, preserving SQLite/app data and refreshing `C:\Users\a\Desktop\Codex Context Bridge.lnk`.
+
+### Verification
+
+The focused extension/recovery/IPC/renderer suite passed 53 tests. `pnpm.cmd run verify` passed 248 Vitest tests, two workflow fixture tests, two Chromium fixture tests, strict typecheck, lint, formatting, and all workspace builds. Alternate Windows packaging, packaged/native-host smoke, and fixture-only packaged restart acceptance passed with zero runtime errors.
+
+The updated installed renderer returned three live DOM-only ChatGPT entries with exact titles and canonical URLs. Selecting `Giải thích UUID` set conversation ID `6a60618a-ec88-83ec-800c-1da420fe5de3`. Codex local discovery returned eight projects; expanding `ai-manga-upscaler` showed five bounded thread titles. No composer text was inserted and no message was submitted.
+
+### Remaining boundary
+
+The previously persisted unavailable pilot may still display its honest `CHATGPT_CONVERSATION_UNAVAILABLE` notice. Creating or rebinding a pilot remains a user choice, and all ChatGPT submits/Codex writes remain separately approval-gated.

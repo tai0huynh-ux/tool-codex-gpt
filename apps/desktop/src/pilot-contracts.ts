@@ -83,6 +83,10 @@ export const pilotCreateDestinationSchema = z.union([
 ]);
 
 export const pilotListInputSchema = z.object({ projectId: pilotIdSchema.optional() }).strict();
+export const pilotDiscoverChatGptInputSchema = z
+  .object({ openIfNeeded: z.boolean().optional() })
+  .strict()
+  .default({});
 export const pilotCreateInputSchema = z
   .object({
     projectId: pilotIdSchema,
@@ -335,6 +339,7 @@ export const chatHistoryExportResponseSchema = z.discriminatedUnion('ok', [
 ]);
 
 export type PilotCreateInput = z.infer<typeof pilotCreateInputSchema>;
+export type PilotDiscoverChatGptInput = z.infer<typeof pilotDiscoverChatGptInputSchema>;
 export type PilotView = z.infer<typeof pilotViewSchema>;
 export type PilotViewResponse = z.infer<typeof pilotViewResponseSchema>;
 export type PilotListResponse = z.infer<typeof pilotListResponseSchema>;

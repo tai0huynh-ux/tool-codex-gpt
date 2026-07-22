@@ -127,3 +127,14 @@
 - Resolution in code: versioned health is backward-compatible, legacy catalog responses are normalized and filtered, navigation paths no longer parse as conversation IDs, and packaging can use a separate artifact root when Windows holds the previous unpacked output.
 - Evidence: after the user reloaded extension `ccchffnkidpolmnnlonbnakjjmphfdjp`, live health returned connected with no legacy error, count-only discovery returned three canonical conversations with no navigation entries, and the installed no-submit smoke passed insert/clear with `composerSent: false`.
 - Remaining boundary: authenticated ChatGPT submit and writable Codex execution still require their separate action-time approvals.
+
+## CHATGPT-DISCOVERY-OPEN-003
+
+- Status: resolved locally; regression-covered and installed-verified.
+- First observed: 2026-07-22
+- Reproduction: click the desktop ChatGPT catalog action while no eligible rendered ChatGPT tab exists, or run an older installed desktop build whose renderer does not contain the current catalog flow.
+- Expected: a manual refresh opens only the allowlisted ChatGPT home when needed, reads rendered sidebar anchors, and displays the exact title and canonical URL; background refresh must not open tabs.
+- Root cause: the installed app was stale, and discovery had no explicit distinction between user-triggered recovery and timer polling. Multiple app launches could also run startup recovery concurrently.
+- Resolution: add the typed `openIfNeeded` flag, bounded open/retry behavior, full canonical URL display, and an Electron single-instance lock; update the per-user installer and Desktop shortcut.
+- Evidence: 248 Vitest tests, full fixture/build/package gates, installed renderer returned three titled canonical links, exact conversation selection, eight Codex projects, and five expanded thread titles; no ChatGPT submission occurred.
+- Remaining boundary: authenticated ChatGPT submit and writable Codex execution still require their separate action-time approvals.

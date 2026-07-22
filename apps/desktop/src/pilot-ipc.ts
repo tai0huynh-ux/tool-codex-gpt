@@ -26,11 +26,13 @@ import {
   pilotErrorCodeSchema,
   pilotIdInputSchema,
   pilotIpcChannels,
+  pilotDiscoverChatGptInputSchema,
   pilotListInputSchema,
   pilotListResponseSchema,
   pilotViewResponseSchema,
   pilotViewSchema,
   type PilotCreateInput,
+  type PilotDiscoverChatGptInput,
   type ChatHistoryExportResult,
   type CodexTargetCatalog,
   type PilotView,
@@ -139,7 +141,7 @@ interface ChatGptEffectRow {
 
 export interface PilotDesktopService {
   list(projectId?: string): Promise<PilotView[]>;
-  discoverChatGpt(): Promise<ChatGptRenderedCatalog>;
+  discoverChatGpt(options?: PilotDiscoverChatGptInput): Promise<ChatGptRenderedCatalog>;
   listCodexTargets(): Promise<CodexTargetCatalog>;
   create(input: PilotCreateInput): Promise<PilotView>;
   refresh(pilotId: string): Promise<PilotView>;
@@ -580,14 +582,24 @@ export function createPilotDesktopService(input: {
         .filter((view) => !projectId || view.projectId === projectId);
       return Promise.all(views.map((view) => refresh(view)));
     },
-    discoverChatGpt: async () => {
-      const transport = await input.bridge.getStatus();
-      if (transport.state !== 'connected') throw new Error('TRANSPORT_DISCONNECTED');
-      const result = await input.bridge.execute({ type: 'conversation.discover' });
-      if (result.type !== 'conversation.discover.result') {
-        throw new Error('TRANSPORT_RESULT_INVALID');
+    discoverChatGpt: async (options = {}) => {
+      const discover = async (): Promise<ChatGptRenderedCatalog> => {
+        const transport = await input.bridge.getStatus();
+        if (transport.state !== 'connected') throw new Error('TRANSPORT_DISCONNECTED');
+        const result = await input.bridge.execute({ type: 'conversation.discover' });
+        if (result.type !== 'conversation.discover.result') {
+          throw new Error('TRANSPORT_RESULT_INVALID');
+        }
+        return result.catalog;
+      };
+      try {
+        return await discover();
+      } catch (error) {
+        if (!options.openIfNeeded || !input.ensureChatGptPage) throw error;
+        // A manual refresh may open one allowlisted home tab, then retry discovery once.
+        await input.ensureChatGptPage({ mode: 'new' }, { allowOpenExternal: true });
+        return discover();
       }
-      return result.catalog;
     },
     listCodexTargets: async () => {
       await syncCodexCatalogIfStale();
@@ -1228,9 +1240,9 @@ export function registerPilotIpc(
   register(
     pilotIpcChannels.discoverChatGpt,
     'pilot.discover-chatgpt',
-    z.undefined(),
+    pilotDiscoverChatGptInputSchema,
     chatGptDiscoveryResponseSchema,
-    () => service.discoverChatGpt(),
+    (value) => service.discoverChatGpt(value as PilotDiscoverChatGptInput),
   );
   register(
     pilotIpcChannels.listCodexTargets,

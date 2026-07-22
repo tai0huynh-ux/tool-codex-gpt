@@ -299,7 +299,7 @@ export function LiveProjectPilot({
 
   const refreshChatGptCatalog = async (): Promise<void> => {
     setBusy(true);
-    const response = await window.contextBridgeDesktop.discoverPilotChatGpt();
+    const response = await window.contextBridgeDesktop.discoverPilotChatGpt({ openIfNeeded: true });
     setBusy(false);
     if (!response.ok) {
       const error = `${response.error.code}: ${response.error.message}`;
@@ -556,7 +556,10 @@ export function LiveProjectPilot({
                   onClick={() => selectConversation(conversation)}
                 >
                   <strong>{conversation.title}</strong>
-                  <small>{conversation.projectName ?? 'Chat độc lập'}</small>
+                  <small>
+                    https://chatgpt.com{conversation.conversationPath} ·{' '}
+                    {conversation.projectName ?? 'Chat độc lập'}
+                  </small>
                 </button>
               ))}
               {(chatCatalog?.conversations.length ?? 0) > chatLimit && (

@@ -193,4 +193,13 @@ Verification for this checkpoint: `pnpm.cmd run verify` passed 240 Vitest tests,
 
 ## Last updated
 
-2026-07-22 13:18 +07:00.
+2026-07-22 13:48 +07:00.
+
+## 2026-07-22 - Manual ChatGPT catalog recovery and installed desktop parity
+
+- The manual ChatGPT refresh now accepts an explicit `openIfNeeded` flag. It first queries every eligible rendered ChatGPT tab; only when that attempt fails may it call bounded recovery to open `https://chatgpt.com/` once and retry discovery once. Startup polling and background archive sync never pass the flag.
+- The renderer displays each rendered sidebar title together with its canonical `https://chatgpt.com/...` URL. Selecting a row preserves the exact conversation ID/path, and the existing Codex project/thread picker remains independent and selectable.
+- Electron now takes a single-instance lock and focuses the existing window when a second launch is attempted, preventing duplicate startup recovery and duplicate browser-tab fan-out.
+- Regression evidence: 248 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, all workspace builds, unsigned Windows packaging, packaged smoke, native-host smoke, and packaged restart acceptance passed.
+- Installed acceptance after update: clicking the refresh action returned three rendered entries (`Giải thích UUID`, `Hỗ trợ phát triển phần mềm`, and `Phương án viết app WhatsApp, cuộc trò chuyện trong dự án app whatapp, Công việc`) with canonical paths; selecting the first set the exact conversation ID `6a60618a-ec88-83ec-800c-1da420fe5de3`. Codex local discovery showed eight projects, including `ai-manga-upscaler` with five visible thread titles after expansion. No ChatGPT message was submitted.
+- The current installer was applied over the existing per-user install without deleting app data, and the refreshed shortcut at `C:\Users\a\Desktop\Codex Context Bridge.lnk` is open.

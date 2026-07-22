@@ -35,6 +35,7 @@ import { createChatHistoryTransferBundle } from './chat-history-transfer';
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const trustedRendererIds = new Set<number>();
 let projectDatabase: SqliteDatabase | undefined;
+let mainWindow: BrowserWindow | undefined;
 
 const applicationDataOverride = process.env.CODEX_CONTEXT_BRIDGE_APP_DATA;
 if (applicationDataOverride) app.setPath('appData', path.resolve(applicationDataOverride));
@@ -50,9 +51,13 @@ function createWindow(): void {
       preload: path.join(currentDirectory, 'preload.cjs'),
     },
   });
+  mainWindow = window;
   const rendererId = window.webContents.id;
   trustedRendererIds.add(rendererId);
-  window.on('closed', () => trustedRendererIds.delete(rendererId));
+  window.on('closed', () => {
+    trustedRendererIds.delete(rendererId);
+    if (mainWindow === window) mainWindow = undefined;
+  });
 
   void window.loadFile(path.join(currentDirectory, '../renderer/index.html'));
 }
@@ -294,7 +299,18 @@ async function startDesktop(): Promise<void> {
   });
 }
 
-void startDesktop().catch((error: unknown) => {
-  console.error('DESKTOP_START_FAILED', error);
+const singleInstanceLock = app.requestSingleInstanceLock();
+if (!singleInstanceLock) {
   app.quit();
-});
+} else {
+  app.on('second-instance', () => {
+    const window = mainWindow ?? BrowserWindow.getAllWindows()[0];
+    if (!window) return;
+    if (window.isMinimized()) window.restore();
+    window.focus();
+  });
+  void startDesktop().catch((error: unknown) => {
+    console.error('DESKTOP_START_FAILED', error);
+    app.quit();
+  });
+}

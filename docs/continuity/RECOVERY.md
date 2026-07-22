@@ -118,7 +118,12 @@ pnpm.cmd run prepare:internal-beta -- --verify=pass --uat=pass --package-smoke=p
 - Keep mock evidence labeled fixture-only; rerun the separate live Codex spike before claiming production acceptance in a new environment.
 - Native health now requires the shared `CHATGPT_CONTENT_VERSION`; an old service worker is reported as `EXTENSION_VERSION_MISMATCH`/degraded and must be reloaded before discovery or account transfer.
 - Account transfer uses only locally stored rendered history, scans it for secret-like content before transfer, persists the effect, and never silently uploads a ZIP. A new-chat effect may transition to an existing SPA conversation only after rendered capture proves the matching approved user payload.
+- Manual ChatGPT catalog refresh is the only discovery path allowed to open the allowlisted home page; it performs one bounded open and one retry. Background polling remains no-open, and Electron enforces one desktop instance per user data directory.
 
 ## Blockers and safe alternatives
 
 `CODEX-SDK-001`, `EXT-PERM-001`, and `BROWSER-LIVE-001` are resolved. There is no active P0/P1 blocker in the accepted internal-beta scope. The current Windows build is unsigned, store publication is deferred, and destructive clean-install/live-browser reruns remain intentionally excluded while the user installation is active.
+
+## 2026-07-22 manual catalog recovery
+
+The installed desktop build was older than the fresh package, so its renderer did not contain the current catalog path. The new build separates manual recovery from background discovery: a user click can open `https://chatgpt.com/` once and retry rendered sidebar discovery once; timers never open tabs. The installed build was updated in place and live DOM-only acceptance returned three titled canonical links and selectable Codex projects without sending a message.

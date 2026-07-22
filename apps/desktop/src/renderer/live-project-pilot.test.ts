@@ -278,6 +278,7 @@ describe('Live Project Pilot renderer', () => {
     });
 
     expect(container.textContent).toContain('MVP planning');
+    expect(container.textContent).toContain('https://chatgpt.com/g/chat-project/c/conversation-1');
     expect(container.textContent).toContain('Codex task 5');
     expect(container.textContent).not.toContain('Codex task 6');
     await act(async () => {
@@ -285,6 +286,7 @@ describe('Live Project Pilot renderer', () => {
       await Promise.resolve();
     });
     expect(discoverChatGpt).toHaveBeenCalledTimes(2);
+    expect(discoverChatGpt).toHaveBeenLastCalledWith({ openIfNeeded: true });
     expect(container.textContent).toContain('Đã đọc 1 đoạn chat từ các tab ChatGPT đang mở');
     await act(async () => {
       button(container, 'Đồng bộ project Codex').click();
@@ -297,6 +299,26 @@ describe('Live Project Pilot renderer', () => {
       await Promise.resolve();
     });
     expect(container.textContent).toContain('Codex task 7');
+
+    act(() => button(container, 'MVP planning').click());
+    act(() => button(container, 'Codex task 1').click());
+    act(() => button(container, 'Dùng yêu cầu mẫu').click());
+    await act(async () => {
+      button(container, 'Tạo Live Project Pilot').click();
+      await Promise.resolve();
+    });
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.createPilot).toHaveBeenLastCalledWith({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: SAMPLE_PILOT_OBJECTIVE,
+      destination: {
+        mode: 'existing',
+        conversationId: 'conversation-1',
+        conversationPath: '/g/chat-project/c/conversation-1',
+      },
+      codexDestination: { mode: 'existing-thread', threadMappingId: 'mapping-1' },
+    });
   });
 
   it('explains how to recover when the persisted conversation is unavailable', async () => {

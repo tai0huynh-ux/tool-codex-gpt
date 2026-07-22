@@ -25,6 +25,7 @@ import {
   type ProjectListResponse,
   type ProjectViewResponse,
   type PilotCreateInput,
+  type PilotDiscoverChatGptInput,
   type PilotListResponse,
   type PilotViewResponse,
   type RepositoryInput,
@@ -51,7 +52,7 @@ export interface ContextBridgeDesktopApi {
   startWorkflow(projectId: string): Promise<WorkflowViewResponse>;
   cancelWorkflow(workflowRunId: string): Promise<WorkflowViewResponse>;
   listPilots(projectId?: string): Promise<PilotListResponse>;
-  discoverPilotChatGpt(): Promise<ChatGptDiscoveryResponse>;
+  discoverPilotChatGpt(options?: PilotDiscoverChatGptInput): Promise<ChatGptDiscoveryResponse>;
   listPilotCodexTargets(): Promise<CodexTargetCatalogResponse>;
   createPilot(input: PilotCreateInput): Promise<PilotViewResponse>;
   inspectPilotChatGpt(pilotId: string): Promise<PilotViewResponse>;
@@ -133,9 +134,9 @@ const api: ContextBridgeDesktopApi = {
         ...(projectId ? { projectId } : {}),
       })) as unknown,
     ),
-  discoverPilotChatGpt: async () =>
+  discoverPilotChatGpt: async (options) =>
     chatGptDiscoveryResponseSchema.parse(
-      (await ipcRenderer.invoke(pilotIpcChannels.discoverChatGpt)) as unknown,
+      (await ipcRenderer.invoke(pilotIpcChannels.discoverChatGpt, options ?? {})) as unknown,
     ),
   listPilotCodexTargets: async () =>
     codexTargetCatalogResponseSchema.parse(
