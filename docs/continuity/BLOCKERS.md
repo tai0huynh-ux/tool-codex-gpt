@@ -117,3 +117,13 @@
 - Large archive path: the ZIP is complete and revealable, but automatic browser file upload is intentionally not claimed. The renderer stops at `manual_attachment_required`.
 - Secret path: detected private-key, token, authorization, or credential-like text blocks the transfer before any ChatGPT effect is approved.
 - Remaining external dependency: the rebuilt unpacked Edge extension and authenticated user-opened ChatGPT tab must be reloaded so the content-version handshake succeeds.
+
+## EXTENSION-RELOAD-002
+
+- Status: pending manual Edge reload after the latest build.
+- First observed: 2026-07-22
+- Reproduction: native health falls back to `EXTENSION_LEGACY_COMPATIBILITY`; count-only `conversation.discover` times out while Edge is running the pre-build service worker.
+- Root cause: the user reloaded the unpacked extension before the current compatibility/catalog build completed, so the running MV3 service worker remained stale.
+- Resolution in code: versioned health is backward-compatible, legacy catalog responses are normalized and filtered, navigation paths no longer parse as conversation IDs, and packaging can use a separate artifact root when Windows holds the previous unpacked output.
+- Evidence: 246 Vitest tests, workflow/Chromium E2E, all workspace builds, unsigned package, packaged smoke, native-host smoke, and fixture-only packaged restart acceptance pass. The installed bridge reports connected legacy until Edge reloads the current `apps/chatgpt-extension/dist` build.
+- Next action: press Reload for extension `ccchffnkidpolmnnlonbnakjjmphfdjp` in `edge://extensions/`, then reload/open the authenticated ChatGPT tabs and rerun count-only discovery. Do not send a message during this check.

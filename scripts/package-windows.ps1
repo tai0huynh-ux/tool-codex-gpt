@@ -2,6 +2,11 @@ $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $artifactRoot = Join-Path $repositoryRoot 'artifacts'
+$desktopArtifactRoot = if ($env:CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT) {
+  (Resolve-Path -LiteralPath $env:CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT).Path
+} else {
+  Join-Path $artifactRoot 'desktop'
+}
 $extensionRoot = Join-Path $artifactRoot 'extension'
 $extensionZip = Join-Path $extensionRoot 'codex-context-bridge-extension-0.1.0.zip'
 
@@ -14,7 +19,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Workspace build failed before desktop packaging.' }
   & pnpm.cmd --filter '@codex-context-bridge/desktop' run dist:win
   if ($LASTEXITCODE -ne 0) { throw 'Desktop packaging failed.' }
-  $unpackedRoot = Join-Path $artifactRoot 'desktop/win-unpacked'
+  $unpackedRoot = Join-Path $desktopArtifactRoot 'win-unpacked'
   $nativeHostExecutable = Join-Path $unpackedRoot 'resources/CodexContextBridgeNativeHost.exe'
   $nativeHostManifestDirectory = Join-Path $unpackedRoot 'native-messaging'
   $nativeHostManifest = Join-Path $nativeHostManifestDirectory 'com.codex_context_bridge.host.json'
@@ -31,7 +36,7 @@ try {
 
   Compress-Archive -Path (Join-Path $repositoryRoot 'apps/chatgpt-extension/dist/*') -DestinationPath $extensionZip -Force
 
-  $installer = Join-Path $artifactRoot 'desktop/Codex-Context-Bridge-0.1.0-x64-setup.exe'
+  $installer = Join-Path $desktopArtifactRoot 'Codex-Context-Bridge-0.1.0-x64-setup.exe'
   $blockmap = "$installer.blockmap"
   $signature = Get-AuthenticodeSignature -LiteralPath $installer
   $resolvedArtifactRoot = (Resolve-Path -LiteralPath $artifactRoot).Path.TrimEnd('\')

@@ -16,7 +16,9 @@ function anchorPath(anchor: HTMLAnchorElement): string | undefined {
     const href = anchor.getAttribute('href');
     if (!href) return undefined;
     const url = new URL(href, 'https://chatgpt.com');
-    if (url.origin !== 'https://chatgpt.com' || url.search || url.hash) return undefined;
+    if (url.origin !== 'https://chatgpt.com') return undefined;
+    // ChatGPT may decorate rendered sidebar links with UI-only query/hash data.
+    // Conversation identity remains the canonical pathname.
     return url.pathname;
   } catch {
     return undefined;

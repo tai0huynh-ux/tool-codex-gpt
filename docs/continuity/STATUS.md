@@ -139,6 +139,15 @@ Redirect-loop/local-catalog hardening is now included in this checkpoint: backgr
 
 The canonical destination checkpoint supersedes the earlier baseline: 70 targeted tests passed; `pnpm.cmd run verify` passed 219 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, and all workspace builds; internal-beta UAT, Windows packaging, packaged/native-host smoke, and fixture-only packaged restart acceptance also passed.
 
+## 2026-07-22 compatibility/catalog checkpoint
+
+- Shared ChatGPT path parsing now rejects `/library`, `/projects`, `/scheduled`, and `/plugins`; root and Project conversation paths remain valid.
+- Legacy rendered catalogs are normalized before schema validation: UI navigation links are dropped, query/hash decorations are removed, and `conversationId` is derived from the canonical pathname.
+- Native health accepts old extension requests but reports `EXTENSION_LEGACY_COMPATIBILITY` instead of hiding a stale service worker.
+- Packaging supports `CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT` so a locked prior unpacked artifact can be left untouched while a fresh package is produced.
+- Verification: format, lint, strict typecheck, 246 Vitest tests, 2 workflow fixture E2E, 2 Chromium fixture E2E, workspace build, unsigned NSIS package, packaged smoke, native-host smoke, and fixture-only packaged restart acceptance all passed.
+- Remaining live step: reload the current unpacked Edge extension and open ChatGPT tabs; no authenticated submit or Codex write has been performed.
+
 ## Chat history archive MVP checkpoint
 
 - Exact existing ChatGPT conversations can be archived from rendered DOM snapshots into SQLite; duplicate content hashes create no duplicate revision, updated content creates a new immutable revision, and exports remain isolated to the selected project.

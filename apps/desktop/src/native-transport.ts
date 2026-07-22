@@ -160,7 +160,10 @@ export function createNativeDesktopBridgeService(
   const now = options.now ?? Date.now;
   const randomId = options.randomId ?? randomUUID;
 
-  async function execute(operation: LocalTransportOperation): Promise<LocalTransportResult> {
+  async function executeWithTimeout(
+    operation: LocalTransportOperation,
+    operationTimeoutMs: number,
+  ): Promise<LocalTransportResult> {
     let capability: string;
     try {
       capability = readNativeCapability(options.capabilityPath);
@@ -180,7 +183,10 @@ export function createNativeDesktopBridgeService(
         socket.destroy();
         work();
       };
-      const timer = setTimeout(() => finish(() => reject(new Error('REQUEST_TIMEOUT'))), timeoutMs);
+      const timer = setTimeout(
+        () => finish(() => reject(new Error('REQUEST_TIMEOUT'))),
+        operationTimeoutMs,
+      );
       socket.once('connect', () => {
         socket.write(
           encodeNativeMessage({
@@ -189,7 +195,7 @@ export function createNativeDesktopBridgeService(
             nonce: randomId(),
             capability,
             sentAt: new Date(sentAt).toISOString(),
-            expiresAt: new Date(sentAt + Math.min(timeoutMs, 60_000)).toISOString(),
+            expiresAt: new Date(sentAt + Math.min(operationTimeoutMs, 60_000)).toISOString(),
             operation,
           }),
         );
@@ -216,22 +222,40 @@ export function createNativeDesktopBridgeService(
     });
   }
 
+  const execute = (operation: LocalTransportOperation): Promise<LocalTransportResult> =>
+    executeWithTimeout(operation, timeoutMs);
+
   return {
     async getStatus(): Promise<TransportStatus> {
       try {
-        const result = await execute({
-          type: 'bridge.health',
-          contentVersion: CHATGPT_CONTENT_VERSION,
-        });
+        const probeTimeoutMs = Math.min(timeoutMs, 2_500);
+        const result = await Promise.any([
+          executeWithTimeout(
+            { type: 'bridge.health', contentVersion: CHATGPT_CONTENT_VERSION },
+            probeTimeoutMs,
+          ),
+          executeWithTimeout({ type: 'bridge.health' }, probeTimeoutMs),
+        ]);
         if (result.type !== 'bridge.health.result') throw new Error('TRANSPORT_DISCONNECTED');
         return {
           transport: 'native_messaging',
           state: result.status === 'ready' ? 'connected' : 'degraded',
           permissionActive: options.permissionActive,
+          ...(result.status === 'ready' && !result.contentVersion
+            ? { lastErrorCode: 'EXTENSION_LEGACY_COMPATIBILITY' }
+            : {}),
           ...(result.status === 'degraded' ? { lastErrorCode: 'CHATGPT_CONTENT_NOT_READY' } : {}),
         };
       } catch (error) {
-        const code = error instanceof Error ? error.message : 'TRANSPORT_DISCONNECTED';
+        const aggregateErrors = error instanceof AggregateError ? error.errors : [error];
+        const codes = aggregateErrors.map((item) =>
+          item instanceof Error ? item.message : 'TRANSPORT_DISCONNECTED',
+        );
+        const code =
+          codes.find((item) => item === 'SCHEMA_INVALID') ??
+          codes.find((item) => item === 'REQUEST_TIMEOUT') ??
+          codes[0] ??
+          'TRANSPORT_DISCONNECTED';
         return {
           transport: 'native_messaging',
           state: code === 'SCHEMA_INVALID' ? 'degraded' : 'disconnected',

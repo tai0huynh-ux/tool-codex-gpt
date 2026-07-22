@@ -51,4 +51,26 @@ describe('rendered ChatGPT conversation discovery', () => {
       ).conversations,
     ).toHaveLength(1);
   });
+
+  it('canonicalizes sidebar links decorated with query strings or fragments', () => {
+    document.body.innerHTML = `
+      <a href="/c/conversation-1?model=gpt-5">Query chat</a>
+      <a href="/g/project-1/c/conversation-2#latest">Project chat</a>`;
+
+    expect(
+      discoverRenderedConversations(
+        document,
+        new URL('https://chatgpt.com/') as unknown as Location,
+      ).conversations,
+    ).toEqual([
+      expect.objectContaining({
+        conversationId: 'conversation-1',
+        conversationPath: '/c/conversation-1',
+      }),
+      expect.objectContaining({
+        conversationId: 'conversation-2',
+        conversationPath: '/g/project-1/c/conversation-2',
+      }),
+    ]);
+  });
 });

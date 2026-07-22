@@ -1509,3 +1509,23 @@ The post-build count-only live rerun confirmed `bridge.health: ready`, but `conv
 ### Next action
 
 Publish this checkpoint, reload the unpacked Edge extension and existing ChatGPT tabs manually, then rerun count-only discovery. The separate live pilot remains paused for action-time confirmation of payload `75cae5042832…428bae39`; after any confirmed ChatGPT send, stop again for the independent Codex workspace-write approval.
+
+## 2026-07-22 - Legacy catalog compatibility and package staging fix
+
+### Goal
+
+Make the current extension tolerate old service-worker/catalog responses without accepting ChatGPT navigation links as conversations, and finish a reproducible Windows package despite a locked previous unpacked artifact.
+
+### Changes
+
+Fixed the shared pathname parser so a missing `c` marker cannot turn `/library` into a conversation ID. Added strict regression coverage for navigation and Project/root conversation routes. Added extension-side catalog normalization that accepts only a valid top-level catalog, canonicalizes ChatGPT paths, derives the authoritative conversation ID, preserves safe metadata, and drops malformed/navigation entries. Health probes remain backward-compatible but expose legacy compatibility.
+
+Added an optional `CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT` staging root to the Electron builder, Windows package script, packaged smoke, and packaged restart acceptance. This avoids deleting a previous unpacked Electron tree while Windows Defender or a running process still holds one of its files.
+
+### Verification
+
+Format, lint, strict typecheck, 246 Vitest tests, two workflow fixture tests, two Chromium fixture tests, and all workspace builds passed. The fresh unsigned package under `artifacts/desktop-current-final`, packaged smoke, native-host smoke, and fixture-only packaged restart acceptance passed with zero renderer runtime errors.
+
+### Remaining live step
+
+The installed bridge currently reports `EXTENSION_LEGACY_COMPATIBILITY` and discovery times out because the current Edge extension service worker was not reloaded after this build. Reload extension `ccchffnkidpolmnnlonbnakjjmphfdjp` and the open ChatGPT tabs, then rerun discovery without sending.

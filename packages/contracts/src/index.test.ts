@@ -5,6 +5,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   assistedChatGptPreviewSchema,
+  chatGptConversationIdFromPath,
   localTransportOperationSchema,
   validateContextBridgeResponse,
   validateContextPack,
@@ -344,5 +345,16 @@ describe('assisted page operations', () => {
         approvalId: 'approval-1',
       }),
     ).toThrow();
+  });
+});
+
+describe('ChatGPT conversation paths', () => {
+  it('rejects navigation paths while accepting root and project conversations', () => {
+    expect(chatGptConversationIdFromPath('/library')).toBeUndefined();
+    expect(chatGptConversationIdFromPath('/projects')).toBeUndefined();
+    expect(chatGptConversationIdFromPath('/scheduled')).toBeUndefined();
+    expect(chatGptConversationIdFromPath('/plugins')).toBeUndefined();
+    expect(chatGptConversationIdFromPath('/c/conversation-1')).toBe('conversation-1');
+    expect(chatGptConversationIdFromPath('/g/project-1/c/conversation-1')).toBe('conversation-1');
   });
 });

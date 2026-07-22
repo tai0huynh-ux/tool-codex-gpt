@@ -79,6 +79,52 @@ describe('extension operation executor', () => {
     expect(sendMessage).toHaveBeenCalledTimes(3);
   });
 
+  it('filters legacy navigation links and repairs conversation identity from its path', async () => {
+    const sendMessage = vi.fn(() =>
+      Promise.resolve({
+        conversations: [
+          {
+            conversationId: 'wrong-id',
+            conversationPath: '/library',
+            title: 'Library',
+            current: false,
+          },
+          {
+            conversationId: 'also-wrong',
+            conversationPath: '/c/real-conversation?from=sidebar#message',
+            title: 'Real conversation',
+            current: true,
+          },
+        ],
+        capturedAt: '2026-07-21T08:00:00.000Z',
+        truncated: false,
+      }),
+    );
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+
+    const result = await executor.execute({ type: 'conversation.discover' });
+    expect(result).toMatchObject({ type: 'conversation.discover.result' });
+    if (result.type === 'conversation.discover.result') {
+      expect(result.catalog.conversations).toEqual([
+        {
+          conversationId: 'real-conversation',
+          conversationPath: '/c/real-conversation',
+          title: 'Real conversation',
+          current: true,
+        },
+      ]);
+    }
+  });
+
+  it('fails closed when a legacy catalog has a malformed top-level shape', async () => {
+    const sendMessage = vi.fn(() => Promise.resolve({ conversations: [] }));
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+
+    await expect(executor.execute({ type: 'conversation.discover' })).rejects.toThrow(
+      'CHATGPT_DISCOVERY_FAILED',
+    );
+  });
+
   it('does not let an unresponsive ChatGPT tab block discovery', async () => {
     vi.useFakeTimers();
     try {
@@ -117,6 +163,7 @@ describe('extension operation executor', () => {
     ).resolves.toEqual({
       type: 'bridge.health.result',
       status: 'degraded',
+      contentVersion: '1.0',
     });
   });
 
@@ -129,6 +176,7 @@ describe('extension operation executor', () => {
     ).resolves.toEqual({
       type: 'bridge.health.result',
       status: 'ready',
+      contentVersion: '1.0',
     });
     expect(sendMessage).toHaveBeenCalledWith(30, {
       type: 'bridge-ping',
@@ -145,6 +193,18 @@ describe('extension operation executor', () => {
     ).resolves.toEqual({
       type: 'bridge.health.result',
       status: 'degraded',
+      contentVersion: '1.0',
+    });
+  });
+
+  it('accepts the legacy health request while reporting the current content version', async () => {
+    const sendMessage = vi.fn(() => Promise.resolve({ ready: true, contentVersion: '1.0' }));
+    const executor = createExtensionOperationExecutor(tabs({ sendMessage }));
+
+    await expect(executor.execute({ type: 'bridge.health' })).resolves.toEqual({
+      type: 'bridge.health.result',
+      status: 'ready',
+      contentVersion: '1.0',
     });
   });
 

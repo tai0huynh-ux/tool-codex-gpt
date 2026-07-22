@@ -1,4 +1,5 @@
 import {
+  CHATGPT_CONTENT_VERSION,
   chatGptConversationIdFromPath,
   chatGptRenderedCatalogSchema,
   localTransportOperationSchema,
@@ -139,12 +140,78 @@ function messageFor(operation: LocalTransportOperation): unknown {
   }
 }
 
+function canonicalConversationPath(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.length === 0) return undefined;
+  try {
+    const parsed = new URL(value, 'https://chatgpt.com');
+    if (parsed.origin !== 'https://chatgpt.com') return undefined;
+    return parsed.pathname;
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizeRenderedCatalog(response: unknown): ChatGptRenderedCatalog {
+  if (!response || typeof response !== 'object' || Array.isArray(response)) {
+    throw new Error('CHATGPT_DISCOVERY_INVALID_RESPONSE');
+  }
+  const rawCatalog = response as Record<string, unknown>;
+  if (
+    !Array.isArray(rawCatalog.conversations) ||
+    typeof rawCatalog.capturedAt !== 'string' ||
+    typeof rawCatalog.truncated !== 'boolean'
+  ) {
+    throw new Error('CHATGPT_DISCOVERY_INVALID_RESPONSE');
+  }
+
+  const conversations: ChatGptRenderedCatalog['conversations'] = [];
+  for (const rawConversation of rawCatalog.conversations) {
+    if (!rawConversation || typeof rawConversation !== 'object' || Array.isArray(rawConversation)) {
+      continue;
+    }
+    const value = rawConversation as Record<string, unknown>;
+    const conversationPath = canonicalConversationPath(value.conversationPath);
+    const conversationId = conversationPath
+      ? chatGptConversationIdFromPath(conversationPath)
+      : undefined;
+    if (!conversationPath || !conversationId) continue;
+
+    const title =
+      typeof value.title === 'string' && value.title.trim().length > 0
+        ? value.title.trim().slice(0, 300)
+        : `Chat ${conversationId.slice(0, 12)}`;
+    const projectId =
+      typeof value.projectId === 'string' && value.projectId.trim().length > 0
+        ? value.projectId.trim().slice(0, 512)
+        : undefined;
+    const projectName =
+      typeof value.projectName === 'string' && value.projectName.trim().length > 0
+        ? value.projectName.trim().slice(0, 300)
+        : undefined;
+
+    conversations.push({
+      conversationId,
+      conversationPath,
+      title,
+      ...(projectId ? { projectId } : {}),
+      ...(projectName ? { projectName } : {}),
+      current: value.current === true,
+    });
+  }
+
+  return chatGptRenderedCatalogSchema.parse({
+    conversations,
+    capturedAt: rawCatalog.capturedAt,
+    truncated: rawCatalog.truncated,
+  });
+}
+
 function resultFor(operation: LocalTransportOperation, response: unknown): LocalTransportResult {
   switch (operation.type) {
     case 'conversation.discover':
       return localTransportResultSchema.parse({
         type: 'conversation.discover.result',
-        catalog: response,
+        catalog: normalizeRenderedCatalog(response),
       });
     case 'conversation.capture':
       return localTransportResultSchema.parse({
@@ -209,7 +276,7 @@ async function discoverAcrossTabs(
           );
         }),
       ]);
-      return chatGptRenderedCatalogSchema.parse(response);
+      return normalizeRenderedCatalog(response);
     } finally {
       if (timer) clearTimeout(timer);
     }
@@ -305,7 +372,15 @@ export function createExtensionOperationExecutor(tabs: BrowserTabs): {
       const operation = localTransportOperationSchema.parse(input);
       const availableTabs = await tabs.query({ url: 'https://chatgpt.com/*' });
       if (operation.type === 'bridge.health') {
-        return healthAcrossTabs(tabs, availableTabs, operation.contentVersion);
+        const result = await healthAcrossTabs(
+          tabs,
+          availableTabs,
+          operation.contentVersion ?? CHATGPT_CONTENT_VERSION,
+        );
+        return localTransportResultSchema.parse({
+          ...result,
+          contentVersion: CHATGPT_CONTENT_VERSION,
+        });
       }
       if (operation.type === 'conversation.discover') {
         return discoverAcrossTabs(tabs, availableTabs);

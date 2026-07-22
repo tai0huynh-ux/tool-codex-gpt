@@ -158,7 +158,7 @@ export function chatGptConversationIdFromPath(path: string): string | undefined 
     }
     const segments = parsed.pathname.split('/').filter(Boolean);
     const conversationMarker = segments.lastIndexOf('c');
-    return conversationMarker === segments.length - 2
+    return conversationMarker >= 0 && conversationMarker === segments.length - 2
       ? segments[conversationMarker + 1]
       : undefined;
   } catch {
@@ -264,7 +264,9 @@ export const localTransportOperationSchema = z.discriminatedUnion('type', [
   z
     .object({
       type: z.literal('bridge.health'),
-      contentVersion: z.literal(CHATGPT_CONTENT_VERSION),
+      // Omitted only for compatibility with extension builds published before
+      // the rendered-content version handshake was introduced.
+      contentVersion: z.literal(CHATGPT_CONTENT_VERSION).optional(),
     })
     .strict(),
   z.object({ type: z.literal('conversation.discover') }).strict(),
@@ -389,6 +391,7 @@ export const localTransportResultSchema = z.discriminatedUnion('type', [
     .object({
       type: z.literal('bridge.health.result'),
       status: z.enum(['ready', 'degraded']),
+      contentVersion: z.literal(CHATGPT_CONTENT_VERSION).optional(),
     })
     .strict(),
   z

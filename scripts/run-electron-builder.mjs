@@ -11,7 +11,14 @@ const repositoryRoot = path.resolve(import.meta.dirname, '..');
 const require = createRequire(import.meta.url);
 const desktopDirectory = path.join(repositoryRoot, 'apps/desktop');
 const cliPath = require.resolve('electron-builder/cli.js', { paths: [desktopDirectory] });
-const result = spawnSync(process.execPath, [cliPath, ...process.argv.slice(2)], {
+const outputOverride = environment.CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT
+  ? path.resolve(environment.CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT)
+  : undefined;
+const builderArguments = [
+  ...process.argv.slice(2),
+  ...(outputOverride ? [`--config.directories.output=${outputOverride}`] : []),
+];
+const result = spawnSync(process.execPath, [cliPath, ...builderArguments], {
   env: environment,
   stdio: 'inherit',
 });

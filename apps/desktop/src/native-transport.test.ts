@@ -98,4 +98,48 @@ describe('native host runtime', () => {
       lastErrorCode: 'TRANSPORT_DISCONNECTED',
     });
   });
+
+  it('falls back to the legacy health shape while keeping the stale extension visible', async () => {
+    const paths = temporaryPaths();
+    ensureNativeCapability(paths.capabilityPath);
+    const extensionInput = new PassThrough();
+    const extensionOutput = new PassThrough();
+    const host = await startNativeHostServer({
+      ...paths,
+      extensionInput,
+      extensionOutput,
+      timeoutMs: 200,
+    });
+    const decoder = new NativeMessageDecoder();
+    extensionOutput.on('data', (chunk: Buffer) => {
+      for (const input of decoder.push(chunk)) {
+        const request = input as {
+          requestId: string;
+          operation: { type: string; contentVersion?: string };
+        };
+        if (request.operation.contentVersion) continue;
+        extensionInput.write(
+          encodeNativeMessage({
+            protocolVersion: '1.0',
+            requestId: request.requestId,
+            ok: true,
+            result: { type: 'bridge.health.result', status: 'ready' },
+          }),
+        );
+      }
+    });
+    const desktop = createNativeDesktopBridgeService({
+      ...paths,
+      permissionActive: true,
+      timeoutMs: 200,
+    });
+
+    await expect(desktop.getStatus()).resolves.toEqual({
+      transport: 'native_messaging',
+      state: 'connected',
+      permissionActive: true,
+      lastErrorCode: 'EXTENSION_LEGACY_COMPATIBILITY',
+    });
+    await host.close();
+  });
 });

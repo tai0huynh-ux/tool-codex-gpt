@@ -9,13 +9,10 @@ import { createRequire } from 'node:module';
 import { _electron as electron } from '@playwright/test';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const executable = path.join(
-  root,
-  'artifacts',
-  'desktop',
-  'win-unpacked',
-  'CodexContextBridge.exe',
-);
+const desktopArtifactRoot = process.env.CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT
+  ? path.resolve(process.env.CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT)
+  : path.join(root, 'artifacts', 'desktop');
+const executable = path.join(desktopArtifactRoot, 'win-unpacked', 'CodexContextBridge.exe');
 const stamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
 const outputRoot = path.join(root, 'artifacts', 'pilot-restart-acceptance', stamp);
 const appData = await mkdtemp(path.join(tmpdir(), 'context-bridge-pilot-restart-app-'));

@@ -1,9 +1,16 @@
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
-$executable = Join-Path $repositoryRoot 'artifacts/desktop/win-unpacked/CodexContextBridge.exe'
-$nativeHostExecutable = Join-Path $repositoryRoot 'artifacts/desktop/win-unpacked/resources/CodexContextBridgeNativeHost.exe'
-$zipRuntimePath = Join-Path $repositoryRoot 'artifacts/desktop/win-unpacked/resources/app.asar/node_modules/fflate'
+$defaultArtifactDesktopRoot = Join-Path $repositoryRoot 'artifacts/desktop'
+$artifactDesktopRoot = if ($env:CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT) {
+  (Resolve-Path -LiteralPath $env:CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT).Path
+} else {
+  $defaultArtifactDesktopRoot
+}
+$unpackedRoot = Join-Path $artifactDesktopRoot 'win-unpacked'
+$executable = Join-Path $unpackedRoot 'CodexContextBridge.exe'
+$nativeHostExecutable = Join-Path $unpackedRoot 'resources/CodexContextBridgeNativeHost.exe'
+$zipRuntimePath = Join-Path $unpackedRoot 'resources/app.asar/node_modules/fflate'
 $profileRoot = Join-Path $env:TEMP "context-bridge-smoke-$([guid]::NewGuid().ToString('N'))"
 $appDataRoot = Join-Path $profileRoot 'appdata'
 $capabilityPath = Join-Path $appDataRoot 'Codex Context Bridge/native-transport-capability'
