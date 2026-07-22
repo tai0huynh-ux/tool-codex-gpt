@@ -146,7 +146,8 @@ The canonical destination checkpoint supersedes the earlier baseline: 70 targete
 - Native health accepts old extension requests but reports `EXTENSION_LEGACY_COMPATIBILITY` instead of hiding a stale service worker.
 - Packaging supports `CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT` so a locked prior unpacked artifact can be left untouched while a fresh package is produced.
 - Verification: format, lint, strict typecheck, 246 Vitest tests, 2 workflow fixture E2E, 2 Chromium fixture E2E, workspace build, unsigned NSIS package, packaged smoke, native-host smoke, and fixture-only packaged restart acceptance all passed.
-- Remaining live step: reload the current unpacked Edge extension and open ChatGPT tabs; no authenticated submit or Codex write has been performed.
+- Live Edge verification now passes: current-version health is connected without a legacy warning, rendered-only discovery returns three canonical conversations and no navigation entries, and the no-submit smoke inserts and clears its marker with `composerSent: false`.
+- No authenticated submit or Codex write has been performed.
 
 ## Chat history archive MVP checkpoint
 

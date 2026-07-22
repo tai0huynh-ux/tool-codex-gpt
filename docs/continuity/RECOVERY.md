@@ -60,7 +60,7 @@ Expected known-good baseline: formatting, lint, strict type-check, 228 or more V
 
 ## Exact next task
 
-Reload the rebuilt unpacked Edge extension (`ccchffnkidpolmnnlonbnakjjmphfdjp`) and authenticated ChatGPT tabs so the content-version handshake is current, then run a count-only `conversation.discover` check. The current installed host reports legacy compatibility until that reload. After discovery succeeds, use the persisted pilot account-transfer action: local archive creation and new-chat opening are automatic, but the inline bootstrap send still requires action-time confirmation. ZIPs larger than the safe inline budget remain explicit manual attachments; never infer upload or send acknowledgement from a prepared preview. The existing live payload `75cae5042832…428bae39` remains separately confirmation-gated.
+Use the persisted pilot account-transfer action only after action-time user confirmation. The current Edge extension health, rendered-only discovery, and no-submit smoke pass; local archive creation and new-chat opening are automatic, but the inline bootstrap send remains separately confirmation-gated. ZIPs larger than the safe inline budget remain explicit manual attachments; never infer upload or send acknowledgement from a prepared preview. The existing live payload `75cae5042832…428bae39` remains unsent.
 
 ## Expected files to modify
 

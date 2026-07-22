@@ -85,20 +85,19 @@
     "pnpm.cmd run test:pilot-packaged-restart passed fixture-only restart with zero renderer runtime errors",
     "Legacy ChatGPT catalog compatibility passed format, lint, strict typecheck, 246 Vitest tests, 2 workflow fixture E2E tests, 2 Chromium fixture E2E tests, and all workspace builds",
     "CODEX_CONTEXT_BRIDGE_DESKTOP_ARTIFACT_ROOT alternate Windows package staging passed unsigned packaging, packaged/native-host smoke, and fixture-only packaged restart with zero runtime errors",
-    "Installed ChatGPT no-submit smoke passed after the native-host runtime update; live count-only discovery still awaits the post-build Edge extension reload"
+    "Installed ChatGPT no-submit smoke passed after the native-host runtime update; live count-only discovery still awaits the post-build Edge extension reload",
+    "Post-reload live Edge health passed without legacy compatibility, rendered-only discovery returned 3 canonical conversations, and installed no-submit insert/clear passed with composerSent false"
   ],
   "knownFailures": [
-    "Post-build live ChatGPT discovery is not yet proven because Edge is still running the pre-build legacy service worker and must reload the current unpacked extension plus ChatGPT tabs",
     "Authenticated account-transfer send and automatic browser ZIP upload remain unverified and intentionally action-time/manual gated"
   ],
   "activeBlockers": [],
   "nextActions": [
-    "Reload the unpacked Edge extension and open ChatGPT tabs, then rerun count-only conversation discovery.",
     "Obtain action-time user confirmation for reviewed ChatGPT payload 75cae5042832…428bae39.",
     "After confirmation, submit exactly once and require rendered acknowledgement plus a valid structured response.",
     "Stop again for the separate repository-bound Codex workspace-write approval before any file changes.",
     "Keep ZIP attachment explicit until a separate safe production browser file-upload boundary is implemented and accepted."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-22T13:14:00.000+07:00"
+  "updatedAt": "2026-07-22T13:24:00.000+07:00"
 }

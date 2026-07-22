@@ -1529,3 +1529,9 @@ Format, lint, strict typecheck, 246 Vitest tests, two workflow fixture tests, tw
 ### Remaining live step
 
 The installed bridge currently reports `EXTENSION_LEGACY_COMPATIBILITY` and discovery times out because the current Edge extension service worker was not reloaded after this build. Reload extension `ccchffnkidpolmnnlonbnakjjmphfdjp` and the open ChatGPT tabs, then rerun discovery without sending.
+
+### Live acceptance after reload
+
+The user reloaded the current unpacked Edge extension and ChatGPT tabs. Native health then returned connected with no legacy warning. Count-only rendered discovery completed without timeout and returned three canonical conversation paths; `/library`, `/projects`, `/scheduled`, and `/plugins` were absent. The installed ChatGPT smoke passed current-version health, redacted capture, exact marker insertion, `composerSent: false`, and exact cleanup.
+
+No conversation title or message content was logged, no ChatGPT message was submitted, and no Codex write was approved.

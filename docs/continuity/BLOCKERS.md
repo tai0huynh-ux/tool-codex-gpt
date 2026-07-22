@@ -120,10 +120,10 @@
 
 ## EXTENSION-RELOAD-002
 
-- Status: pending manual Edge reload after the latest build.
+- Status: resolved by manual Edge reload and live no-submit verification.
 - First observed: 2026-07-22
 - Reproduction: native health falls back to `EXTENSION_LEGACY_COMPATIBILITY`; count-only `conversation.discover` times out while Edge is running the pre-build service worker.
 - Root cause: the user reloaded the unpacked extension before the current compatibility/catalog build completed, so the running MV3 service worker remained stale.
 - Resolution in code: versioned health is backward-compatible, legacy catalog responses are normalized and filtered, navigation paths no longer parse as conversation IDs, and packaging can use a separate artifact root when Windows holds the previous unpacked output.
-- Evidence: 246 Vitest tests, workflow/Chromium E2E, all workspace builds, unsigned package, packaged smoke, native-host smoke, and fixture-only packaged restart acceptance pass. The installed bridge reports connected legacy until Edge reloads the current `apps/chatgpt-extension/dist` build.
-- Next action: press Reload for extension `ccchffnkidpolmnnlonbnakjjmphfdjp` in `edge://extensions/`, then reload/open the authenticated ChatGPT tabs and rerun count-only discovery. Do not send a message during this check.
+- Evidence: after the user reloaded extension `ccchffnkidpolmnnlonbnakjjmphfdjp`, live health returned connected with no legacy error, count-only discovery returned three canonical conversations with no navigation entries, and the installed no-submit smoke passed insert/clear with `composerSent: false`.
+- Remaining boundary: authenticated ChatGPT submit and writable Codex execution still require their separate action-time approvals.
