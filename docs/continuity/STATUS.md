@@ -168,6 +168,8 @@ The canonical destination checkpoint supersedes the earlier baseline: 70 targete
 
 ## Latest commit
 
+`b9023dae0b8d352e2298740cd51ccaad0b2aa4d4` (`fix(chatgpt): normalize legacy conversation discovery`)
+
 ## Prior startup recovery evidence
 
 The rebuilt Windows package and packaged/native-host smoke passed. A real app-data renderer inspection displayed pilot `8ec5d3b7` as `Cần xác nhận lần gửi`; no ChatGPT message was resent or submitted. The targeted recovery set passed 36 tests, and `pnpm.cmd run verify` passed with 206 Vitest tests, two workflow fixture E2E tests, two Chromium fixture E2E tests, and all workspace builds.
@@ -176,7 +178,7 @@ Resolve current HEAD with `git rev-parse HEAD`; the state helper reports it with
 
 ## Latest successful push
 
-Resolve the published hash with `git rev-parse origin/main`; publication requires equality with HEAD.
+`b9023dae0b8d352e2298740cd51ccaad0b2aa4d4`; verify equality with `git rev-parse HEAD` and `git rev-parse origin/main`.
 
 ## Account transfer checkpoint - 2026-07-21
 
@@ -190,4 +192,4 @@ Verification for this checkpoint: `pnpm.cmd run verify` passed 240 Vitest tests,
 
 ## Last updated
 
-2026-07-20 01:11 +07:00.
+2026-07-22 13:18 +07:00.
