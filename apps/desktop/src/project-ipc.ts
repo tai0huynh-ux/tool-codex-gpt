@@ -210,6 +210,28 @@ function registrationInput(
   };
 }
 
+function reassignmentInput(
+  input: RepositoryInput,
+  existing: ReturnType<ProjectRegistry['findRepositoryByRoot']>,
+): RepositoryFingerprintInput & { branch?: string; worktreeRoot?: string } {
+  const merged: RepositoryFingerprintInput & { branch?: string; worktreeRoot?: string } = {
+    repoRoot: input.repoRoot,
+  };
+  const gitRemote = input.gitRemote ?? existing?.normalizedRemote;
+  const projectName = input.projectName ?? existing?.projectName;
+  const repositoryMarker = input.repositoryMarker ?? existing?.repositoryMarker;
+  const agentsHash = input.agentsHash ?? existing?.agentsHash;
+  const branch = input.branch ?? existing?.branch;
+  const worktreeRoot = input.worktreeRoot ?? existing?.worktreeRoot;
+  if (gitRemote) merged.gitRemote = gitRemote;
+  if (projectName) merged.projectName = projectName;
+  if (repositoryMarker) merged.repositoryMarker = repositoryMarker;
+  if (agentsHash) merged.agentsHash = agentsHash;
+  if (branch) merged.branch = branch;
+  if (worktreeRoot) merged.worktreeRoot = worktreeRoot;
+  return merged;
+}
+
 function bestProjectScore(
   registry: ProjectRegistry,
   projectId: string,
@@ -259,10 +281,17 @@ export function createProjectDesktopService(
       const project = registry.get(projectId);
       if (!project || project.archivedAt) throw new Error('PROJECT_NOT_FOUND');
       const score = bestProjectScore(registry, projectId, validatedRepository);
-      const registered = registry.registerRepository(
-        projectId,
-        registrationInput(validatedRepository),
-      );
+      const existing = registry.findRepositoryByRoot(validatedRepository.repoRoot);
+      const existingProject = existing ? registry.get(existing.projectId) : undefined;
+      const registered =
+        existing && existing.projectId !== projectId && existingProject?.archivedAt
+          ? registry.reassignRepository(
+              existing.id,
+              projectId,
+              reassignmentInput(validatedRepository, existing),
+            )
+          : registry.registerRepository(projectId, registrationInput(validatedRepository));
+      if (!registered) throw new Error('REPOSITORY_CREATE_FAILED');
       registry.recordMapping({
         projectId,
         repositoryId: registered.id,

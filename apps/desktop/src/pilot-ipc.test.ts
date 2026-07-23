@@ -537,6 +537,89 @@ describe('pilot desktop persistence', () => {
     database.close();
   });
 
+  it('persists a deterministic ChatGPT submit rejection as a failed pilot', async () => {
+    const database = openDatabase(':memory:');
+    const projects = new ProjectRegistry(database, () => '2026-07-19T08:00:00.000Z');
+    projects.create('Pilot', 'project-1');
+    projects.registerRepository('project-1', { repoRoot: 'C:/pilot' }, 'repository-1');
+    const workflows = new WorkflowEngine(database, {
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const codex = new FixtureCodexAdapter();
+    const execute = vi.fn<DesktopBridgeService['execute']>((operation) => {
+      if (operation.type === 'page.inspect') {
+        return Promise.resolve({
+          type: 'page.inspect.result',
+          inspection: {
+            page: { mode: 'new' },
+            composer: { available: true, readOnly: false },
+          },
+        });
+      }
+      if (operation.type === 'composer.insert') {
+        return Promise.resolve({
+          type: 'composer.insert.result',
+          inserted: true,
+          sent: false,
+          textHash: operation.payloadHash,
+        });
+      }
+      if (operation.type === 'page.status') {
+        return Promise.resolve({
+          type: 'page.status.result',
+          streaming: false,
+          structuredResponse: {
+            ok: false,
+            error: { code: 'MARKER_NOT_FOUND', message: 'Not found.' },
+          },
+        });
+      }
+      if (operation.type === 'composer.submit') {
+        return Promise.resolve({
+          type: 'composer.submit.result',
+          submitted: false,
+          code: 'HASH_MISMATCH',
+        });
+      }
+      return Promise.reject(new Error('NOT_USED'));
+    });
+    const service = createPilotDesktopService({
+      database,
+      projects,
+      workflows,
+      bridge: { ...bridge, execute },
+      codex,
+      router: new ResponseRouter(database, workflows, projects, codex),
+      now: () => '2026-07-19T08:00:00.000Z',
+    });
+    const created = await service.create({
+      projectId: 'project-1',
+      repositoryId: 'repository-1',
+      objective: 'Create a static site.',
+      destination: { mode: 'new' },
+    });
+    await service.prepareChatGpt(created.id);
+
+    const rejected = await service.approveChatGpt(created.id);
+
+    expect(rejected).toMatchObject({ status: 'failed', errorCode: 'HASH_MISMATCH' });
+    expect(workflows.getEffect(rejected.chatGptEffectId ?? '')).toMatchObject({ status: 'failed' });
+    expect(workflows.getRun(rejected.workflowRunId)).toMatchObject({
+      lastErrorCode: 'HASH_MISMATCH',
+    });
+
+    database
+      .prepare('UPDATE settings SET value_json = ? WHERE key = ?')
+      .run(
+        JSON.stringify({ ...rejected, status: 'chatgpt_confirmation_required' }),
+        `live-project-pilot:${rejected.id}`,
+      );
+    await expect(service.list('project-1')).resolves.toMatchObject([
+      { id: rejected.id, status: 'failed', errorCode: 'HASH_MISMATCH' },
+    ]);
+    database.close();
+  });
+
   it('resolves the current open ChatGPT conversation before persisting the pilot', async () => {
     const database = openDatabase(':memory:');
     const projects = new ProjectRegistry(database, () => '2026-07-19T08:00:00.000Z');

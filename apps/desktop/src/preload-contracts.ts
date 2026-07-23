@@ -26,7 +26,9 @@ export const workflowIpcChannels = {
   list: 'workflows:list',
   start: 'workflows:start',
   run: 'workflows:run',
+  rerun: 'workflows:rerun',
   cancel: 'workflows:cancel',
+  updateNotes: 'workflows:update-notes',
   delete: 'workflows:delete',
   logs: 'workflows:logs',
 } as const;
@@ -41,6 +43,7 @@ const ipcErrorCode = z.enum([
   'REPOSITORY_ALREADY_REGISTERED',
   'WORKFLOW_NOT_FOUND',
   'WORKFLOW_NOT_RUNNABLE',
+  'WORKFLOW_NOT_RERUNNABLE',
   'WORKFLOW_NOT_CANCELLABLE',
   'WORKFLOW_NOT_DELETABLE',
   'INTERNAL_ERROR',
@@ -174,8 +177,48 @@ const workflowDashboardSchema = z
         })
         .strict(),
     ),
+    operatorNotes: z
+      .array(
+        z
+          .object({
+            id: z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/),
+            target: z.enum(['chatgpt', 'codex']),
+            mode: z.enum(['once', 'repeat']),
+            text: z.string().min(1).max(10_000),
+            createdAt: z.iso.datetime(),
+          })
+          .strict(),
+      )
+      .max(50),
   })
   .strict();
+
+export const workflowNotesUpdateInputSchema = z
+  .object({
+    workflowRunId: z.string().min(1).max(256),
+    notes: z
+      .array(
+        z
+          .object({
+            id: z
+              .string()
+              .regex(/^[a-zA-Z0-9_-]{1,128}$/)
+              .optional(),
+            target: z.enum(['chatgpt', 'codex']),
+            mode: z.enum(['once', 'repeat']),
+            text: z.string().trim().min(1).max(10_000),
+          })
+          .strict(),
+      )
+      .max(50),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const ids = value.notes.flatMap((note) => (note.id ? [note.id] : []));
+    if (new Set(ids).size !== ids.length) {
+      context.addIssue({ code: 'custom', path: ['notes'], message: 'Duplicate note ID.' });
+    }
+  });
 
 export const workflowListResponseSchema = z.discriminatedUnion('ok', [
   success(z.array(workflowDashboardSchema)),
@@ -222,6 +265,7 @@ export type RepositoryPreviewResponse = z.infer<typeof repositoryPreviewResponse
 export type ChooseRootResponse = z.infer<typeof chooseRootResponseSchema>;
 export type WorkflowListResponse = z.infer<typeof workflowListResponseSchema>;
 export type WorkflowViewResponse = z.infer<typeof workflowViewResponseSchema>;
+export type WorkflowNotesUpdateInput = z.infer<typeof workflowNotesUpdateInputSchema>;
 export type WorkflowDeleteResponse = z.infer<typeof workflowDeleteResponseSchema>;
 export type WorkflowLogsResponse = z.infer<typeof workflowLogsResponseSchema>;
 export {

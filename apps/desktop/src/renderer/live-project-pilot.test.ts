@@ -67,7 +67,9 @@ function baseApi(): ContextBridgeDesktopApi {
     listWorkflows: vi.fn(),
     startWorkflow: vi.fn(),
     runWorkflow: vi.fn(),
+    rerunWorkflow: vi.fn(),
     cancelWorkflow: vi.fn(),
+    updateWorkflowNotes: vi.fn(),
     deleteWorkflow: vi.fn(),
     listWorkflowLogs: vi.fn().mockResolvedValue({ ok: true, value: [] }),
     listPilots: vi.fn().mockResolvedValue({
@@ -200,6 +202,28 @@ describe('Live Project Pilot renderer', () => {
     expect(container.textContent).toContain('Duyệt và gửi ChatGPT');
     expect(container.textContent).not.toContain('Duyệt và gửi Codex');
     expect(button(container, 'Duyệt và gửi ChatGPT')).toHaveProperty('disabled', false);
+  });
+
+  it('does not report ChatGPT submission success for a deterministic rejection', async () => {
+    api.approvePilotChatGpt = vi.fn().mockResolvedValue({
+      ok: true,
+      value: pilot({
+        status: 'failed',
+        chatGptPreview,
+        chatGptEffectId: 'effect-1',
+        errorCode: 'HASH_MISMATCH',
+      }),
+    });
+
+    await act(async () => {
+      button(container, 'Duyệt và gửi ChatGPT').click();
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).not.toContain(
+      'Explicit approval đã được dùng một lần để insert và submit ChatGPT.',
+    );
+    expect(container.textContent).toContain('HASH_MISMATCH');
   });
 
   it('confirms and deletes exactly one reviewed handoff through IPC', async () => {

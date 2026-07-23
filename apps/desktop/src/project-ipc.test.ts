@@ -128,6 +128,32 @@ describe('project desktop service', () => {
       rmSync(directory, { recursive: true, force: true });
     }
   });
+
+  it('moves an explicitly confirmed repository out of an archived project', async () => {
+    const { registry, close } = setupRegistry();
+    registry.archive('project-1');
+    const service = createProjectDesktopService(registry, () => null);
+
+    const confirmed = await Promise.resolve(
+      service.confirmRepository({
+        projectId: 'project-2',
+        repository: { repoRoot: 'C:/work/one', branch: 'release' },
+        confirmed: true,
+      }),
+    );
+
+    expect(confirmed.repositories).toContainEqual(
+      expect.objectContaining({
+        id: 'repository-1',
+        projectId: 'project-2',
+        canonicalRoot: 'c:/work/one',
+        branch: 'release',
+        normalizedRemote: 'https://github.com/acme/bridge',
+      }),
+    );
+    expect(registry.listRepositories('project-1')).toEqual([]);
+    close();
+  });
 });
 
 describe('project IPC boundary', () => {

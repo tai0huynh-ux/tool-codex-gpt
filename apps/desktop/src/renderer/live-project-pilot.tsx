@@ -338,7 +338,7 @@ export function LiveProjectPilot({
 
   const run = async (
     action: () => Promise<PilotViewResponse>,
-    successMessage: string,
+    successMessage: string | ((view: PilotView) => string),
   ): Promise<void> => {
     setBusy(true);
     const response = await action();
@@ -348,7 +348,9 @@ export function LiveProjectPilot({
       return;
     }
     replace(response.value);
-    setNotice(successMessage);
+    setNotice(
+      typeof successMessage === 'function' ? successMessage(response.value) : successMessage,
+    );
   };
 
   const refreshCodexCatalog = async (): Promise<void> => {
@@ -1217,7 +1219,12 @@ export function LiveProjectPilot({
                       onClick={() =>
                         void run(
                           () => window.contextBridgeDesktop.approvePilotChatGpt(selected.id),
-                          'Explicit approval đã được dùng một lần để insert và submit ChatGPT.',
+                          (view) =>
+                            view.status === 'chatgpt_dispatched'
+                              ? 'Explicit approval đã được dùng một lần để insert và submit ChatGPT.'
+                              : view.status === 'failed'
+                                ? `ChatGPT không được gửi; app đã dừng an toàn. ${view.errorCode ?? 'CHATGPT_SUBMIT_REJECTED'}`
+                                : 'Chưa xác nhận được kết quả gửi ChatGPT; app sẽ không tự gửi lại.',
                         )
                       }
                     >

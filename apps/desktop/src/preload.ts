@@ -39,6 +39,7 @@ import {
   type TransportOperationResponse,
   type TransportStatusResponse,
   type WorkflowListResponse,
+  type WorkflowNotesUpdateInput,
   type WorkflowDeleteResponse,
   type WorkflowLogsResponse,
   type WorkflowViewResponse,
@@ -59,7 +60,9 @@ export interface ContextBridgeDesktopApi {
   listWorkflows(projectId?: string): Promise<WorkflowListResponse>;
   startWorkflow(projectId: string): Promise<WorkflowViewResponse>;
   runWorkflow(workflowRunId: string): Promise<WorkflowViewResponse>;
+  rerunWorkflow(workflowRunId: string): Promise<WorkflowViewResponse>;
   cancelWorkflow(workflowRunId: string): Promise<WorkflowViewResponse>;
+  updateWorkflowNotes(input: WorkflowNotesUpdateInput): Promise<WorkflowViewResponse>;
   deleteWorkflow(workflowRunId: string): Promise<WorkflowDeleteResponse>;
   listWorkflowLogs(projectId?: string, limit?: number): Promise<WorkflowLogsResponse>;
   listPilots(projectId?: string): Promise<PilotListResponse>;
@@ -142,9 +145,17 @@ const api: ContextBridgeDesktopApi = {
     workflowViewResponseSchema.parse(
       (await ipcRenderer.invoke(workflowIpcChannels.run, { workflowRunId })) as unknown,
     ),
+  rerunWorkflow: async (workflowRunId) =>
+    workflowViewResponseSchema.parse(
+      (await ipcRenderer.invoke(workflowIpcChannels.rerun, { workflowRunId })) as unknown,
+    ),
   cancelWorkflow: async (workflowRunId) =>
     workflowViewResponseSchema.parse(
       (await ipcRenderer.invoke(workflowIpcChannels.cancel, { workflowRunId })) as unknown,
+    ),
+  updateWorkflowNotes: async (input) =>
+    workflowViewResponseSchema.parse(
+      (await ipcRenderer.invoke(workflowIpcChannels.updateNotes, input)) as unknown,
     ),
   deleteWorkflow: async (workflowRunId) =>
     workflowDeleteResponseSchema.parse(

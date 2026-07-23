@@ -145,6 +145,40 @@ describe('composer insertion', () => {
     expect(submitted).toBe(1);
   });
 
+  it('keeps one canonical hash after a ProseMirror multiline rewrite', async () => {
+    document.body.innerHTML = `
+      <form>
+        <div contenteditable="true" data-testid="prompt-textarea"></div>
+        <button type="submit" data-testid="send-button">Send</button>
+      </form>`;
+    const composer = document.querySelector<HTMLElement>('[contenteditable="true"]');
+    if (!composer) throw new Error('TEST_COMPOSER_NOT_FOUND');
+    composer.addEventListener('input', (event) => {
+      if (event instanceof InputEvent && event.data === text) {
+        composer.innerHTML = '<p>Header</p><p><br></p><p>Line one</p><p>Line two</p>';
+      }
+    });
+    let submitted = 0;
+    document.querySelector('form')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      submitted += 1;
+    });
+
+    const text = 'Header\n\nLine one\nLine two';
+    const textHash = await hashComposerText(text);
+    expect(insertComposerText(document, text)).toBe(true);
+    await expect(
+      inspectChatGptPage(document, new URL('https://chatgpt.com/') as unknown as Location),
+    ).resolves.toMatchObject({ composer: { textHash } });
+    await expect(
+      submitComposer(document, new URL('https://chatgpt.com/') as unknown as Location, textHash, {
+        mode: 'new',
+      }),
+    ).resolves.toEqual({ submitted: true, textHash });
+    expect(submitted).toBe(1);
+    expect(await clearComposerText(document, textHash)).toBe(true);
+  });
+
   it('blocks submit while streaming or when the semantic control is disabled', async () => {
     document.body.innerHTML = `
       <textarea id="prompt-textarea">Approved exact payload</textarea>

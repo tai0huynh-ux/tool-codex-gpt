@@ -10,7 +10,7 @@
   "lastCheckpoint": {
     "id": "P18-PILOT-001",
     "commit": "STATE_FILE_COMMIT",
-    "completedAt": "2026-07-22T19:17:00.000+07:00"
+    "completedAt": "2026-07-24T00:50:00.000+07:00"
   },
   "verifiedCommands": [
     "pnpm.cmd run verify",
@@ -96,19 +96,24 @@
     "Safe pilot deletion regression passed focused IPC/renderer tests: local cards delete in non-running states, ambiguous dispatching effects remain durable and never auto-resend, and codex_running deletion is blocked",
     "Full verification passed 261 Vitest tests, 2 workflow fixture tests, 2 Chromium fixture tests, strict formatting/lint/type-check, migrations parity, and all workspace builds",
     "Packaged and installed UI acceptance each passed 14/14 checks across 68 controls with zero runtime errors, including Codex catalog refresh/thread expansion, destination toggles, workflow controls, logs, and archive confirmation",
-    "Per-user installer update exited 0; installed ChatGPT no-submit smoke passed health ready, 2 captured messages, composerSent false, and exact composer cleanup"
+    "Per-user installer update exited 0; installed ChatGPT no-submit smoke passed health ready, 2 captured messages, composerSent false, and exact composer cleanup",
+    "Assisted Mode run/rerun/controlled-note focused and adjacent desktop tests passed 48 of 48",
+    "pnpm.cmd run verify passed with 271 Vitest tests, 2 workflow fixture tests, 2 Chromium fixture tests, strict formatting/lint/type-check, migration parity, and all workspace builds",
+    "pnpm.cmd run test:internal-beta-uat passed 46 targeted tests and 2 Chromium fixture flows; pnpm.cmd run test:project-pilot passed",
+    "pnpm.cmd run package:win, pnpm.cmd run smoke:packaged:win, and pnpm.cmd run test:pilot-packaged-restart passed with zero renderer runtime errors",
+    "Packaged UI acceptance artifacts/ui-acceptance/2026-07-23T17-46-28-027Z passed 16 of 16 checks across 79 controls, including run, stop, rerun, controlled-note add/delete, terminal cleanup, logs, and refresh"
   ],
   "knownFailures": [
     "Authenticated account-transfer send and automatic browser ZIP upload remain unverified and intentionally action-time/manual gated"
   ],
   "activeBlockers": [],
   "nextActions": [
+    "Use Chạy to reach the review gate and Chạy lại only when a cancelled or failed guided workflow needs a fresh run; review controlled notes before any later approved transfer.",
     "Obtain action-time user confirmation for reviewed ChatGPT payload 75cae5042832…428bae39.",
     "After confirmation, submit exactly once and require rendered acknowledgement plus a valid structured response.",
     "Stop again for the separate repository-bound Codex workspace-write approval before any file changes.",
-    "Keep ZIP attachment explicit until a separate safe production browser file-upload boundary is implemented and accepted.",
-    "Use the operator-note and bounded-context-picker controls for reviewed pilots; do not treat fixture or no-submit smoke as authenticated loop completion."
+    "Keep ZIP attachment explicit until a separate safe production browser file-upload boundary is implemented and accepted."
   ],
   "workingTreeExpectedClean": true,
-  "updatedAt": "2026-07-22T19:17:00.000+07:00"
+  "updatedAt": "2026-07-24T00:50:00.000+07:00"
 }

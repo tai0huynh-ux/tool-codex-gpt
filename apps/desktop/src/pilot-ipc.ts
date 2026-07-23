@@ -351,24 +351,31 @@ export function createPilotDesktopService(input: {
   };
 
   const recoverChatGptEffect = (view: PilotView): PilotView => {
-    if (view.chatGptEffectId) return view;
     if (
       !['chatgpt_ready', 'chatgpt_dispatched', 'chatgpt_confirmation_required'].includes(
         view.status,
-      )
+      ) &&
+      view.status !== 'failed'
     ) {
       return view;
     }
-    const effect = input.database
-      .prepare(
-        `SELECT id, status FROM workflow_effects
-         WHERE workflow_run_id = ? AND operation = 'send_chatgpt'
-         ORDER BY prepared_at DESC LIMIT 1`,
-      )
-      .get(view.workflowRunId) as ChatGptEffectRow | undefined;
+    const effect: ChatGptEffectRow | undefined = view.chatGptEffectId
+      ? input.workflows.getEffect(view.chatGptEffectId)
+      : (input.database
+          .prepare(
+            `SELECT id, status FROM workflow_effects
+             WHERE workflow_run_id = ? AND operation = 'send_chatgpt'
+             ORDER BY prepared_at DESC LIMIT 1`,
+          )
+          .get(view.workflowRunId) as ChatGptEffectRow | undefined);
     if (!effect) return view;
-    if (effect.status === 'prepared') return save({ ...view, chatGptEffectId: effect.id });
+    if (effect.status === 'prepared') {
+      return view.chatGptEffectId ? view : save({ ...view, chatGptEffectId: effect.id });
+    }
     if (effect.status === 'dispatching') {
+      if (view.chatGptEffectId === effect.id && view.status === 'chatgpt_confirmation_required') {
+        return view;
+      }
       return save({
         ...view,
         chatGptEffectId: effect.id,
@@ -376,13 +383,25 @@ export function createPilotDesktopService(input: {
       });
     }
     if (effect.status === 'acknowledged') {
+      if (view.chatGptEffectId === effect.id && view.status === 'chatgpt_dispatched') return view;
       return save({ ...view, chatGptEffectId: effect.id, status: 'chatgpt_dispatched' });
+    }
+    const errorCode =
+      input.workflows.getRun(view.workflowRunId)?.lastErrorCode ??
+      view.errorCode ??
+      'CHATGPT_TRANSFER_FAILED';
+    if (
+      view.chatGptEffectId === effect.id &&
+      view.status === 'failed' &&
+      view.errorCode === errorCode
+    ) {
+      return view;
     }
     return save({
       ...view,
       chatGptEffectId: effect.id,
       status: 'failed',
-      errorCode: 'CHATGPT_TRANSFER_FAILED',
+      errorCode,
     });
   };
 
@@ -1035,7 +1054,11 @@ export function createPilotDesktopService(input: {
         ...view,
         chatGptEffectId: effect.id,
         status:
-          submitted.status === 'submitted' ? 'chatgpt_dispatched' : 'chatgpt_confirmation_required',
+          submitted.status === 'submitted'
+            ? 'chatgpt_dispatched'
+            : submitted.status === 'failed'
+              ? 'failed'
+              : 'chatgpt_confirmation_required',
         ...(submitted.status === 'failed' ? { errorCode: submitted.code } : {}),
       });
     },
@@ -1294,7 +1317,12 @@ export function createPilotDesktopService(input: {
           ...view,
           accountTransfer: {
             ...currentTransfer,
-            status: submitted.status === 'submitted' ? 'dispatching' : 'confirmation_required',
+            status:
+              submitted.status === 'submitted'
+                ? 'dispatching'
+                : submitted.status === 'failed'
+                  ? 'failed'
+                  : 'confirmation_required',
             ...(submitted.status === 'failed' ? { errorCode: submitted.code } : {}),
           },
         });

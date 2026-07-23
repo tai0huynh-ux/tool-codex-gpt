@@ -70,6 +70,40 @@ describe('ProjectRegistry', () => {
     database.close();
   });
 
+  it('reassigns a repository from an archived project without changing its identity', () => {
+    const database = openDatabase(':memory:');
+    const registry = new ProjectRegistry(database, () => timestamp);
+    registry.create('Archived', 'project-archived');
+    registry.create('Active', 'project-active');
+    const repository = registry.registerRepository(
+      'project-archived',
+      {
+        repoRoot: 'C:/work/bridge',
+        gitRemote: 'https://github.com/acme/bridge.git',
+        branch: 'main',
+      },
+      'repository-1',
+    );
+    registry.archive('project-archived');
+
+    expect(registry.findRepositoryByRoot('c:\\WORK\\bridge')?.id).toBe(repository.id);
+    expect(
+      registry.reassignRepository(repository.id, 'project-active', {
+        repoRoot: repository.canonicalRoot,
+        ...(repository.normalizedRemote ? { gitRemote: repository.normalizedRemote } : {}),
+        ...(repository.branch ? { branch: repository.branch } : {}),
+      }),
+    ).toMatchObject({
+      id: repository.id,
+      projectId: 'project-active',
+      canonicalRoot: repository.canonicalRoot,
+      fingerprint: repository.fingerprint,
+    });
+    expect(registry.listRepositories('project-archived')).toEqual([]);
+    expect(registry.listRepositories('project-active')).toHaveLength(1);
+    database.close();
+  });
+
   it('persists mapping evidence and supersedes earlier confirmations atomically', () => {
     const database = openDatabase(':memory:');
     const registry = new ProjectRegistry(database, () => timestamp);

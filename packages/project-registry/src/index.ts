@@ -305,6 +305,46 @@ export class ProjectRegistry {
     return (this.database.prepare(sql).all(projectId) as RepositoryRow[]).map(mapRepository);
   }
 
+  public findRepositoryByRoot(repoRoot: string): RegisteredRepository | undefined {
+    const canonicalRoot = canonicalizeRepositoryRoot(
+      requireText(repoRoot, 'REPOSITORY_ROOT_REQUIRED'),
+    );
+    const row = this.database
+      .prepare('SELECT * FROM repositories WHERE canonical_root = ?')
+      .get(canonicalRoot) as RepositoryRow | undefined;
+    return row ? mapRepository(row) : undefined;
+  }
+
+  public reassignRepository(
+    id: string,
+    projectId: string,
+    input: RepositoryFingerprintInput & { branch?: string; worktreeRoot?: string },
+  ): RegisteredRepository | undefined {
+    const identity = createRepositoryFingerprint(normalizedRepositoryInput(input));
+    const result = this.database
+      .prepare(
+        `UPDATE repositories SET
+          project_id = ?, canonical_root = ?, normalized_remote = ?, project_name = ?,
+          repository_marker = ?, agents_hash = ?, fingerprint = ?, branch = ?,
+          worktree_root = ?, archived_at = NULL, updated_at = ?
+        WHERE id = ?`,
+      )
+      .run(
+        projectId,
+        identity.repoRoot,
+        identity.gitRemote ?? null,
+        identity.projectName ?? null,
+        identity.repositoryMarker ?? null,
+        identity.agentsHash ?? null,
+        identity.fingerprint,
+        optionalText(input.branch),
+        input.worktreeRoot ? canonicalizeRepositoryRoot(input.worktreeRoot) : null,
+        this.now(),
+        id,
+      );
+    return result.changes === 0 ? undefined : this.getRepository(id);
+  }
+
   public refreshRepository(
     id: string,
     input: RepositoryFingerprintInput & { branch?: string; worktreeRoot?: string },

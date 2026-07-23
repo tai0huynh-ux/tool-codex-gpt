@@ -1,4 +1,4 @@
-/* global console, process */
+/* global console, document, process */
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -221,11 +221,53 @@ await check(
 );
 
 await check(
-  'delete-terminal-workflow',
+  'rerun-stopped-workflow',
   async () => {
-    const deleteButton = page.locator('.run-delete').first();
-    page.once('dialog', (dialog) => void dialog.accept());
-    await deleteButton.click();
+    await page.locator('[aria-label^="Chạy lại workflow"]').first().click();
+  },
+  async () =>
+    (await page.locator('.run-card.active .state-badge').textContent())?.trim() ===
+      'Review context' && (await page.locator('.run-card').count()) === 2,
+);
+
+await check(
+  'workflow-controlled-note-add-delete-stop',
+  async () => {
+    await page.getByLabel('Đích ghi chú workflow').selectOption('chatgpt');
+    await page.getByLabel('Chế độ ghi chú workflow').selectOption('repeat');
+    await page
+      .getByLabel('Ghi chú workflow', { exact: true })
+      .fill('Ghi chú acceptance có kiểm soát.');
+    await page.getByRole('button', { name: 'Thêm ghi chú', exact: true }).click();
+    await page.locator('.workflow-note-row').waitFor();
+    await page.locator('.workflow-note-row button').click();
+    await page.locator('.run-card.active [aria-label^="Dừng workflow"]').click();
+  },
+  async () => {
+    const active = page.locator('.run-card.active');
+    return (
+      (await page.locator('.workflow-note-row').count()) === 0 &&
+      (await active.locator('.state-badge').textContent())?.trim() === 'Cancelled' &&
+      (await active.locator('[aria-label^="Dừng workflow"]').isDisabled())
+    );
+  },
+);
+
+await check(
+  'delete-terminal-workflows',
+  async () => {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const deleteButton = page.locator('.run-delete:not([disabled])').first();
+      if ((await deleteButton.count()) === 0) return;
+      const beforeCount = await page.locator('.run-card').count();
+      page.once('dialog', (dialog) => void dialog.accept());
+      await deleteButton.click();
+      await page.waitForFunction(
+        (count) => document.querySelectorAll('.run-card').length < count,
+        beforeCount,
+      );
+    }
+    throw new Error('Terminal workflow cleanup exceeded its safety bound.');
   },
   async () => (await page.locator('.run-card').count()) === 0,
 );
@@ -299,3 +341,4 @@ await app.close();
 await rm(appData, { recursive: true, force: true });
 await rm(fixture, { recursive: true, force: true });
 console.log(JSON.stringify({ out, controls: inventory.length, results }, null, 2));
+if (results.some((item) => item.status === 'FAIL')) process.exitCode = 1;

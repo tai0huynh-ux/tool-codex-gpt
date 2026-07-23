@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { WorkflowState } from '@codex-context-bridge/contracts';
+import type { WorkflowNotesUpdateInput } from '../preload-contracts';
 import type { WorkflowDashboard, WorkflowLog } from '../workflow-ipc';
 
 const stateLabels: Record<WorkflowState, string> = {
@@ -26,6 +27,7 @@ const stateLabels: Record<WorkflowState, string> = {
 };
 
 const terminalStates = new Set<WorkflowState>(['finished', 'failed', 'cancelled']);
+const rerunnableStates = new Set<WorkflowState>(['failed', 'cancelled']);
 
 function tone(state: WorkflowState): string {
   if (state === 'finished' || state === 'codex_completed') return 'success';
@@ -68,6 +70,9 @@ export function WorkflowWorkspace({ projectId }: { projectId: string }): React.J
   const [logs, setLogs] = useState<WorkflowLog[]>([]);
   const [logNotice, setLogNotice] = useState('Chưa tải log.');
   const [logsBusy, setLogsBusy] = useState(false);
+  const [noteTarget, setNoteTarget] = useState<'chatgpt' | 'codex'>('codex');
+  const [noteMode, setNoteMode] = useState<'once' | 'repeat'>('once');
+  const [noteText, setNoteText] = useState('');
   const busy = Boolean(pendingKey);
 
   const selected = useMemo(
@@ -154,7 +159,25 @@ export function WorkflowWorkspace({ projectId }: { projectId: string }): React.J
     );
     setSelectedId(workflowRunId);
     setNotice(
-      'Workflow đã chuyển sang trạng thái chạy có hướng dẫn; chưa có dữ liệu nào được gửi.',
+      'Đã chuẩn bị ngữ cảnh và dừng tại bước Review context; chưa có dữ liệu nào được gửi.',
+    );
+  };
+
+  const rerun = async (workflowRunId: string): Promise<void> => {
+    setPendingKey(`rerun:${workflowRunId}`);
+    const response = await window.contextBridgeDesktop.rerunWorkflow(workflowRunId);
+    setPendingKey('');
+    if (!response.ok) {
+      setNotice(`${response.error.code}: ${response.error.message}`);
+      return;
+    }
+    setItems((current) => [
+      response.value,
+      ...current.filter((item) => item.run.id !== response.value.run.id),
+    ]);
+    setSelectedId(response.value.run.id);
+    setNotice(
+      `Đã tạo run mới ${shortId(response.value.run.id)} từ workflow đã dừng và dừng tại Review context; chưa gửi dữ liệu.`,
     );
   };
 
@@ -199,6 +222,47 @@ export function WorkflowWorkspace({ projectId }: { projectId: string }): React.J
     setNotice(`Đã xóa workflow ${shortId(workflowRunId)}. Audit log vẫn được bảo toàn.`);
   };
 
+  const updateNotes = async (
+    workflowRunId: string,
+    notes: WorkflowNotesUpdateInput['notes'],
+    successNotice: string,
+  ): Promise<boolean> => {
+    setPendingKey(`notes:${workflowRunId}`);
+    const response = await window.contextBridgeDesktop.updateWorkflowNotes({
+      workflowRunId,
+      notes,
+    });
+    setPendingKey('');
+    if (!response.ok) {
+      setNotice(`${response.error.code}: ${response.error.message}`);
+      return false;
+    }
+    setItems((current) =>
+      current.map((item) => (item.run.id === workflowRunId ? response.value : item)),
+    );
+    setSelectedId(workflowRunId);
+    setNotice(successNotice);
+    return true;
+  };
+
+  const addNote = async (): Promise<void> => {
+    if (!selected || !noteText.trim()) return;
+    const saved = await updateNotes(
+      selected.run.id,
+      [
+        ...selected.operatorNotes.map(({ id, target, mode, text }) => ({
+          id,
+          target,
+          mode,
+          text,
+        })),
+        { target: noteTarget, mode: noteMode, text: noteText.trim() },
+      ],
+      'Đã lưu ghi chú có kiểm soát; ghi chú chỉ xuất hiện trong phần review và chưa được gửi.',
+    );
+    if (saved) setNoteText('');
+  };
+
   const openLogs = (): void => {
     setLogsOpen(true);
     void loadLogs();
@@ -236,6 +300,7 @@ export function WorkflowWorkspace({ projectId }: { projectId: string }): React.J
         <nav className="run-list" aria-label="Workflow runs">
           {items.map((item) => {
             const terminal = terminalStates.has(item.run.state);
+            const rerunnable = rerunnableStates.has(item.run.state);
             const itemBusy = pendingKey.endsWith(`:${item.run.id}`);
             return (
               <article
@@ -259,11 +324,21 @@ export function WorkflowWorkspace({ projectId }: { projectId: string }): React.J
                 <div className="run-card-actions" aria-label={`Thao tác workflow ${item.run.id}`}>
                   <button
                     type="button"
-                    disabled={busy || item.run.state !== 'idle'}
-                    aria-label={`Chạy workflow ${item.run.id}`}
-                    onClick={() => void run(item.run.id)}
+                    disabled={busy || (item.run.state !== 'idle' && !rerunnable)}
+                    aria-label={
+                      rerunnable
+                        ? `Chạy lại workflow ${item.run.id}`
+                        : `Chạy workflow ${item.run.id}`
+                    }
+                    onClick={() => void (rerunnable ? rerun(item.run.id) : run(item.run.id))}
                   >
-                    {itemBusy && pendingKey.startsWith('run:') ? 'Đang chạy' : 'Chạy'}
+                    {itemBusy && pendingKey.startsWith('rerun:')
+                      ? 'Đang chạy lại'
+                      : itemBusy && pendingKey.startsWith('run:')
+                        ? 'Đang chạy'
+                        : rerunnable
+                          ? 'Chạy lại'
+                          : 'Chạy'}
                   </button>
                   <button
                     type="button"
@@ -340,6 +415,78 @@ export function WorkflowWorkspace({ projectId }: { projectId: string }): React.J
                   </strong>
                 </p>
               </div>
+              <div className="workflow-notes-editor" aria-label="Ghi chú có kiểm soát workflow">
+                <div className="workflow-notes-heading">
+                  <div>
+                    <span>OPERATOR NOTES</span>
+                    <strong>Ghi chú có kiểm soát</strong>
+                  </div>
+                  <small>Không tự gửi; chỉ đưa vào review sau khi bạn xem.</small>
+                </div>
+                <div className="workflow-note-controls">
+                  <select
+                    aria-label="Đích ghi chú workflow"
+                    value={noteTarget}
+                    onChange={(event) => setNoteTarget(event.target.value as 'chatgpt' | 'codex')}
+                  >
+                    <option value="chatgpt">Cho ChatGPT</option>
+                    <option value="codex">Cho Codex</option>
+                  </select>
+                  <select
+                    aria-label="Chế độ ghi chú workflow"
+                    value={noteMode}
+                    onChange={(event) => setNoteMode(event.target.value as 'once' | 'repeat')}
+                  >
+                    <option value="once">Một lần</option>
+                    <option value="repeat">Lặp lại</option>
+                  </select>
+                </div>
+                <textarea
+                  aria-label="Ghi chú workflow"
+                  maxLength={10_000}
+                  rows={3}
+                  value={noteText}
+                  onChange={(event) => setNoteText(event.target.value)}
+                  placeholder="Ví dụ: ưu tiên kiểm tra lỗi mobile trước"
+                />
+                <button
+                  type="button"
+                  disabled={busy || !noteText.trim()}
+                  onClick={() => void addNote()}
+                >
+                  Thêm ghi chú
+                </button>
+                <div className="workflow-note-list">
+                  {selected.operatorNotes.length === 0 && (
+                    <p className="empty-state">Chưa có ghi chú bổ sung.</p>
+                  )}
+                  {selected.operatorNotes.map((note) => (
+                    <div className="workflow-note-row" key={note.id}>
+                      <span>
+                        {note.target === 'chatgpt' ? 'CHATGPT' : 'CODEX'} ·{' '}
+                        {note.mode === 'repeat' ? 'LẶP LẠI' : 'MỘT LẦN'}
+                      </span>
+                      <strong>{note.text}</strong>
+                      <button
+                        type="button"
+                        aria-label={`Xóa ghi chú workflow ${note.id}`}
+                        disabled={busy}
+                        onClick={() =>
+                          void updateNotes(
+                            selected.run.id,
+                            selected.operatorNotes
+                              .filter((candidate) => candidate.id !== note.id)
+                              .map(({ id, target, mode, text }) => ({ id, target, mode, text })),
+                            'Đã xóa ghi chú khỏi workflow đang chọn.',
+                          )
+                        }
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
               {selected.recovery.map((item) => (
                 <div className="recovery-callout" key={item.effect.id}>
                   <strong>{item.action.replaceAll('_', ' ')}</strong>
@@ -357,7 +504,7 @@ export function WorkflowWorkspace({ projectId }: { projectId: string }): React.J
                 ))}
               </div>
               <p className="workflow-action-hint">
-                Chạy, dừng hoặc xóa trực tiếp trên từng workflow ở cột bên trái.
+                Chạy, dừng, chạy lại hoặc xóa trực tiếp trên từng workflow ở cột bên trái.
               </p>
             </>
           ) : (

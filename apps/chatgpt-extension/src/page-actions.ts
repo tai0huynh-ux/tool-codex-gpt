@@ -18,8 +18,67 @@ function findComposer(document: Document): HTMLElement | undefined {
     .find((candidate) => candidate !== null);
 }
 
+const composerBlockElements = new Set([
+  'ADDRESS',
+  'ARTICLE',
+  'ASIDE',
+  'BLOCKQUOTE',
+  'DIV',
+  'FOOTER',
+  'HEADER',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+  'LI',
+  'MAIN',
+  'NAV',
+  'OL',
+  'P',
+  'PRE',
+  'SECTION',
+  'UL',
+]);
+
+function serializeInlineNode(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? '';
+  if (!(node instanceof HTMLElement)) return '';
+  if (node.tagName === 'BR') return '\n';
+  return [...node.childNodes].map(serializeInlineNode).join('');
+}
+
+function isEmptyEditorBlock(element: HTMLElement): boolean {
+  return [...element.childNodes].every((node) => {
+    if (node.nodeType === Node.TEXT_NODE) return !(node.textContent ?? '').trim();
+    if (!(node instanceof HTMLElement)) return true;
+    return node.tagName === 'BR' || isEmptyEditorBlock(node);
+  });
+}
+
+function serializeContentEditable(composer: HTMLElement): string {
+  const lines: string[] = [];
+  let inline = '';
+  for (const node of composer.childNodes) {
+    if (node instanceof HTMLElement && composerBlockElements.has(node.tagName)) {
+      if (inline) {
+        lines.push(inline);
+        inline = '';
+      }
+      lines.push(isEmptyEditorBlock(node) ? '' : serializeInlineNode(node));
+      continue;
+    }
+    inline += serializeInlineNode(node);
+  }
+  if (inline || lines.length === 0) lines.push(inline);
+  return lines.join('\n');
+}
+
 function composerText(composer: HTMLElement): string {
-  return composer instanceof HTMLTextAreaElement ? composer.value : composer.textContent;
+  return composer instanceof HTMLTextAreaElement
+    ? composer.value
+    : serializeContentEditable(composer);
 }
 
 function setComposerText(composer: HTMLElement, text: string): boolean {

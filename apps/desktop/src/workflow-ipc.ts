@@ -14,13 +14,17 @@ export const workflowIpcChannels = {
   list: 'workflows:list',
   start: 'workflows:start',
   run: 'workflows:run',
+  rerun: 'workflows:rerun',
   cancel: 'workflows:cancel',
+  updateNotes: 'workflows:update-notes',
   delete: 'workflows:delete',
   logs: 'workflows:logs',
 } as const;
 
 const ipcIdSchema = z.string().min(1).max(256);
 const terminalStates = new Set<WorkflowRun['state']>(['finished', 'failed', 'cancelled']);
+const rerunnableStates = new Set<WorkflowRun['state']>(['failed', 'cancelled']);
+const WORKFLOW_NOTES_PREFIX = 'guided-workflow-notes:';
 const safeErrorCodeSchema = z
   .string()
   .min(1)
@@ -48,6 +52,38 @@ const diagnosticSchema = z
   })
   .strict();
 
+const workflowNoteIdSchema = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);
+export const workflowNoteInputSchema = z
+  .object({
+    id: workflowNoteIdSchema.optional(),
+    target: z.enum(['chatgpt', 'codex']),
+    mode: z.enum(['once', 'repeat']),
+    text: z.string().trim().min(1).max(10_000),
+  })
+  .strict();
+export const workflowOperatorNoteSchema = z
+  .object({
+    id: workflowNoteIdSchema,
+    target: z.enum(['chatgpt', 'codex']),
+    mode: z.enum(['once', 'repeat']),
+    text: z.string().min(1).max(10_000),
+    createdAt: z.iso.datetime(),
+  })
+  .strict();
+export const workflowNotesUpdateInputSchema = z
+  .object({
+    workflowRunId: ipcIdSchema,
+    notes: z.array(workflowNoteInputSchema).max(50),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const ids = value.notes.flatMap((note) => (note.id ? [note.id] : []));
+    if (new Set(ids).size !== ids.length) {
+      context.addIssue({ code: 'custom', path: ['notes'], message: 'Duplicate note ID.' });
+    }
+  });
+const workflowOperatorNotesSchema = z.array(workflowOperatorNoteSchema).max(50);
+
 export const workflowLogSchema = z
   .object({
     id: ipcIdSchema,
@@ -70,6 +106,7 @@ export const workflowDashboardSchema = z
     recovery: z.array(workflowRecoveryItemSchema),
     approvals: z.array(approvalSummarySchema),
     diagnostics: z.array(diagnosticSchema),
+    operatorNotes: workflowOperatorNotesSchema,
   })
   .strict();
 
@@ -85,6 +122,7 @@ const workflowErrorSchema = z
           'PROJECT_NOT_FOUND',
           'WORKFLOW_NOT_FOUND',
           'WORKFLOW_NOT_RUNNABLE',
+          'WORKFLOW_NOT_RERUNNABLE',
           'WORKFLOW_NOT_CANCELLABLE',
           'WORKFLOW_NOT_DELETABLE',
           'INTERNAL_ERROR',
@@ -117,6 +155,9 @@ export const workflowLogsResponseSchema = z.discriminatedUnion('ok', [
 
 export type WorkflowDashboard = z.infer<typeof workflowDashboardSchema>;
 export type WorkflowLog = z.infer<typeof workflowLogSchema>;
+export type WorkflowNoteInput = z.infer<typeof workflowNoteInputSchema>;
+export type WorkflowOperatorNote = z.infer<typeof workflowOperatorNoteSchema>;
+export type WorkflowNotesUpdateInput = z.infer<typeof workflowNotesUpdateInputSchema>;
 export type WorkflowListResponse = z.infer<typeof workflowListResponseSchema>;
 export type WorkflowViewResponse = z.infer<typeof workflowViewResponseSchema>;
 export type WorkflowDeleteResponse = z.infer<typeof workflowDeleteResponseSchema>;
@@ -126,7 +167,9 @@ export interface WorkflowDesktopService {
   list(projectId?: string): WorkflowDashboard[] | Promise<WorkflowDashboard[]>;
   start(projectId: string): WorkflowDashboard | Promise<WorkflowDashboard>;
   run(workflowRunId: string): WorkflowDashboard | Promise<WorkflowDashboard>;
+  rerun(workflowRunId: string): WorkflowDashboard | Promise<WorkflowDashboard>;
   cancel(workflowRunId: string): WorkflowDashboard | Promise<WorkflowDashboard>;
+  updateNotes(input: WorkflowNotesUpdateInput): WorkflowDashboard | Promise<WorkflowDashboard>;
   delete(workflowRunId: string): { workflowRunId: string } | Promise<{ workflowRunId: string }>;
   logs(projectId?: string, limit?: number): WorkflowLog[] | Promise<WorkflowLog[]>;
 }
@@ -154,6 +197,52 @@ interface AuditRow {
   created_at: string;
   workflow_run_id: string | null;
   run_error_code: string | null;
+}
+
+function workflowNotesKey(workflowRunId: string): string {
+  return `${WORKFLOW_NOTES_PREFIX}${workflowRunId}`;
+}
+
+function loadWorkflowNotes(
+  database: SqliteDatabase,
+  workflowRunId: string,
+): WorkflowOperatorNote[] {
+  const row = database
+    .prepare('SELECT value_json FROM settings WHERE key = ?')
+    .get(workflowNotesKey(workflowRunId)) as { value_json: string } | undefined;
+  return row ? workflowOperatorNotesSchema.parse(JSON.parse(row.value_json) as unknown) : [];
+}
+
+function saveWorkflowNotes(
+  database: SqliteDatabase,
+  workflowRunId: string,
+  notes: WorkflowOperatorNote[],
+  updatedAt: string,
+): void {
+  database
+    .prepare(
+      `INSERT INTO settings (key, value_json, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`,
+    )
+    .run(workflowNotesKey(workflowRunId), JSON.stringify(notes), updatedAt);
+}
+
+function mergeWorkflowNotes(
+  current: WorkflowOperatorNote[],
+  incoming: WorkflowNoteInput[],
+  createdAt: string,
+): WorkflowOperatorNote[] {
+  const existing = new Map(current.map((note) => [note.id, note]));
+  return incoming.map((note) => {
+    const prior = note.id ? existing.get(note.id) : undefined;
+    return {
+      id: prior?.id ?? randomUUID(),
+      target: note.target,
+      mode: note.mode,
+      text: note.text.trim(),
+      createdAt: prior?.createdAt ?? createdAt,
+    };
+  });
 }
 
 const pilotWorkflowReferenceSchema = z.looseObject({
@@ -203,6 +292,7 @@ function dashboard(
         : [],
     ),
     diagnostics,
+    operatorNotes: loadWorkflowNotes(database, run.id),
   });
 }
 
@@ -249,7 +339,9 @@ function referencesPilot(database: SqliteDatabase, workflowRunId: string): boole
 export function createWorkflowDesktopService(
   database: SqliteDatabase,
   workflows: WorkflowEngine,
+  options: { now?: () => string } = {},
 ): WorkflowDesktopService {
+  const now = options.now ?? (() => new Date().toISOString());
   const auditBlocked = (run: WorkflowRun, eventType: string, errorCode: string): void => {
     appendAuditEvent(database, {
       id: randomUUID(),
@@ -261,6 +353,29 @@ export function createWorkflowDesktopService(
       resourceId: run.id,
       outcome: 'blocked',
       details: { errorCode },
+    });
+  };
+
+  const advanceToReview = (
+    run: WorkflowRun,
+    eventType: 'workflow.started_by_user' | 'workflow.rerun_started_by_user',
+    payload: Record<string, unknown> = {},
+  ): WorkflowRun => {
+    let current = workflows.transition(run.id, {
+      toState: 'project_resolving',
+      eventType,
+      actor: 'user',
+      payload,
+    });
+    current = workflows.transition(current.id, {
+      toState: 'building_context',
+      eventType: 'workflow.context.building',
+      actor: 'workflow.service',
+    });
+    return workflows.transition(current.id, {
+      toState: 'context_review_required',
+      eventType: 'workflow.context.review_required',
+      actor: 'workflow.service',
     });
   };
 
@@ -298,12 +413,41 @@ export function createWorkflowDesktopService(
         auditBlocked(run, 'workflow.start.blocked', 'WORKFLOW_NOT_RUNNABLE');
         throw new Error('WORKFLOW_NOT_RUNNABLE');
       }
-      const started = workflows.transition(run.id, {
-        toState: 'project_resolving',
-        eventType: 'workflow.started_by_user',
-        actor: 'user',
-      });
-      return dashboard(database, workflows, started);
+      const reviewed = database.transaction(() =>
+        advanceToReview(run, 'workflow.started_by_user'),
+      )();
+      return dashboard(database, workflows, reviewed);
+    },
+    rerun: (workflowRunId) => {
+      const source = workflows.getRun(workflowRunId);
+      if (!source) throw new Error('WORKFLOW_NOT_FOUND');
+      if (!rerunnableStates.has(source.state)) {
+        auditBlocked(source, 'workflow.rerun.blocked', 'WORKFLOW_NOT_RERUNNABLE');
+        throw new Error('WORKFLOW_NOT_RERUNNABLE');
+      }
+      const reviewed = database.transaction(() => {
+        const nonce = randomUUID();
+        const rerun = workflows.create({
+          projectId: source.projectId,
+          correlationId: `desktop:rerun:${nonce}`,
+          idempotencyKey: `desktop:rerun:${nonce}`,
+          maxIterations: source.maxIterations,
+          maxFailureRetries: source.maxFailureRetries,
+        });
+        const copiedAt = now();
+        const copiedNotes = loadWorkflowNotes(database, source.id).map((note) => ({
+          ...note,
+          id: randomUUID(),
+          createdAt: copiedAt,
+        }));
+        if (copiedNotes.length > 0) {
+          saveWorkflowNotes(database, rerun.id, copiedNotes, copiedAt);
+        }
+        return advanceToReview(rerun, 'workflow.rerun_started_by_user', {
+          sourceWorkflowRunId: source.id,
+        });
+      })();
+      return dashboard(database, workflows, reviewed);
     },
     cancel: (workflowRunId) => {
       const run = workflows.getRun(workflowRunId);
@@ -323,6 +467,34 @@ export function createWorkflowDesktopService(
         throw error;
       }
       return dashboard(database, workflows, cancelled);
+    },
+    updateNotes: (rawInput) => {
+      const input = workflowNotesUpdateInputSchema.parse(rawInput);
+      const run = workflows.getRun(input.workflowRunId);
+      if (!run) throw new Error('WORKFLOW_NOT_FOUND');
+      const updatedAt = now();
+      const notes = mergeWorkflowNotes(loadWorkflowNotes(database, run.id), input.notes, updatedAt);
+      database.transaction(() => {
+        saveWorkflowNotes(database, run.id, notes, updatedAt);
+        appendAuditEvent(database, {
+          id: randomUUID(),
+          eventType: 'workflow.notes.updated',
+          actor: 'user',
+          projectId: run.projectId,
+          correlationId: run.correlationId,
+          resourceType: 'workflow_run',
+          resourceId: run.id,
+          outcome: 'allowed',
+          details: {
+            noteCount: notes.length,
+            chatgptCount: notes.filter((note) => note.target === 'chatgpt').length,
+            codexCount: notes.filter((note) => note.target === 'codex').length,
+            repeatCount: notes.filter((note) => note.mode === 'repeat').length,
+          },
+          createdAt: updatedAt,
+        });
+      })();
+      return dashboard(database, workflows, run);
     },
     delete: (workflowRunId) => {
       const run = workflows.getRun(workflowRunId);
@@ -354,6 +526,7 @@ export function createWorkflowDesktopService(
         });
         database.prepare('DELETE FROM workflow_effects WHERE workflow_run_id = ?').run(run.id);
         database.prepare('DELETE FROM user_approvals WHERE workflow_run_id = ?').run(run.id);
+        database.prepare('DELETE FROM settings WHERE key = ?').run(workflowNotesKey(run.id));
         database
           .prepare('DELETE FROM chatgpt_response_receipts WHERE workflow_run_id = ?')
           .run(run.id);
@@ -410,6 +583,7 @@ function codeFor(error: unknown): z.infer<typeof workflowErrorSchema>['error']['
   if (error.message === 'PROJECT_NOT_FOUND') return 'PROJECT_NOT_FOUND';
   if (error.message === 'WORKFLOW_NOT_FOUND') return 'WORKFLOW_NOT_FOUND';
   if (error.message === 'WORKFLOW_NOT_RUNNABLE') return 'WORKFLOW_NOT_RUNNABLE';
+  if (error.message === 'WORKFLOW_NOT_RERUNNABLE') return 'WORKFLOW_NOT_RERUNNABLE';
   if (error.message === 'WORKFLOW_NOT_CANCELLABLE') return 'WORKFLOW_NOT_CANCELLABLE';
   if (error.message === 'WORKFLOW_NOT_DELETABLE') return 'WORKFLOW_NOT_DELETABLE';
   return 'INTERNAL_ERROR';
@@ -470,10 +644,22 @@ export function registerWorkflowIpc(
     (input) => service.run((input as { workflowRunId: string }).workflowRunId),
   );
   register(
+    workflowIpcChannels.rerun,
+    z.object({ workflowRunId: ipcIdSchema }).strict(),
+    workflowViewResponseSchema,
+    (input) => service.rerun((input as { workflowRunId: string }).workflowRunId),
+  );
+  register(
     workflowIpcChannels.cancel,
     z.object({ workflowRunId: ipcIdSchema }).strict(),
     workflowViewResponseSchema,
     (input) => service.cancel((input as { workflowRunId: string }).workflowRunId),
+  );
+  register(
+    workflowIpcChannels.updateNotes,
+    workflowNotesUpdateInputSchema,
+    workflowViewResponseSchema,
+    (input) => service.updateNotes(input as WorkflowNotesUpdateInput),
   );
   register(
     workflowIpcChannels.delete,

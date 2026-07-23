@@ -12,6 +12,7 @@ const timestamp = '2026-07-18T11:00:00.000Z';
 function dashboard(
   state: WorkflowDashboard['run']['state'] = 'idle',
   id = 'workflow-1',
+  operatorNotes: WorkflowDashboard['operatorNotes'] = [],
 ): WorkflowDashboard {
   return {
     run: {
@@ -43,6 +44,7 @@ function dashboard(
     recovery: [],
     approvals: [],
     diagnostics: [],
+    operatorNotes,
   };
 }
 
@@ -51,6 +53,8 @@ describe('guided workflow renderer', () => {
   let root: Root;
   let api: ContextBridgeDesktopApi;
   let cancelWorkflow: ReturnType<typeof vi.fn<ContextBridgeDesktopApi['cancelWorkflow']>>;
+  let rerunWorkflow: ReturnType<typeof vi.fn<ContextBridgeDesktopApi['rerunWorkflow']>>;
+  let updateWorkflowNotes: ReturnType<typeof vi.fn<ContextBridgeDesktopApi['updateWorkflowNotes']>>;
 
   beforeEach(async () => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -58,6 +62,26 @@ describe('guided workflow renderer', () => {
     document.body.append(container);
     root = createRoot(container);
     cancelWorkflow = vi.fn().mockResolvedValue({ ok: true, value: dashboard('cancelled') });
+    rerunWorkflow = vi.fn().mockResolvedValue({
+      ok: true,
+      value: dashboard('context_review_required', 'rerun-1'),
+    });
+    updateWorkflowNotes = vi.fn((input) =>
+      Promise.resolve({
+        ok: true as const,
+        value: dashboard(
+          'idle',
+          input.workflowRunId,
+          input.notes.map((note, index) => ({
+            id: note.id ?? `note-${String(index + 1)}`,
+            target: note.target,
+            mode: note.mode,
+            text: note.text.trim(),
+            createdAt: timestamp,
+          })),
+        ),
+      }),
+    );
     api = {
       getTransportStatus: vi.fn().mockResolvedValue({
         ok: true,
@@ -76,8 +100,12 @@ describe('guided workflow renderer', () => {
         value: [dashboard(), dashboard('cancelled', 'workflow-2')],
       }),
       startWorkflow: vi.fn().mockResolvedValue({ ok: true, value: dashboard() }),
-      runWorkflow: vi.fn().mockResolvedValue({ ok: true, value: dashboard('project_resolving') }),
+      runWorkflow: vi
+        .fn()
+        .mockResolvedValue({ ok: true, value: dashboard('context_review_required') }),
+      rerunWorkflow,
       cancelWorkflow,
+      updateWorkflowNotes,
       deleteWorkflow: vi
         .fn()
         .mockResolvedValue({ ok: true, value: { workflowRunId: 'workflow-1' } }),
@@ -155,6 +183,9 @@ describe('guided workflow renderer', () => {
     });
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(api.runWorkflow).toHaveBeenCalledWith('workflow-1');
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(api.runWorkflow).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain('Review context');
     const stop = container.querySelector('[aria-label="Dừng workflow workflow-1"]');
     expect(stop).toBeInstanceOf(HTMLButtonElement);
     if (!(stop instanceof HTMLButtonElement)) throw new Error('Stop button missing.');
@@ -174,6 +205,91 @@ describe('guided workflow renderer', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(api.deleteWorkflow).toHaveBeenCalledWith('workflow-1');
     expect(container.textContent).toContain('Cancelled');
+  });
+
+  it('offers rerun after stop and selects the newly created reviewed run', async () => {
+    const stop = container.querySelector('[aria-label="Dừng workflow workflow-1"]');
+    expect(stop).toBeInstanceOf(HTMLButtonElement);
+    if (!(stop instanceof HTMLButtonElement)) throw new Error('Stop button missing.');
+    await act(async () => {
+      stop.click();
+      await Promise.resolve();
+    });
+
+    const rerun = container.querySelector('[aria-label="Chạy lại workflow workflow-1"]');
+    expect(rerun).toBeInstanceOf(HTMLButtonElement);
+    if (!(rerun instanceof HTMLButtonElement)) throw new Error('Rerun button missing.');
+    await act(async () => {
+      rerun.click();
+      await Promise.resolve();
+    });
+
+    expect(rerunWorkflow).toHaveBeenCalledTimes(1);
+    expect(rerunWorkflow).toHaveBeenCalledWith('workflow-1');
+    expect(container.textContent).toContain('Run rerun-1');
+    expect(container.textContent).toContain('Review context');
+    expect(
+      container.querySelector('.run-card.active [aria-pressed="true"]')?.textContent,
+    ).toContain('rerun-1');
+  });
+
+  it('adds and deletes controlled notes through the exact typed workflow IPC payload', async () => {
+    const target = container.querySelector('[aria-label="Đích ghi chú workflow"]');
+    const mode = container.querySelector('[aria-label="Chế độ ghi chú workflow"]');
+    const textarea = container.querySelector('[aria-label="Ghi chú workflow"]');
+    expect(target).toBeInstanceOf(HTMLSelectElement);
+    expect(mode).toBeInstanceOf(HTMLSelectElement);
+    expect(textarea).toBeInstanceOf(HTMLTextAreaElement);
+    if (
+      !(target instanceof HTMLSelectElement) ||
+      !(mode instanceof HTMLSelectElement) ||
+      !(textarea instanceof HTMLTextAreaElement)
+    ) {
+      throw new Error('Controlled note editor missing.');
+    }
+
+    await act(async () => {
+      target.value = 'chatgpt';
+      target.dispatchEvent(new Event('change', { bubbles: true }));
+      mode.value = 'repeat';
+      mode.dispatchEvent(new Event('change', { bubbles: true }));
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        'value',
+      )?.set;
+      if (!valueSetter) throw new Error('Textarea setter missing.');
+      Reflect.apply(valueSetter, textarea, ['  Ghi chú thử  ']);
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      await Promise.resolve();
+    });
+    const add = [...container.querySelectorAll('button')].find(
+      (button) => button.textContent === 'Thêm ghi chú',
+    );
+    expect(add).toBeInstanceOf(HTMLButtonElement);
+    if (!(add instanceof HTMLButtonElement)) throw new Error('Add note button missing.');
+    await act(async () => {
+      add.click();
+      await Promise.resolve();
+    });
+
+    expect(updateWorkflowNotes).toHaveBeenNthCalledWith(1, {
+      workflowRunId: 'workflow-1',
+      notes: [{ target: 'chatgpt', mode: 'repeat', text: 'Ghi chú thử' }],
+    });
+    expect(container.textContent).toContain('Ghi chú thử');
+
+    const remove = container.querySelector('[aria-label="Xóa ghi chú workflow note-1"]');
+    expect(remove).toBeInstanceOf(HTMLButtonElement);
+    if (!(remove instanceof HTMLButtonElement)) throw new Error('Delete note button missing.');
+    await act(async () => {
+      remove.click();
+      await Promise.resolve();
+    });
+    expect(updateWorkflowNotes).toHaveBeenNthCalledWith(2, {
+      workflowRunId: 'workflow-1',
+      notes: [],
+    });
   });
 
   it('opens the detailed log dialog with timestamp and error cause', async () => {

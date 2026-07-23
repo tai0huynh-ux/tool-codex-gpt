@@ -1617,3 +1617,25 @@ Focused pilot/project IPC and renderer tests passed (40 tests). `pnpm.cmd run ve
 ### Boundary
 
 No authenticated ChatGPT submission, account-transfer send, automatic browser ZIP upload, or writable production Codex run was performed. The real pilot `8ec5d3b7` remains untouched pending action-time confirmation immediately before any destructive card deletion.
+
+## 2026-07-24 00:50 +07:00 - Assisted Mode progression and rerun checkpoint
+
+### Goal
+
+Reproduce why clicking `Chạy` appeared to do nothing, make the safe guided flow progress, add controlled notes inside ASSISTED MODE, and support rerunning after a stop.
+
+### Root cause and implementation
+
+The click handler and IPC invocation were working. The service persisted only the `idle -> project_resolving` transition and returned, with no later workflow driver. The fix advances the run through `building_context` to the explicit `context_review_required` gate and records each transition as a durable event.
+
+`Chạy lại` is terminal-only for `cancelled`/`failed` runs. It creates a new workflow ID, preserves the old run and audit history, links the source run in the new event payload, and copies notes with new IDs. Per-workflow notes are persisted under the existing settings table, validated and trimmed at the IPC boundary, displayed as ChatGPT/Codex plus once/repeat review metadata, and audited only by bounded counts.
+
+The packaged acceptance harness now uses exact note labels, waits for card deletion to settle, and exits non-zero on any failed check so acceptance cannot pass on a printed failure.
+
+### Verification
+
+Focused workflow IPC/renderer plus adjacent desktop tests passed 48/48. `pnpm.cmd run verify` passed 271 Vitest tests, two workflow fixture tests, two Chromium fixture tests, migration parity, strict formatting/lint/type-check, and all workspace builds. Internal-beta UAT passed 46 tests plus two Chromium flows; project-pilot passed; Windows packaging, packaged smoke, fixture-only packaged restart, and packaged UI acceptance passed 16/16 with 79 controls and zero runtime errors. Node SQLite ABI was restored after packaging.
+
+### Boundary
+
+The new run path stops at human review. No authenticated ChatGPT send, automatic ZIP upload, or writable live Codex execution was performed or claimed.

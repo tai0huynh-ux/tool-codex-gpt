@@ -228,3 +228,15 @@ Verification for this checkpoint: `pnpm.cmd run verify` passed 240 Vitest tests,
 - Isolated and fixed the last UI acceptance failure: archive confirmation was not accepted by the harness. Added the archive renderer regression and expanded acceptance to 14 stateful checks across 68 controls.
 - Verification: 40 focused pilot/project renderer and IPC tests; `pnpm.cmd run verify` passed 261 Vitest tests, two workflow fixture tests, two Chromium fixture tests, and all workspace builds; internal-beta UAT 46 plus two Chromium flows; project-pilot integration; Windows package, packaged/native-host smoke, fixture restart, per-user silent installer update; packaged and installed UI acceptance 14/14.
 - Installed ChatGPT no-submit smoke passed with `health: ready`, two captured messages, `composerSent: false`, and exact marker cleanup. No authenticated ChatGPT submit, ZIP upload, account transfer, or writable live Codex run was performed.
+
+## 2026-07-24 - Assisted Mode run, rerun, and controlled notes checkpoint
+
+- Root cause of the reported no-op `Chạy` button: `workflows:run` received the click and persisted `workflow.started_by_user`, but the desktop service stopped at `project_resolving` and had no driver for later transitions.
+- `Chạy` now advances the same run through `project_resolving -> building_context -> context_review_required`, then stops at the mandatory human review gate. It never sends ChatGPT data or starts a writable Codex run.
+- `Chạy lại` is available for `cancelled` and `failed` runs. It creates a new run with a fresh ID, copies controlled notes with fresh IDs, links the source in the rerun event payload, and leaves the original terminal history immutable.
+- Assisted Mode now stores bounded per-workflow notes in SQLite with `ChatGPT/Codex` target and `Một lần/Lặp lại` mode. Notes are visible in review, trim and validate at IPC, and audit events record only counts (never note text).
+- Terminal workflow deletion removes that run's notes transactionally. The renderer prevents duplicate actions while pending and exposes exact run/stop/rerun/delete state.
+- Verification: `pnpm.cmd run verify` passed 271 Vitest tests, two workflow fixture tests, two Chromium fixture tests, strict formatting/lint/type-check, migration parity, and all workspace builds; internal-beta UAT passed 46 tests plus two Chromium flows; project-pilot passed; Windows packaging, packaged smoke, fixture-only packaged restart, and packaged UI acceptance passed.
+- Packaged UI evidence: `artifacts/ui-acceptance/2026-07-23T17-46-28-027Z/` recorded 79 controls and 16/16 checks, including Chạy, Dừng, Chạy lại, note add/delete, terminal cleanup, logs, and refresh with no runtime errors.
+
+Boundary remains unchanged: no authenticated ChatGPT submission, automatic ZIP upload, or writable production Codex run was performed.

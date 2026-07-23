@@ -68,6 +68,26 @@ type SubmitResult =
       code: 'DUPLICATE_EFFECT';
     };
 
+export async function insertComposerPayload(
+  document: Document,
+  location: Location,
+  request: Pick<InsertRequest, 'text' | 'payloadHash'>,
+): Promise<{ inserted: boolean; sent: false; textHash?: string }> {
+  if ((await hashComposerText(request.text)) !== request.payloadHash) {
+    return { inserted: false, sent: false };
+  }
+  const inserted = insertComposerText(document, request.text);
+  if (!inserted) return { inserted: false, sent: false };
+  // Let controlled editors finish their synchronous/microtask DOM rewrite before hashing the draft.
+  await Promise.resolve();
+  const inspection = await inspectChatGptPage(document, location);
+  return {
+    inserted: true,
+    sent: false,
+    ...(inspection.composer.textHash ? { textHash: inspection.composer.textHash } : {}),
+  };
+}
+
 export function createSubmitEffectGuard(): (
   effectId: string,
   submit: () => Promise<Awaited<ReturnType<typeof submitComposer>>>,
@@ -115,15 +135,7 @@ if (location.origin === 'https://chatgpt.com' && typeof chrome !== 'undefined') 
     }
 
     if (request.type === 'insert-composer-text') {
-      void (async () => {
-        const textHash = await hashComposerText(request.text);
-        if (textHash !== request.payloadHash) {
-          sendResponse({ inserted: false, sent: false });
-          return;
-        }
-        const inserted = insertComposerText(document, request.text);
-        sendResponse({ inserted, sent: false, ...(inserted ? { textHash } : {}) });
-      })();
+      void insertComposerPayload(document, location, request).then(sendResponse);
       return true;
     }
 

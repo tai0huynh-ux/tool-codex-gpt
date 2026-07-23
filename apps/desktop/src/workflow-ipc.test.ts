@@ -47,7 +47,7 @@ describe('workflow desktop boundary', () => {
     database.close();
   });
 
-  it('runs only the exact idle workflow and records rejected repeat starts', async () => {
+  it('advances the exact idle workflow to the safe review gate and records rejected repeat starts', async () => {
     const database = openDatabase(':memory:');
     const registry = new ProjectRegistry(database, () => '2026-07-22T09:00:00.000Z');
     registry.create('Bridge', 'project-1');
@@ -57,8 +57,13 @@ describe('workflow desktop boundary', () => {
     const second = await service.start('project-1');
 
     expect(await service.run(first.run.id)).toMatchObject({
-      run: { id: first.run.id, state: 'project_resolving' },
-      events: [{ eventType: 'workflow.created' }, { eventType: 'workflow.started_by_user' }],
+      run: { id: first.run.id, state: 'context_review_required' },
+      events: [
+        { eventType: 'workflow.created' },
+        { eventType: 'workflow.started_by_user' },
+        { eventType: 'workflow.context.building' },
+        { eventType: 'workflow.context.review_required' },
+      ],
     });
     expect(
       (await service.list('project-1')).find((item) => item.run.id === second.run.id),
@@ -77,6 +82,95 @@ describe('workflow desktop boundary', () => {
     database.close();
   });
 
+  it('persists bounded controlled notes without exposing their text in audit details', async () => {
+    const database = openDatabase(':memory:');
+    const registry = new ProjectRegistry(database, () => '2026-07-22T09:00:00.000Z');
+    registry.create('Bridge', 'project-1');
+    const workflows = new WorkflowEngine(database, { now: () => '2026-07-22T09:00:00.000Z' });
+    const service = createWorkflowDesktopService(database, workflows, {
+      now: () => '2026-07-22T09:00:01.000Z',
+    });
+    const created = await service.start('project-1');
+
+    const updated = await service.updateNotes({
+      workflowRunId: created.run.id,
+      notes: [
+        { target: 'codex', mode: 'repeat', text: '  Kiểm tra mobile trước.  ' },
+        { target: 'chatgpt', mode: 'once', text: 'Tóm tắt ngắn gọn.' },
+      ],
+    });
+
+    expect(updated.operatorNotes).toEqual([
+      expect.objectContaining({
+        target: 'codex',
+        mode: 'repeat',
+        text: 'Kiểm tra mobile trước.',
+        createdAt: '2026-07-22T09:00:01.000Z',
+      }),
+      expect.objectContaining({
+        target: 'chatgpt',
+        mode: 'once',
+        text: 'Tóm tắt ngắn gọn.',
+        createdAt: '2026-07-22T09:00:01.000Z',
+      }),
+    ]);
+    expect((await service.list('project-1'))[0]?.operatorNotes).toEqual(updated.operatorNotes);
+    const audit = database
+      .prepare(
+        "SELECT details_json FROM audit_events WHERE event_type = 'workflow.notes.updated' AND resource_id = ?",
+      )
+      .get(created.run.id) as { details_json: string };
+    expect(JSON.parse(audit.details_json)).toEqual({
+      noteCount: 2,
+      chatgptCount: 1,
+      codexCount: 1,
+      repeatCount: 1,
+    });
+    expect(audit.details_json).not.toContain('Kiểm tra mobile trước');
+    expect(audit.details_json).not.toContain('Tóm tắt ngắn gọn');
+    database.close();
+  });
+
+  it('reruns a stopped workflow as a new reviewed run with fresh copied note identities', async () => {
+    const database = openDatabase(':memory:');
+    const registry = new ProjectRegistry(database, () => '2026-07-22T09:00:00.000Z');
+    registry.create('Bridge', 'project-1');
+    const workflows = new WorkflowEngine(database, { now: () => '2026-07-22T09:00:00.000Z' });
+    const service = createWorkflowDesktopService(database, workflows, {
+      now: () => '2026-07-22T09:00:01.000Z',
+    });
+    const original = await service.start('project-1');
+    const withNotes = await service.updateNotes({
+      workflowRunId: original.run.id,
+      notes: [{ target: 'codex', mode: 'repeat', text: 'Giữ kiểm tra hồi quy.' }],
+    });
+    await service.cancel(original.run.id);
+
+    const rerun = await service.rerun(original.run.id);
+
+    expect(workflows.getRun(original.run.id)?.state).toBe('cancelled');
+    expect(rerun.run).toMatchObject({
+      projectId: original.run.projectId,
+      state: 'context_review_required',
+    });
+    expect(rerun.run.id).not.toBe(original.run.id);
+    expect(rerun.events).toMatchObject([
+      { eventType: 'workflow.created' },
+      {
+        eventType: 'workflow.rerun_started_by_user',
+        payload: { sourceWorkflowRunId: original.run.id },
+      },
+      { eventType: 'workflow.context.building' },
+      { eventType: 'workflow.context.review_required' },
+    ]);
+    expect(rerun.operatorNotes).toEqual([
+      expect.objectContaining({ target: 'codex', mode: 'repeat', text: 'Giữ kiểm tra hồi quy.' }),
+    ]);
+    expect(rerun.operatorNotes[0]?.id).not.toBe(withNotes.operatorNotes[0]?.id);
+    expect(() => service.rerun(rerun.run.id)).toThrow('WORKFLOW_NOT_RERUNNABLE');
+    database.close();
+  });
+
   it('deletes only terminal unreferenced workflows and preserves durable audit logs', async () => {
     const database = openDatabase(':memory:');
     const registry = new ProjectRegistry(database, () => '2026-07-22T09:00:00.000Z');
@@ -87,6 +181,10 @@ describe('workflow desktop boundary', () => {
     expect(() => service.delete(active.run.id)).toThrow('WORKFLOW_NOT_DELETABLE');
 
     const terminal = await service.start('project-1');
+    await service.updateNotes({
+      workflowRunId: terminal.run.id,
+      notes: [{ target: 'chatgpt', mode: 'once', text: 'Xóa cùng workflow.' }],
+    });
     await service.cancel(terminal.run.id);
     database
       .prepare(
@@ -139,6 +237,11 @@ describe('workflow desktop boundary', () => {
     ).toEqual({ count: 0 });
     expect(
       database
+        .prepare('SELECT COUNT(*) AS count FROM settings WHERE key = ?')
+        .get(`guided-workflow-notes:${terminal.run.id}`),
+    ).toEqual({ count: 0 });
+    expect(
+      database
         .prepare(
           "SELECT outcome FROM audit_events WHERE event_type = 'workflow.deleted' AND resource_id = ?",
         )
@@ -178,6 +281,15 @@ describe('workflow desktop boundary', () => {
       ipc.handlers.get(workflowIpcChannels.logs)?.(
         { sender: { id: 7 } },
         { projectId: 'project-1', limit: 201 },
+      ),
+    ).resolves.toMatchObject({ error: { code: 'IPC_SCHEMA_INVALID' } });
+    await expect(
+      ipc.handlers.get(workflowIpcChannels.updateNotes)?.(
+        { sender: { id: 7 } },
+        {
+          workflowRunId: 'workflow-1',
+          notes: [{ target: 'codex', mode: 'repeat', text: '   ' }],
+        },
       ),
     ).resolves.toMatchObject({ error: { code: 'IPC_SCHEMA_INVALID' } });
     database.close();
