@@ -101,7 +101,7 @@
     "pnpm.cmd run verify passed with 271 Vitest tests, 2 workflow fixture tests, 2 Chromium fixture tests, strict formatting/lint/type-check, migration parity, and all workspace builds",
     "pnpm.cmd run test:internal-beta-uat passed 46 targeted tests and 2 Chromium fixture flows; pnpm.cmd run test:project-pilot passed",
     "pnpm.cmd run package:win, pnpm.cmd run smoke:packaged:win, and pnpm.cmd run test:pilot-packaged-restart passed with zero renderer runtime errors",
-    "Packaged UI acceptance artifacts/ui-acceptance/2026-07-23T17-46-28-027Z passed 16 of 16 checks across 79 controls, including run, stop, rerun, controlled-note add/delete, terminal cleanup, logs, and refresh"
+    "Packaged UI acceptance artifacts/ui-acceptance/2026-07-23T17-46-28-027Z and installed UI acceptance artifacts/ui-acceptance/2026-07-23T17-55-21-261Z each passed 16 of 16 checks across 79 controls, including run, stop, rerun, controlled-note add/delete, terminal cleanup, logs, and refresh"
   ],
   "knownFailures": [
     "Authenticated account-transfer send and automatic browser ZIP upload remain unverified and intentionally action-time/manual gated"

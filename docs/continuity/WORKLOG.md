@@ -1634,7 +1634,7 @@ The packaged acceptance harness now uses exact note labels, waits for card delet
 
 ### Verification
 
-Focused workflow IPC/renderer plus adjacent desktop tests passed 48/48. `pnpm.cmd run verify` passed 271 Vitest tests, two workflow fixture tests, two Chromium fixture tests, migration parity, strict formatting/lint/type-check, and all workspace builds. Internal-beta UAT passed 46 tests plus two Chromium flows; project-pilot passed; Windows packaging, packaged smoke, fixture-only packaged restart, and packaged UI acceptance passed 16/16 with 79 controls and zero runtime errors. Node SQLite ABI was restored after packaging.
+Focused workflow IPC/renderer plus adjacent desktop tests passed 48/48. `pnpm.cmd run verify` passed 271 Vitest tests, two workflow fixture tests, two Chromium fixture tests, migration parity, strict formatting/lint/type-check, and all workspace builds. Internal-beta UAT passed 46 tests plus two Chromium flows; project-pilot passed; Windows packaging, packaged smoke, and fixture-only packaged restart passed. Packaged and installed UI acceptance each passed 16/16 with 79 controls and zero runtime errors. The per-user installer update preserved app data, and Node SQLite ABI was restored after packaging.
 
 ### Boundary
 

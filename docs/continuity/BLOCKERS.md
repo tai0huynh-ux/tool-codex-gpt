@@ -134,7 +134,7 @@
 - Reproduction: click `Chạy` on an idle ASSISTED MODE card and observe a persisted `workflow.started_by_user` event with the run permanently left in `project_resolving`.
 - Root cause: the desktop workflow IPC implemented only the first transition; there was no safe progression driver.
 - Resolution: the service now performs the bounded internal progression to `context_review_required`, adds explicit rerun and controlled-note IPC, and keeps all external sends behind the existing review/approval boundary.
-- Evidence: focused workflow IPC/renderer tests passed 12/12; full verification passed 271 Vitest tests; packaged acceptance passed 16/16 with 79 controls and zero runtime errors.
+- Evidence: focused workflow IPC/renderer tests passed 12/12; full verification passed 271 Vitest tests; packaged and installed acceptance each passed 16/16 with 79 controls and zero runtime errors.
 - Remaining limitation: the flow intentionally stops at human review and does not claim authenticated ChatGPT/Codex completion.
 
 ## UI-ACCEPTANCE-ARCHIVE-001
